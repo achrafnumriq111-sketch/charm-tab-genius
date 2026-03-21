@@ -746,8 +746,6 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       giftCardDeduction: giftCardDeduction || 0,
       giftCardId: giftCardId || null,
       status: "completed",
-      employeeId: null,
-      employeeName: null,
     };
     onOrderComplete(order);
     clearCart();
