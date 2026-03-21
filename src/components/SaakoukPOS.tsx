@@ -746,6 +746,8 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       giftCardDeduction: giftCardDeduction || 0,
       giftCardId: giftCardId || null,
       status: "completed",
+      employeeId: null,
+      employeeName: null,
     };
     onOrderComplete(order);
     clearCart();
@@ -1607,47 +1609,282 @@ function GiftCardsView({ giftCards, setGiftCards }: any) {
 }
 
 // ─── SALES ───────────────────────────────────────────────────────────────────
-// Now uses live products prop instead of stale initialProducts
 
-function SalesView({ orders, products }: any) {
-  const today = new Date();
-  const todayOrders = orders.filter((o) => o.date.toDateString() === today.toDateString());
-  const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
-  const itemsSold = todayOrders.reduce((s, o) => s + o.items.reduce((a, i) => a + i.qty, 0), 0);
-  const avgDiscount = todayOrders.length > 0 ? todayOrders.reduce((s, o) => s + o.discount, 0) / todayOrders.length : 0;
+function SalesView({ orders, products, employees }: any) {
+  const [tab, setTab] = useState("overview");
+  const [dateRange, setDateRange] = useState("today");
 
+  function getFilteredOrders() {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (dateRange === "today") return orders.filter((o: any) => o.date >= startOfDay);
+    if (dateRange === "week") {
+      const weekAgo = new Date(startOfDay); weekAgo.setDate(weekAgo.getDate() - 7);
+      return orders.filter((o: any) => o.date >= weekAgo);
+    }
+    if (dateRange === "month") {
+      const monthAgo = new Date(startOfDay); monthAgo.setMonth(monthAgo.getMonth() - 1);
+      return orders.filter((o: any) => o.date >= monthAgo);
+    }
+    return orders;
+  }
+
+  const filtered = getFilteredOrders();
+  const revenue = filtered.reduce((s: number, o: any) => s + o.total, 0);
+  const itemsSold = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + i.qty, 0), 0);
+  const avgTicket = filtered.length > 0 ? revenue / filtered.length : 0;
+  const totalTips = filtered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
+  const totalDiscount = filtered.reduce((s: number, o: any) => s + (o.discount || 0), 0);
+
+  // By section
   const bySection: Record<string, number> = {};
-  todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
     const product = products.find((p: any) => p.id === item.productId);
     const sec = product?.section || "Other";
     bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
   }));
 
+  // By employee
+  const byEmployee: Record<string, { name: string; orders: number; revenue: number; items: number; tips: number }> = {};
+  filtered.forEach((o: any) => {
+    const eid = o.employeeId || "unknown";
+    const ename = o.employeeName || "Onbekend";
+    if (!byEmployee[eid]) byEmployee[eid] = { name: ename, orders: 0, revenue: 0, items: 0, tips: 0 };
+    byEmployee[eid].orders++;
+    byEmployee[eid].revenue += o.total;
+    byEmployee[eid].items += o.items.reduce((a: number, i: any) => a + i.qty, 0);
+    byEmployee[eid].tips += o.tip || 0;
+  });
+
+  // By hour
+  const byHour: Record<number, { orders: number; revenue: number }> = {};
+  for (let h = 8; h <= 22; h++) byHour[h] = { orders: 0, revenue: 0 };
+  filtered.forEach((o: any) => {
+    const h = o.date.getHours();
+    if (!byHour[h]) byHour[h] = { orders: 0, revenue: 0 };
+    byHour[h].orders++;
+    byHour[h].revenue += o.total;
+  });
+  const peakHourRevenue = Math.max(...Object.values(byHour).map((v) => v.revenue), 1);
+
+  // By day
+  const byDay: Record<string, { orders: number; revenue: number; date: string }> = {};
+  filtered.forEach((o: any) => {
+    const key = o.date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    if (!byDay[key]) byDay[key] = { orders: 0, revenue: 0, date: key };
+    byDay[key].orders++;
+    byDay[key].revenue += o.total;
+  });
+
+  // Top products
+  const topProducts: Record<string, { name: string; qty: number; revenue: number }> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0 };
+    topProducts[item.productId].qty += item.qty;
+    topProducts[item.productId].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+  }));
+  const topList = Object.values(topProducts).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+  // Payment methods
+  const byMethod: Record<string, number> = {};
+  filtered.forEach((o: any) => { byMethod[o.method] = (byMethod[o.method] || 0) + o.total; });
+
+  const tabs = [
+    { key: "overview", label: "Overzicht" },
+    { key: "employees", label: "Per medewerker" },
+    { key: "hourly", label: "Per uur" },
+    { key: "daily", label: "Per dag" },
+    { key: "products", label: "Producten" },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="rounded-2xl"><CardContent className="p-4"><div className="text-sm text-muted-foreground">Revenue</div><div className="text-2xl font-bold">{euro(revenue)}</div></CardContent></Card>
-        <Card className="rounded-2xl"><CardContent className="p-4"><div className="text-sm text-muted-foreground">Orders</div><div className="text-2xl font-bold">{todayOrders.length}</div></CardContent></Card>
-        <Card className="rounded-2xl"><CardContent className="p-4"><div className="text-sm text-muted-foreground">Items sold</div><div className="text-2xl font-bold">{itemsSold}</div></CardContent></Card>
-        <Card className="rounded-2xl"><CardContent className="p-4"><div className="text-sm text-muted-foreground">Avg discount</div><div className="text-2xl font-bold">{euro(avgDiscount)}</div></CardContent></Card>
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex gap-1">
+          {tabs.map((t) => (
+            <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setTab(t.key)}>
+              {t.label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex gap-1">
+          {[
+            { key: "today", label: "Vandaag" },
+            { key: "week", label: "7 dagen" },
+            { key: "month", label: "30 dagen" },
+            { key: "all", label: "Alles" },
+          ].map((r) => (
+            <Button key={r.key} variant={dateRange === r.key ? "secondary" : "ghost"} size="sm" className="text-xs" onClick={() => setDateRange(r.key)}>
+              {r.label}
+            </Button>
+          ))}
+        </div>
       </div>
-      <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-sm">Revenue by section</CardTitle></CardHeader>
-        <CardContent>
-          {Object.keys(bySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales data yet.</div> : (
-            <div className="space-y-3">
-              {Object.entries(bySection).sort((a, b) => b[1] - a[1]).map(([section, amount]) => (
-                <div key={section} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount)}</span></div>
-                  <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
+
+      {/* KPI strip */}
+      <div className="grid grid-cols-5 gap-3">
+        {[
+          { label: "Omzet", value: euro(revenue), sub: `${filtered.length} orders` },
+          { label: "Gem. ticket", value: euro(avgTicket), sub: "per order" },
+          { label: "Items", value: String(itemsSold), sub: "verkocht" },
+          { label: "Fooi", value: euro(totalTips), sub: "totaal" },
+          { label: "Korting", value: euro(totalDiscount), sub: "gegeven" },
+        ].map((kpi, i) => (
+          <Card key={i} className="rounded-2xl">
+            <CardContent className="p-3">
+              <div className="text-[11px] text-muted-foreground">{kpi.label}</div>
+              <div className="text-xl font-bold tabular-nums">{kpi.value}</div>
+              <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* TAB: Overview */}
+      {tab === "overview" && (
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Omzet per categorie</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(bySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-2.5">
+                  {Object.entries(bySection).sort((a, b) => b[1] - a[1]).map(([section, amount]) => (
+                    <div key={section} className="space-y-1">
+                      <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium tabular-nums">{euro(amount)}</span></div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-foreground rounded-full transition-all" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Betaalmethode</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(byMethod).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-2.5">
+                  {Object.entries(byMethod).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([method, amount]) => (
+                    <div key={method} className="space-y-1">
+                      <div className="flex justify-between text-sm"><span className="capitalize">{method === "giftcard" ? "Cadeaubon" : method}</span><span className="font-medium tabular-nums">{euro(amount as number)}</span></div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-foreground rounded-full transition-all" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* TAB: By Employee */}
+      {tab === "employees" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per medewerker</CardTitle></CardHeader>
+          <CardContent>
+            {Object.keys(byEmployee).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+              <div className="space-y-1">
+                {Object.entries(byEmployee).sort((a, b) => b[1].revenue - a[1].revenue).map(([eid, data]) => (
+                  <div key={eid} className="flex items-center gap-3 py-2.5 border-b last:border-0">
+                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                      {data.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{data.name}</div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                        <div className="h-full bg-foreground rounded-full transition-all" style={{ width: revenue > 0 ? `${(data.revenue / revenue) * 100}%` : "0%" }} />
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-bold text-sm tabular-nums">{euro(data.revenue)}</div>
+                      <div className="text-[10px] text-muted-foreground">{data.orders} orders · {data.items} items</div>
+                    </div>
+                    {data.tips > 0 && <Badge variant="secondary" className="text-[10px] shrink-0">{euro(data.tips)} fooi</Badge>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* TAB: By Hour */}
+      {tab === "hourly" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per uur</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              {Object.entries(byHour).map(([hour, data]) => (
+                <div key={hour} className="flex items-center gap-3 py-1.5">
+                  <span className="text-xs text-muted-foreground w-12 tabular-nums shrink-0">{String(hour).padStart(2, "0")}:00</span>
+                  <div className="flex-1 h-6 bg-muted rounded overflow-hidden relative">
+                    <div className={clsx("h-full rounded transition-all", data.revenue > 0 ? "bg-foreground" : "")}
+                      style={{ width: `${(data.revenue / peakHourRevenue) * 100}%` }} />
+                    {data.revenue > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground">
+                        {euro(data.revenue)} · {data.orders}x
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* TAB: By Day */}
+      {tab === "daily" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per dag</CardTitle></CardHeader>
+          <CardContent>
+            {Object.keys(byDay).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+              <div className="space-y-1">
+                {Object.values(byDay).map((data) => {
+                  const maxDayRevenue = Math.max(...Object.values(byDay).map((d) => d.revenue), 1);
+                  return (
+                    <div key={data.date} className="flex items-center gap-3 py-2 border-b last:border-0">
+                      <span className="text-xs w-24 shrink-0">{data.date}</span>
+                      <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                        <div className="h-full bg-foreground rounded transition-all" style={{ width: `${(data.revenue / maxDayRevenue) * 100}%` }} />
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-sm font-bold tabular-nums">{euro(data.revenue)}</span>
+                        <span className="text-[10px] text-muted-foreground ml-2">{data.orders} orders</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* TAB: Top Products */}
+      {tab === "products" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Top producten</CardTitle></CardHeader>
+          <CardContent>
+            {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+              <div className="space-y-1">
+                {topList.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
+                    <span className="w-6 text-center text-xs text-muted-foreground font-mono">{i + 1}</span>
+                    <span className="flex-1 text-sm font-medium truncate">{item.name}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{item.qty}x</span>
+                    <span className="text-sm font-bold tabular-nums w-20 text-right">{euro(item.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -2014,7 +2251,8 @@ export default function SaakoukPOS() {
   }
 
   function handleOrderComplete(order: any) {
-    setOrders((prev) => [...prev, order]);
+    const stamped = { ...order, employeeId: loggedInEmployee?.id || null, employeeName: loggedInEmployee?.name || null };
+    setOrders((prev) => [...prev, stamped]);
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
@@ -2101,7 +2339,7 @@ export default function SaakoukPOS() {
             {active === "qr" && <QrView features={features} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
-            {active === "sales" && <SalesView orders={orders} products={products} />}
+            {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} />}
