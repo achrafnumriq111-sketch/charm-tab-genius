@@ -278,17 +278,17 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
 function ProductButton({ product, onClick }: { product: any; onClick: () => void }) {
   return (
     <button onClick={onClick}
-      className="rounded-2xl border bg-white p-3 text-left shadow-sm hover:shadow-md hover:scale-[1.02] transition-all h-full flex flex-col justify-between">
+      className="rounded-2xl border bg-white p-2.5 text-left shadow-sm active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation">
       <div>
-        <div className="flex items-start justify-between gap-2">
-          <div className="font-semibold text-sm leading-tight">{product.name}</div>
-          <Badge variant="secondary" className="shrink-0 text-xs">{euro(product.price)}</Badge>
+        <div className="flex items-start justify-between gap-1.5">
+          <div className="font-semibold text-[13px] leading-tight">{product.name}</div>
+          <Badge variant="secondary" className="shrink-0 text-[11px]">{euro(product.price)}</Badge>
         </div>
         {product.modifierGroups?.length > 0 && (
-          <div className="text-[11px] text-muted-foreground mt-1">{product.modifierGroups.length} modifier group{product.modifierGroups.length > 1 ? "s" : ""}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
         )}
       </div>
-      {product.color && <div className="w-full h-1 rounded-full mt-2" style={{ backgroundColor: product.color }} />}
+      {product.color && <div className="w-full h-1 rounded-full mt-1.5" style={{ backgroundColor: product.color }} />}
     </button>
   );
 }
