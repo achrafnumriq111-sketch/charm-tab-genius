@@ -2104,7 +2104,7 @@ export default function SaakoukPOS() {
             {active === "qr" && <QrView features={features} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
-            {active === "sales" && <SalesView orders={orders} products={products} />}
+            {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} />}
