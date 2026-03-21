@@ -905,7 +905,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 
 function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation }: any) {
   const [areaFilter, setAreaFilter] = useState("all");
-  const areas = ["all", ...Array.from(new Set(tables.map((t) => t.area)))];
+  const areas: string[] = ["all", ...Array.from(new Set(tables.map((t: any) => t.area as string)))];
   const filtered = areaFilter === "all" ? tables : tables.filter((t) => t.area === areaFilter);
 
   function getTableStatus(table) {
@@ -1003,7 +1003,7 @@ function DashboardView({ orders, tables, openTickets }: any) {
   todayOrders.forEach((o) => o.items.forEach((item) => {
     topProducts[item.name] = (topProducts[item.name] || 0) + item.qty;
   }));
-  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const topList = Object.entries(topProducts).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, 5);
 
   const paymentBreakdown = { card: 0, cash: 0, qr: 0, giftcard: 0 };
   todayOrders.forEach((o) => { paymentBreakdown[o.method] = (paymentBreakdown[o.method] || 0) + o.total; });
@@ -1034,13 +1034,13 @@ function DashboardView({ orders, tables, openTickets }: any) {
           <CardContent>
             {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales yet today.</div> : (
               <div className="space-y-2">
-                {topList.map(([name, qty], i) => (
+                {topList.map(([name, qty]: [string, number], i: number) => (
                   <div key={name} className="flex items-center justify-between py-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
                       <span className="text-sm">{name}</span>
                     </div>
-                    <Badge variant="secondary">{qty} sold</Badge>
+                    <Badge variant="secondary">{qty as number} sold</Badge>
                   </div>
                 ))}
               </div>
@@ -1051,11 +1051,11 @@ function DashboardView({ orders, tables, openTickets }: any) {
           <CardHeader className="pb-2"><CardTitle className="text-sm">Payment breakdown</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(paymentBreakdown).filter(([, amount]) => amount > 0).map(([method, amount]) => (
+              {Object.entries(paymentBreakdown).filter(([, amount]) => (amount as number) > 0).map(([method, amount]: [string, number]) => (
                 <div key={method} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span className="capitalize">{method === "giftcard" ? "Gift card" : method}</span><span className="font-medium">{euro(amount)}</span></div>
+                  <div className="flex justify-between text-sm"><span className="capitalize">{method === "giftcard" ? "Gift card" : method}</span><span className="font-medium">{euro(amount as number)}</span></div>
                   <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-black rounded-full transition-all" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
+                    <div className="h-full bg-black rounded-full transition-all" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
                   </div>
                 </div>
               ))}
@@ -1617,11 +1617,11 @@ function SalesView({ orders, products }: any) {
         <CardContent>
           {Object.keys(bySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales data yet.</div> : (
             <div className="space-y-3">
-              {Object.entries(bySection).sort((a, b) => b[1] - a[1]).map(([section, amount]) => (
+              {Object.entries(bySection).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([section, amount]: [string, number]) => (
                 <div key={section} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount)}</span></div>
+                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount as number)}</span></div>
                   <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
+                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
                   </div>
                 </div>
               ))}
@@ -1675,7 +1675,7 @@ function AccountingView({ orders }: any) {
         <CardHeader><CardTitle className="text-sm">By payment method</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2 max-w-md">
-            {Object.entries(byMethod).filter(([, v]) => v > 0).map(([method, amount]) => (
+            {Object.entries(byMethod).filter(([, v]) => (v as number) > 0).map(([method, amount]: [string, number]) => (
               <div key={method} className="flex justify-between py-1.5 text-sm">
                 <span className="capitalize">{method === "giftcard" ? "Gift card" : method}</span>
                 <span className="font-medium">{euro(amount)}</span>
