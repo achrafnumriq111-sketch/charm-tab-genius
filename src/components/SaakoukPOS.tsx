@@ -1877,24 +1877,24 @@ export default function SaakoukPOS() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-950 flex">
+    <div className="h-dvh bg-neutral-50 text-neutral-950 flex overflow-hidden select-none">
       <Sidebar active={active} setActive={setActive} />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="shrink-0 border-b bg-white px-6 py-3 flex items-center justify-between">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="shrink-0 border-b bg-white px-4 py-2 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold">{titles[active] || "Saakouk"}</h1>
-            <div className="text-xs text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
+            <h1 className="text-base font-bold leading-tight">{titles[active] || "Saakouk"}</h1>
+            <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline">{todayOrders.length} orders today</Badge>
-            <Badge variant="secondary">{euro(todayRevenue)} revenue</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
+            <Badge variant="secondary" className="text-[11px]">{euro(todayRevenue)}</Badge>
           </div>
         </div>
-        <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-[1600px] mx-auto">
+        <div className="flex-1 overflow-auto p-4">
+          <div className="mx-auto">
             {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} />}
             {active === "pos" && (
-              <Tabs defaultValue="counter" className="space-y-4">
+              <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-xl">
                   <TabsTrigger value="counter">Counter</TabsTrigger>
                   <TabsTrigger value="table">Tables</TabsTrigger>
