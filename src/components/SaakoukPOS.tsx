@@ -755,14 +755,14 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     <div className="grid grid-cols-12 gap-3 h-[calc(100dvh-120px)]">
       {/* LEFT: Product grid */}
       <div className="col-span-7 flex flex-col gap-3 overflow-hidden">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 min-w-[160px]">
+        <div className="flex flex-col gap-2">
+          <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="pl-9 h-10" />
           </div>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {SECTIONS.map((s) => (
-              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-[11px] px-2.5 h-8" onClick={() => setSection(s)}>
+              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-[11px] px-3 h-8" onClick={() => setSection(s)}>
                 {s}
               </Button>
             ))}
