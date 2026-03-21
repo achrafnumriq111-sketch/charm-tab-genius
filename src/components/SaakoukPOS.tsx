@@ -927,7 +927,7 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          {areas.map((a) => (
+          {(areas as string[]).map((a: string) => (
             <Button key={a} variant={areaFilter === a ? "default" : "outline"} size="sm" className="rounded-full capitalize" onClick={() => setAreaFilter(a)}>
               {a === "all" ? "All areas" : a}
             </Button>
