@@ -1034,13 +1034,13 @@ function DashboardView({ orders, tables, openTickets }: any) {
           <CardContent>
             {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales yet today.</div> : (
               <div className="space-y-2">
-                {topList.map(([name, qty]: [string, number], i: number) => (
+                {topList.map(([name, qty], i) => (
                   <div key={name} className="flex items-center justify-between py-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
                       <span className="text-sm">{name}</span>
                     </div>
-                    <Badge variant="secondary">{qty as number} sold</Badge>
+                    <Badge variant="secondary">{qty} sold</Badge>
                   </div>
                 ))}
               </div>
