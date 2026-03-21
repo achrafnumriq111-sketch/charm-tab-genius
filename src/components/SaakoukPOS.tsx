@@ -161,11 +161,11 @@ const initialReservations = [
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-function euro(value) {
+function euro(value: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(value);
 }
 
-function clsx(...parts) {
+function clsx(...parts: any[]) {
   return parts.filter(Boolean).join(" ");
 }
 
@@ -173,33 +173,33 @@ function generateId() {
   return Math.random().toString(36).substring(2, 10);
 }
 
-function formatTime(date) {
+function formatTime(date: Date) {
   return date.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatDate(date) {
+function formatDate(date: Date) {
   return date.toLocaleDateString("nl-NL", { year: "numeric", month: "short", day: "numeric" });
 }
 
-function isToday(date) {
+function isToday(date: Date) {
   return date.toDateString() === new Date().toDateString();
 }
 
-function emptyTicket(tableId) {
+function emptyTicket(tableId: string) {
   return { tableId, cart: [], selectedDiscount: null, customerId: null, customerName: "", loyaltyProvider: "none", loyaltyCustomer: null };
 }
 
-function cartSubtotal(cart) {
+function cartSubtotal(cart: any[]) {
   return cart.reduce((sum, item) => sum + (item.price + item.modifiers.reduce((m, x) => m + x.price, 0)) * item.qty, 0);
 }
 
-function cartItemCount(cart) {
+function cartItemCount(cart: any[]) {
   return cart.reduce((s, i) => s + i.qty, 0);
 }
 
 // ─── MODAL WRAPPER ───────────────────────────────────────────────────────────
 
-function Modal({ open, onClose, children, wide }) {
+function Modal({ open, onClose, children, wide }: { open: boolean; onClose?: () => void; children: React.ReactNode; wide?: boolean }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6 z-50" onClick={() => onClose?.()}>
@@ -212,7 +212,7 @@ function Modal({ open, onClose, children, wide }) {
 
 // ─── TOAST ───────────────────────────────────────────────────────────────────
 
-function Toast({ message, onClose }) {
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3000);
     return () => clearTimeout(t);
@@ -229,7 +229,7 @@ function Toast({ message, onClose }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive }) {
+function Sidebar({ active, setActive }: { active: string; setActive: (k: string) => void }) {
   const sections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "pos", label: "POS", icon: ShoppingCart },
@@ -275,7 +275,7 @@ function Sidebar({ active, setActive }) {
 
 // ─── PRODUCT BUTTON ──────────────────────────────────────────────────────────
 
-function ProductButton({ product, onClick }) {
+function ProductButton({ product, onClick }: { product: any; onClick: () => void }) {
   return (
     <button onClick={onClick}
       className="rounded-2xl border bg-white p-3 text-left shadow-sm hover:shadow-md hover:scale-[1.02] transition-all h-full flex flex-col justify-between">
@@ -295,7 +295,7 @@ function ProductButton({ product, onClick }) {
 
 // ─── MODIFIER PICKER ─────────────────────────────────────────────────────────
 
-function ModifierPicker({ product, onAdd, onClose }) {
+function ModifierPicker({ product, onAdd, onClose }: { product: any; onAdd: (item: any) => void; onClose: () => void }) {
   const [selected, setSelected] = useState({});
   const [notes, setNotes] = useState("");
   const [qty, setQty] = useState(1);
@@ -412,7 +412,7 @@ function ModifierPicker({ product, onAdd, onClose }) {
 
 // ─── PAYMENT MODAL ───────────────────────────────────────────────────────────
 
-function PaymentModal({ open, onClose, total, onComplete, method: initialMethod, features, giftCards, onRedeemGiftCard }) {
+function PaymentModal({ open, onClose, total, onComplete, method: initialMethod, features, giftCards, onRedeemGiftCard }: any) {
   const [method, setMethod] = useState(initialMethod || "card");
   const [cashGiven, setCashGiven] = useState("");
   const [step, setStep] = useState("choose");
@@ -580,7 +580,7 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
 
 // ─── RECEIPT PREVIEW ─────────────────────────────────────────────────────────
 
-function ReceiptPreview({ order, onClose }) {
+function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void }) {
   if (!order) return null;
   return (
     <div className="p-6 space-y-4">
@@ -624,7 +624,7 @@ function ReceiptPreview({ order, onClose }) {
 // ─── COUNTER POS VIEW ────────────────────────────────────────────────────────
 // Cart state is now lifted: ticket comes from parent via props
 
-function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete }) {
+function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete }: any) {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("Signature Drinks");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -903,7 +903,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 // ─── TABLE VIEW ──────────────────────────────────────────────────────────────
 // Table status is now derived from openTickets (single source of truth)
 
-function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation }) {
+function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation }: any) {
   const [areaFilter, setAreaFilter] = useState("all");
   const areas = ["all", ...Array.from(new Set(tables.map((t) => t.area)))];
   const filtered = areaFilter === "all" ? tables : tables.filter((t) => t.area === areaFilter);
@@ -918,7 +918,7 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
   }
 
   const statusColors = { free: "bg-green-50 border-green-200", occupied: "bg-orange-50 border-orange-200", reserved: "bg-blue-50 border-blue-200" };
-  const statusBadge = { free: "outline", occupied: "default", reserved: "secondary" };
+  const statusBadge: Record<string, "default" | "outline" | "secondary"> = { free: "outline", occupied: "default", reserved: "secondary" };
 
   const tableCounts = { free: 0, occupied: 0, reserved: 0 };
   tables.forEach((t) => { tableCounts[getTableStatus(t)]++; });
@@ -992,7 +992,7 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-function DashboardView({ orders, tables, openTickets }) {
+function DashboardView({ orders, tables, openTickets }: any) {
   const todayOrders = orders.filter((o) => isToday(o.date));
   const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
   const tips = todayOrders.reduce((s, o) => s + (o.tip || 0), 0);
@@ -1091,7 +1091,7 @@ function DashboardView({ orders, tables, openTickets }) {
 
 // ─── ACTIVITY / ORDER HISTORY ────────────────────────────────────────────────
 
-function ActivityView({ orders }) {
+function ActivityView({ orders }: any) {
   const [search, setSearch] = useState("");
   const [receiptOrder, setReceiptOrder] = useState(null);
 
@@ -1149,7 +1149,7 @@ function ActivityView({ orders }) {
 
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 
-function ReservationsView({ reservations, setReservations, tables }) {
+function ReservationsView({ reservations, setReservations, tables }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
 
@@ -1232,7 +1232,7 @@ function ReservationsView({ reservations, setReservations, tables }) {
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts }) {
+function ProductsView({ products: allProducts, setProducts }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
@@ -1364,7 +1364,7 @@ function ProductsView({ products: allProducts, setProducts }) {
 
 // ─── QR ORDERING ─────────────────────────────────────────────────────────────
 
-function QrView({ features }) {
+function QrView({ features }: any) {
   return (
     <div className="space-y-4">
       <Card className="rounded-2xl">
@@ -1410,7 +1410,7 @@ function QrView({ features }) {
 
 // ─── CUSTOMERS ───────────────────────────────────────────────────────────────
 
-function CustomersView({ customers, setCustomers }) {
+function CustomersView({ customers, setCustomers }: any) {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", provider: "none" });
@@ -1521,7 +1521,7 @@ function CustomersView({ customers, setCustomers }) {
 
 // ─── GIFT CARDS ──────────────────────────────────────────────────────────────
 
-function GiftCardsView({ giftCards, setGiftCards }) {
+function GiftCardsView({ giftCards, setGiftCards }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ customerName: "", value: "25" });
 
@@ -1590,7 +1590,7 @@ function GiftCardsView({ giftCards, setGiftCards }) {
 // ─── SALES ───────────────────────────────────────────────────────────────────
 // Now uses live products prop instead of stale initialProducts
 
-function SalesView({ orders, products }) {
+function SalesView({ orders, products }: any) {
   const today = new Date();
   const todayOrders = orders.filter((o) => o.date.toDateString() === today.toDateString());
   const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
@@ -1635,7 +1635,7 @@ function SalesView({ orders, products }) {
 
 // ─── ACCOUNTING ──────────────────────────────────────────────────────────────
 
-function AccountingView({ orders }) {
+function AccountingView({ orders }: any) {
   const today = new Date();
   const todayOrders = orders.filter((o) => o.date.toDateString() === today.toDateString());
   const grossRevenue = todayOrders.reduce((s, o) => s + o.subtotal, 0);
@@ -1698,7 +1698,7 @@ function AccountingView({ orders }) {
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
-function SettingsView({ features, setFeatures }) {
+function SettingsView({ features, setFeatures }: any) {
   return (
     <div className="space-y-4 max-w-2xl">
       <Card className="rounded-2xl">
