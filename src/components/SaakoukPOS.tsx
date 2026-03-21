@@ -733,24 +733,24 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   }
 
   return (
-    <div className="grid grid-cols-12 gap-4 h-[calc(100vh-180px)]">
+    <div className="grid grid-cols-12 gap-3 h-[calc(100dvh-120px)]">
       {/* LEFT: Product grid */}
-      <div className="col-span-8 flex flex-col gap-4 overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+      <div className="col-span-7 flex flex-col gap-3 overflow-hidden">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-[160px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search product..." className="pl-9" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="pl-9 h-10" />
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-1">
             {SECTIONS.map((s) => (
-              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setSection(s)}>
+              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-[11px] px-2.5 h-8" onClick={() => setSection(s)}>
                 {s}
               </Button>
             ))}
           </div>
         </div>
         <ScrollArea className="flex-1">
-          <div className="grid grid-cols-3 gap-3 pb-4">
+          <div className="grid grid-cols-3 gap-2 pb-4">
             {filtered.map((product) => (
               <ProductButton key={product.id} product={product} onClick={() => quickAdd(product)} />
             ))}
