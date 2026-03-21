@@ -244,29 +244,29 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
     { key: "settings", label: "Settings", icon: Settings },
   ];
   return (
-    <div className="w-64 border-r bg-white flex flex-col shrink-0">
-      <div className="p-5 border-b">
-        <div className="text-2xl font-black tracking-tight">saakouk</div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">POS System</div>
+    <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
+      <div className="py-4 px-2 border-b flex flex-col items-center">
+        <div className="text-sm font-black tracking-tight leading-none">S</div>
       </div>
-      <ScrollArea className="flex-1 px-2 py-3">
-        <div className="space-y-0.5">
+      <ScrollArea className="flex-1 py-2 px-1.5">
+        <div className="space-y-1 flex flex-col items-center">
           {sections.map((item) => {
             const Icon = item.icon;
             return (
               <button key={item.key} onClick={() => setActive(item.key)}
-                className={clsx("w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
-                  active === item.key ? "bg-black text-white font-medium" : "hover:bg-neutral-100 text-neutral-700")}>
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
+                title={item.label}
+                className={clsx("w-12 h-12 flex flex-col items-center justify-center rounded-xl text-[10px] leading-tight transition-all gap-0.5",
+                  active === item.key ? "bg-black text-white font-medium" : "hover:bg-neutral-100 text-neutral-600")}>
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
               </button>
             );
           })}
         </div>
       </ScrollArea>
-      <div className="p-3 border-t">
-        <button className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
-          <LogOut className="h-4 w-4" /><span>End shift</span>
+      <div className="p-1.5 border-t flex justify-center">
+        <button title="End shift" className="w-12 h-12 flex items-center justify-center rounded-xl text-red-600 hover:bg-red-50 transition">
+          <LogOut className="h-5 w-5" />
         </button>
       </div>
     </div>
@@ -278,17 +278,17 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
 function ProductButton({ product, onClick }: { product: any; onClick: () => void }) {
   return (
     <button onClick={onClick}
-      className="rounded-2xl border bg-white p-3 text-left shadow-sm hover:shadow-md hover:scale-[1.02] transition-all h-full flex flex-col justify-between">
+      className="rounded-2xl border bg-white p-2.5 text-left shadow-sm active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation">
       <div>
-        <div className="flex items-start justify-between gap-2">
-          <div className="font-semibold text-sm leading-tight">{product.name}</div>
-          <Badge variant="secondary" className="shrink-0 text-xs">{euro(product.price)}</Badge>
+        <div className="flex items-start justify-between gap-1.5">
+          <div className="font-semibold text-[13px] leading-tight">{product.name}</div>
+          <Badge variant="secondary" className="shrink-0 text-[11px]">{euro(product.price)}</Badge>
         </div>
         {product.modifierGroups?.length > 0 && (
-          <div className="text-[11px] text-muted-foreground mt-1">{product.modifierGroups.length} modifier group{product.modifierGroups.length > 1 ? "s" : ""}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
         )}
       </div>
-      {product.color && <div className="w-full h-1 rounded-full mt-2" style={{ backgroundColor: product.color }} />}
+      {product.color && <div className="w-full h-1 rounded-full mt-1.5" style={{ backgroundColor: product.color }} />}
     </button>
   );
 }
@@ -733,24 +733,24 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   }
 
   return (
-    <div className="grid grid-cols-12 gap-4 h-[calc(100vh-180px)]">
+    <div className="grid grid-cols-12 gap-3 h-[calc(100dvh-120px)]">
       {/* LEFT: Product grid */}
-      <div className="col-span-8 flex flex-col gap-4 overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+      <div className="col-span-7 flex flex-col gap-3 overflow-hidden">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-[160px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search product..." className="pl-9" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="pl-9 h-10" />
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex gap-1">
             {SECTIONS.map((s) => (
-              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setSection(s)}>
+              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-[11px] px-2.5 h-8" onClick={() => setSection(s)}>
                 {s}
               </Button>
             ))}
           </div>
         </div>
         <ScrollArea className="flex-1">
-          <div className="grid grid-cols-3 gap-3 pb-4">
+          <div className="grid grid-cols-3 gap-2 pb-4">
             {filtered.map((product) => (
               <ProductButton key={product.id} product={product} onClick={() => quickAdd(product)} />
             ))}
@@ -764,7 +764,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       </div>
 
       {/* RIGHT: Cart */}
-      <div className="col-span-4 flex flex-col overflow-hidden">
+      <div className="col-span-5 flex flex-col overflow-hidden">
         <Card className="rounded-2xl flex-1 flex flex-col overflow-hidden">
           <CardHeader className="p-4 pb-3 space-y-3 shrink-0">
             <div className="flex items-center justify-between">
@@ -1877,24 +1877,24 @@ export default function SaakoukPOS() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-950 flex">
+    <div className="h-dvh bg-neutral-50 text-neutral-950 flex overflow-hidden select-none">
       <Sidebar active={active} setActive={setActive} />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="shrink-0 border-b bg-white px-6 py-3 flex items-center justify-between">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <div className="shrink-0 border-b bg-white px-4 py-2 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold">{titles[active] || "Saakouk"}</h1>
-            <div className="text-xs text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
+            <h1 className="text-base font-bold leading-tight">{titles[active] || "Saakouk"}</h1>
+            <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline">{todayOrders.length} orders today</Badge>
-            <Badge variant="secondary">{euro(todayRevenue)} revenue</Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
+            <Badge variant="secondary" className="text-[11px]">{euro(todayRevenue)}</Badge>
           </div>
         </div>
-        <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-[1600px] mx-auto">
+        <div className="flex-1 overflow-auto p-4">
+          <div className="mx-auto">
             {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} />}
             {active === "pos" && (
-              <Tabs defaultValue="counter" className="space-y-4">
+              <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-xl">
                   <TabsTrigger value="counter">Counter</TabsTrigger>
                   <TabsTrigger value="table">Tables</TabsTrigger>
