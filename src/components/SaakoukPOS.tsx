@@ -1597,11 +1597,11 @@ function SalesView({ orders, products }: any) {
   const itemsSold = todayOrders.reduce((s, o) => s + o.items.reduce((a, i) => a + i.qty, 0), 0);
   const avgDiscount = todayOrders.length > 0 ? todayOrders.reduce((s, o) => s + o.discount, 0) / todayOrders.length : 0;
 
-  const bySection = {};
-  todayOrders.forEach((o) => o.items.forEach((item) => {
-    const product = products.find((p) => p.id === item.productId);
+  const bySection: Record<string, number> = {};
+  todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
+    const product = products.find((p: any) => p.id === item.productId);
     const sec = product?.section || "Other";
-    bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s, m) => s + m.price, 0)) * item.qty;
+    bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
   }));
 
   return (
