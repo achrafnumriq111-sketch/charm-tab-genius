@@ -999,11 +999,11 @@ function DashboardView({ orders, tables, openTickets }: any) {
   const avgTicket = todayOrders.length > 0 ? revenue / todayOrders.length : 0;
   const occupiedTables = tables.filter((t) => !!openTickets[t.id]).length;
 
-  const topProducts = {};
-  todayOrders.forEach((o) => o.items.forEach((item) => {
+  const topProducts: Record<string, number> = {};
+  todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
     topProducts[item.name] = (topProducts[item.name] || 0) + item.qty;
   }));
-  const topList = Object.entries(topProducts).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, 5);
+  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   const paymentBreakdown = { card: 0, cash: 0, qr: 0, giftcard: 0 };
   todayOrders.forEach((o) => { paymentBreakdown[o.method] = (paymentBreakdown[o.method] || 0) + o.total; });
