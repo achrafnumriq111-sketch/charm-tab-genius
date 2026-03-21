@@ -242,24 +242,30 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive }: { active: string; setActive: (k: string) => void }) {
-  const sections = [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { key: "pos", label: "POS", icon: ShoppingCart },
-    { key: "activity", label: "Activity", icon: Activity },
-    { key: "reservations", label: "Reservations", icon: CalendarDays },
-    { key: "products", label: "Products", icon: Package },
-    { key: "qr", label: "QR Ordering", icon: QrCode },
-    { key: "customers", label: "Customers", icon: Users },
-    { key: "giftcards", label: "Gift cards", icon: Gift },
-    { key: "sales", label: "Sales", icon: Receipt },
-    { key: "accounting", label: "Accounting", icon: Calculator },
-    { key: "settings", label: "Settings", icon: Settings },
+function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string }) {
+  const isAdmin = role === "owner";
+  const allSections = [
+    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
+    { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false },
+    { key: "activity", label: "Activity", icon: Activity, adminOnly: false },
+    { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false },
+    { key: "products", label: "Products", icon: Package, adminOnly: true },
+    { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true },
+    { key: "customers", label: "Customers", icon: Users, adminOnly: false },
+    { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false },
+    { key: "sales", label: "Sales", icon: Receipt, adminOnly: true },
+    { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true },
+    { key: "employees", label: "Team", icon: UserCog, adminOnly: true },
+    { key: "settings", label: "Settings", icon: Settings, adminOnly: true },
   ];
+  const sections = allSections.filter((s) => !s.adminOnly || isAdmin);
   return (
     <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
-      <div className="py-4 px-2 border-b flex flex-col items-center">
-        <div className="text-sm font-black tracking-tight leading-none">S</div>
+      <div className="py-3 px-2 border-b flex flex-col items-center gap-0.5">
+        <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+          {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+        </div>
+        <span className="text-[8px] text-muted-foreground truncate w-full text-center">{employeeName.split(" ")[0]}</span>
       </div>
       <ScrollArea className="flex-1 py-2 px-1.5">
         <div className="space-y-1 flex flex-col items-center">
@@ -269,7 +275,7 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
               <button key={item.key} onClick={() => setActive(item.key)}
                 title={item.label}
                 className={clsx("w-12 h-12 flex flex-col items-center justify-center rounded-xl text-[10px] leading-tight transition-all gap-0.5",
-                  active === item.key ? "bg-black text-white font-medium" : "hover:bg-neutral-100 text-neutral-600")}>
+                  active === item.key ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent text-muted-foreground")}>
                 <Icon className="h-5 w-5 shrink-0" />
                 <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
               </button>
@@ -278,7 +284,7 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
         </div>
       </ScrollArea>
       <div className="p-1.5 border-t flex justify-center">
-        <button title="End shift" className="w-12 h-12 flex items-center justify-center rounded-xl text-red-600 hover:bg-red-50 transition">
+        <button title="Log out" onClick={onLogout} className="w-12 h-12 flex items-center justify-center rounded-xl text-destructive hover:bg-destructive/10 transition">
           <LogOut className="h-5 w-5" />
         </button>
       </div>
