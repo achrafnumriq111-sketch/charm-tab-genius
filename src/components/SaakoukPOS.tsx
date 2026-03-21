@@ -905,7 +905,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 
 function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation }: any) {
   const [areaFilter, setAreaFilter] = useState("all");
-  const areas: string[] = ["all", ...Array.from(new Set(tables.map((t: any) => t.area as string)))];
+  const areas = ["all", ...Array.from(new Set(tables.map((t: any) => String(t.area))))];
   const filtered = areaFilter === "all" ? tables : tables.filter((t) => t.area === areaFilter);
 
   function getTableStatus(table) {
@@ -927,7 +927,7 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          {areas.map((a) => (
+          {(areas as string[]).map((a: string) => (
             <Button key={a} variant={areaFilter === a ? "default" : "outline"} size="sm" className="rounded-full capitalize" onClick={() => setAreaFilter(a)}>
               {a === "all" ? "All areas" : a}
             </Button>
@@ -999,11 +999,11 @@ function DashboardView({ orders, tables, openTickets }: any) {
   const avgTicket = todayOrders.length > 0 ? revenue / todayOrders.length : 0;
   const occupiedTables = tables.filter((t) => !!openTickets[t.id]).length;
 
-  const topProducts = {};
-  todayOrders.forEach((o) => o.items.forEach((item) => {
+  const topProducts: Record<string, number> = {};
+  todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
     topProducts[item.name] = (topProducts[item.name] || 0) + item.qty;
   }));
-  const topList = Object.entries(topProducts).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, 5);
+  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   const paymentBreakdown = { card: 0, cash: 0, qr: 0, giftcard: 0 };
   todayOrders.forEach((o) => { paymentBreakdown[o.method] = (paymentBreakdown[o.method] || 0) + o.total; });
@@ -1034,13 +1034,13 @@ function DashboardView({ orders, tables, openTickets }: any) {
           <CardContent>
             {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales yet today.</div> : (
               <div className="space-y-2">
-                {topList.map(([name, qty]: [string, number], i: number) => (
+                {topList.map(([name, qty], i) => (
                   <div key={name} className="flex items-center justify-between py-1.5">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
                       <span className="text-sm">{name}</span>
                     </div>
-                    <Badge variant="secondary">{qty as number} sold</Badge>
+                    <Badge variant="secondary">{qty} sold</Badge>
                   </div>
                 ))}
               </div>
@@ -1597,11 +1597,11 @@ function SalesView({ orders, products }: any) {
   const itemsSold = todayOrders.reduce((s, o) => s + o.items.reduce((a, i) => a + i.qty, 0), 0);
   const avgDiscount = todayOrders.length > 0 ? todayOrders.reduce((s, o) => s + o.discount, 0) / todayOrders.length : 0;
 
-  const bySection = {};
-  todayOrders.forEach((o) => o.items.forEach((item) => {
-    const product = products.find((p) => p.id === item.productId);
+  const bySection: Record<string, number> = {};
+  todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
+    const product = products.find((p: any) => p.id === item.productId);
     const sec = product?.section || "Other";
-    bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s, m) => s + m.price, 0)) * item.qty;
+    bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
   }));
 
   return (
@@ -1617,11 +1617,11 @@ function SalesView({ orders, products }: any) {
         <CardContent>
           {Object.keys(bySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales data yet.</div> : (
             <div className="space-y-3">
-              {Object.entries(bySection).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([section, amount]: [string, number]) => (
+              {Object.entries(bySection).sort((a, b) => b[1] - a[1]).map(([section, amount]) => (
                 <div key={section} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount as number)}</span></div>
+                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount)}</span></div>
                   <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
+                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
                   </div>
                 </div>
               ))}
