@@ -2016,7 +2016,8 @@ export default function SaakoukPOS() {
   }
 
   function handleOrderComplete(order: any) {
-    setOrders((prev) => [...prev, order]);
+    const stamped = { ...order, employeeId: loggedInEmployee?.id || null, employeeName: loggedInEmployee?.name || null };
+    setOrders((prev) => [...prev, stamped]);
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
