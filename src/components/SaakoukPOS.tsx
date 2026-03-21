@@ -244,29 +244,29 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
     { key: "settings", label: "Settings", icon: Settings },
   ];
   return (
-    <div className="w-64 border-r bg-white flex flex-col shrink-0">
-      <div className="p-5 border-b">
-        <div className="text-2xl font-black tracking-tight">saakouk</div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">POS System</div>
+    <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
+      <div className="py-4 px-2 border-b flex flex-col items-center">
+        <div className="text-sm font-black tracking-tight leading-none">S</div>
       </div>
-      <ScrollArea className="flex-1 px-2 py-3">
-        <div className="space-y-0.5">
+      <ScrollArea className="flex-1 py-2 px-1.5">
+        <div className="space-y-1 flex flex-col items-center">
           {sections.map((item) => {
             const Icon = item.icon;
             return (
               <button key={item.key} onClick={() => setActive(item.key)}
-                className={clsx("w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
-                  active === item.key ? "bg-black text-white font-medium" : "hover:bg-neutral-100 text-neutral-700")}>
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
+                title={item.label}
+                className={clsx("w-12 h-12 flex flex-col items-center justify-center rounded-xl text-[10px] leading-tight transition-all gap-0.5",
+                  active === item.key ? "bg-black text-white font-medium" : "hover:bg-neutral-100 text-neutral-600")}>
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
               </button>
             );
           })}
         </div>
       </ScrollArea>
-      <div className="p-3 border-t">
-        <button className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
-          <LogOut className="h-4 w-4" /><span>End shift</span>
+      <div className="p-1.5 border-t flex justify-center">
+        <button title="End shift" className="w-12 h-12 flex items-center justify-center rounded-xl text-red-600 hover:bg-red-50 transition">
+          <LogOut className="h-5 w-5" />
         </button>
       </div>
     </div>
