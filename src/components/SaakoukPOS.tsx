@@ -1617,11 +1617,11 @@ function SalesView({ orders, products }: any) {
         <CardContent>
           {Object.keys(bySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales data yet.</div> : (
             <div className="space-y-3">
-              {Object.entries(bySection).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([section, amount]: [string, number]) => (
+              {Object.entries(bySection).sort((a, b) => b[1] - a[1]).map(([section, amount]) => (
                 <div key={section} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount as number)}</span></div>
+                  <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium">{euro(amount)}</span></div>
                   <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
+                    <div className="h-full bg-black rounded-full" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
                   </div>
                 </div>
               ))}
