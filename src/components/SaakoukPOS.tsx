@@ -905,7 +905,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 
 function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation }: any) {
   const [areaFilter, setAreaFilter] = useState("all");
-  const areas: string[] = ["all", ...Array.from(new Set(tables.map((t: any) => t.area as string)))];
+  const areas = ["all", ...Array.from(new Set(tables.map((t: any) => String(t.area))))];
   const filtered = areaFilter === "all" ? tables : tables.filter((t) => t.area === areaFilter);
 
   function getTableStatus(table) {
