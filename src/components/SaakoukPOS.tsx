@@ -13,10 +13,10 @@ import {
   Calculator, Settings, ShoppingCart, Plus, Minus, Trash2, CreditCard,
   Sparkles, Wallet, Percent, Search, Smartphone, X, Check,
   ChefHat, Printer, Edit, Eye, DollarSign, TrendingUp,
-  UserPlus, MapPin, FileText,
+  UserPlus, MapPin, FileText, Mail, Lock,
   Shield, Zap, Bell, LogOut,
   ChevronRight, Banknote,
-  UtensilsCrossed, Armchair, Play,
+  UtensilsCrossed, Armchair, Play, UserCog,
 } from "lucide-react";
 
 /**
