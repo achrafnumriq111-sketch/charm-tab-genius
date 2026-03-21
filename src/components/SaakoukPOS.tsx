@@ -764,7 +764,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       </div>
 
       {/* RIGHT: Cart */}
-      <div className="col-span-4 flex flex-col overflow-hidden">
+      <div className="col-span-5 flex flex-col overflow-hidden">
         <Card className="rounded-2xl flex-1 flex flex-col overflow-hidden">
           <CardHeader className="p-4 pb-3 space-y-3 shrink-0">
             <div className="flex items-center justify-between">
