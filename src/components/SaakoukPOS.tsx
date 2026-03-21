@@ -1441,7 +1441,7 @@ function CustomersView({ customers, setCustomers }: any) {
   );
 
   function addCustomer() {
-    if (!form.name) return;
+    if (!form.name || !form.email || !form.phone) return;
     setCustomers((prev) => [...prev, { ...form, id: generateId(), loyaltyId: form.provider !== "none" ? `LYL-${generateId().toUpperCase().slice(0, 3)}` : "", points: 0, visits: 0, totalSpent: 0, lastVisit: "-" }]);
     setShowAdd(false);
     setForm({ name: "", email: "", phone: "", provider: "none" });
@@ -1501,7 +1501,7 @@ function CustomersView({ customers, setCustomers }: any) {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button onClick={addCustomer} disabled={!form.name}>Save</Button>
+            <Button onClick={addCustomer} disabled={!form.name || !form.email || !form.phone}>Save</Button>
           </div>
         </div>
       </Modal>
