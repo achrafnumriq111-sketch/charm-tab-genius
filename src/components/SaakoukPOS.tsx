@@ -13,10 +13,10 @@ import {
   Calculator, Settings, ShoppingCart, Plus, Minus, Trash2, CreditCard,
   Sparkles, Wallet, Percent, Search, Smartphone, X, Check,
   ChefHat, Printer, Edit, Eye, DollarSign, TrendingUp,
-  UserPlus, MapPin, FileText,
+  UserPlus, MapPin, FileText, Mail, Lock,
   Shield, Zap, Bell, LogOut,
   ChevronRight, Banknote,
-  UtensilsCrossed, Armchair, Play,
+  UtensilsCrossed, Armchair, Play, UserCog,
 } from "lucide-react";
 
 /**
@@ -159,6 +159,19 @@ const initialReservations = [
   { id: "r3", name: "Office meetup", date: "2026-03-19", time: "10:00", guests: 6, table: "T2", phone: "+31698760000", notes: "Need power outlets", status: "pending" },
 ];
 
+// ─── EMPLOYEES ───────────────────────────────────────────────────────────────
+
+const initialEmployees = [
+  { id: "e1", name: "Solaiman Aakouk", email: "saakoukstore@gmail.com", role: "owner", pin: "1234" },
+  { id: "e2", name: "Badr El Messaoudi", email: "BadrElMessaoudi3@gmail.com", role: "sales", pin: "2345" },
+  { id: "e3", name: "Kaan Ikiz", email: "kaan-ikiz@hotmail.com", role: "sales", pin: "3456" },
+  { id: "e4", name: "Inez Ikiz", email: "inez-ikiz@hotmail.com", role: "sales", pin: "4567" },
+  { id: "e5", name: "Daniel Jie Sam Foek", email: "danielantoinesu@gmail.com", role: "sales", pin: "5678" },
+  { id: "e6", name: "Djemaro Dalloesingh", email: "djemaro@gmail.com", role: "sales", pin: "6789" },
+  { id: "e7", name: "Achraf Idrissi", email: "Acidrissi@icloud.com", role: "owner", pin: "7890" },
+  { id: "e8", name: "Anouar Azif", email: "anouar_azif@outlook.com", role: "sales", pin: "8901" },
+];
+
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function euro(value: number) {
@@ -229,24 +242,30 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive }: { active: string; setActive: (k: string) => void }) {
-  const sections = [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { key: "pos", label: "POS", icon: ShoppingCart },
-    { key: "activity", label: "Activity", icon: Activity },
-    { key: "reservations", label: "Reservations", icon: CalendarDays },
-    { key: "products", label: "Products", icon: Package },
-    { key: "qr", label: "QR Ordering", icon: QrCode },
-    { key: "customers", label: "Customers", icon: Users },
-    { key: "giftcards", label: "Gift cards", icon: Gift },
-    { key: "sales", label: "Sales", icon: Receipt },
-    { key: "accounting", label: "Accounting", icon: Calculator },
-    { key: "settings", label: "Settings", icon: Settings },
+function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string }) {
+  const isAdmin = role === "owner";
+  const allSections = [
+    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
+    { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false },
+    { key: "activity", label: "Activity", icon: Activity, adminOnly: false },
+    { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false },
+    { key: "products", label: "Products", icon: Package, adminOnly: true },
+    { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true },
+    { key: "customers", label: "Customers", icon: Users, adminOnly: false },
+    { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false },
+    { key: "sales", label: "Sales", icon: Receipt, adminOnly: true },
+    { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true },
+    { key: "employees", label: "Team", icon: UserCog, adminOnly: true },
+    { key: "settings", label: "Settings", icon: Settings, adminOnly: true },
   ];
+  const sections = allSections.filter((s) => !s.adminOnly || isAdmin);
   return (
     <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
-      <div className="py-4 px-2 border-b flex flex-col items-center">
-        <div className="text-sm font-black tracking-tight leading-none">S</div>
+      <div className="py-3 px-2 border-b flex flex-col items-center gap-0.5">
+        <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+          {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+        </div>
+        <span className="text-[8px] text-muted-foreground truncate w-full text-center">{employeeName.split(" ")[0]}</span>
       </div>
       <ScrollArea className="flex-1 py-2 px-1.5">
         <div className="space-y-1 flex flex-col items-center">
@@ -256,7 +275,7 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
               <button key={item.key} onClick={() => setActive(item.key)}
                 title={item.label}
                 className={clsx("w-12 h-12 flex flex-col items-center justify-center rounded-xl text-[10px] leading-tight transition-all gap-0.5",
-                  active === item.key ? "bg-black text-white font-medium" : "hover:bg-neutral-100 text-neutral-600")}>
+                  active === item.key ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent text-muted-foreground")}>
                 <Icon className="h-5 w-5 shrink-0" />
                 <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
               </button>
@@ -265,7 +284,7 @@ function Sidebar({ active, setActive }: { active: string; setActive: (k: string)
         </div>
       </ScrollArea>
       <div className="p-1.5 border-t flex justify-center">
-        <button title="End shift" className="w-12 h-12 flex items-center justify-center rounded-xl text-red-600 hover:bg-red-50 transition">
+        <button title="Log out" onClick={onLogout} className="w-12 h-12 flex items-center justify-center rounded-xl text-destructive hover:bg-destructive/10 transition">
           <LogOut className="h-5 w-5" />
         </button>
       </div>
@@ -1757,34 +1776,203 @@ function SettingsView({ features, setFeatures }: any) {
   );
 }
 
+// ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
+
+function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: any) => void }) {
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  function handleDigit(d: string) {
+    if (pin.length >= 4) return;
+    const next = pin + d;
+    setPin(next);
+    setError("");
+    if (next.length === 4) {
+      const emp = selectedId
+        ? employees.find((e) => e.id === selectedId && e.pin === next)
+        : employees.find((e) => e.pin === next);
+      if (emp) {
+        onLogin(emp);
+      } else {
+        setError("Verkeerde PIN");
+        setTimeout(() => { setPin(""); setError(""); }, 1200);
+      }
+    }
+  }
+
+  function handleBackspace() {
+    setPin((p) => p.slice(0, -1));
+    setError("");
+  }
+
+  return (
+    <div className="h-dvh bg-background flex items-center justify-center select-none">
+      <div className="w-full max-w-sm space-y-6 px-6">
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl font-black tracking-tight">saakouk</h1>
+          <p className="text-sm text-muted-foreground">Voer je PIN in om te beginnen</p>
+        </div>
+
+        {/* Employee quick-select */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {employees.map((emp) => (
+            <button key={emp.id} onClick={() => { setSelectedId(emp.id === selectedId ? null : emp.id); setPin(""); setError(""); }}
+              className={clsx("flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all text-xs",
+                selectedId === emp.id ? "bg-primary text-primary-foreground" : "bg-card border hover:bg-accent")}>
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
+                {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+              <span className="truncate max-w-[60px]">{emp.name.split(" ")[0]}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* PIN dots */}
+        <div className="flex justify-center gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={clsx("w-4 h-4 rounded-full transition-all",
+              error ? "bg-destructive" : i < pin.length ? "bg-foreground" : "bg-border")} />
+          ))}
+        </div>
+        {error && <p className="text-center text-sm text-destructive font-medium">{error}</p>}
+
+        {/* Numpad */}
+        <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "←"].map((d) =>
+            d === "" ? <div key="empty" /> : (
+              <button key={d} onClick={() => d === "←" ? handleBackspace() : handleDigit(d)}
+                className="h-14 rounded-xl bg-card border text-lg font-semibold hover:bg-accent active:scale-95 transition-all touch-manipulation">
+                {d}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
+
+function EmployeesView({ employees, setEmployees }: { employees: any[]; setEmployees: any }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
+
+  function openEdit(emp: any) {
+    setEditingId(emp.id);
+    setForm({ name: emp.name, email: emp.email, role: emp.role, pin: emp.pin });
+  }
+
+  function openAdd() {
+    setEditingId(null);
+    setForm({ name: "", email: "", role: "sales", pin: "" });
+    setShowAdd(true);
+  }
+
+  function save() {
+    if (!form.name || !form.pin || form.pin.length !== 4) return;
+    if (editingId) {
+      setEmployees((prev: any[]) => prev.map((e) => e.id === editingId ? { ...e, ...form } : e));
+    } else {
+      setEmployees((prev: any[]) => [...prev, { id: generateId(), ...form }]);
+    }
+    setShowAdd(false);
+    setEditingId(null);
+  }
+
+  function remove(id: string) {
+    setEmployees((prev: any[]) => prev.filter((e) => e.id !== id));
+  }
+
+  const roleColors: Record<string, string> = {
+    owner: "bg-green-100 text-green-800 border-green-200",
+    sales: "bg-orange-100 text-orange-800 border-orange-200",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{employees.length} medewerkers</span>
+        <Button onClick={openAdd} className="rounded-xl"><Plus className="h-4 w-4 mr-1" /> Medewerker Toevoegen</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {employees.map((emp) => (
+          <Card key={emp.id} className="rounded-2xl">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
+                    {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">{emp.name}</div>
+                    <div className="text-xs text-muted-foreground">{emp.email}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEdit(emp)} className="p-2 rounded-lg hover:bg-accent transition"><Edit className="h-4 w-4 text-muted-foreground" /></button>
+                  <button onClick={() => remove(emp.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition"><Trash2 className="h-4 w-4 text-destructive" /></button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{emp.role === "owner" ? "Owner" : "Sales"}</Badge>
+                <span className="text-xs text-muted-foreground font-mono">PIN: ••••</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Modal open={showAdd || !!editingId} onClose={() => { setShowAdd(false); setEditingId(null); }}>
+        <div className="p-6 space-y-4">
+          <h3 className="text-lg font-bold">{editingId ? "Medewerker bewerken" : "Nieuwe medewerker"}</h3>
+          <div className="space-y-3">
+            <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
+            <div>
+              <Label>Rol</Label>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+                <option value="owner">Owner</option>
+                <option value="sales">Sales</option>
+              </select>
+            </div>
+            <div><Label>PIN (4 cijfers)</Label><Input type="password" maxLength={4} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 4) })} placeholder="••••" className="mt-1 font-mono" /></div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
+            <Button onClick={save} disabled={!form.name || form.pin.length !== 4}>Opslaan</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
-// State model:
-// - openTickets: { [tableId | "walk-in"]: ticket } — persists across nav
-// - activeTicketId: which ticket is currently being edited in POS
-// - Table status derived from openTickets (no separate status field)
-// - Orders linked by customerId
 
 export default function SaakoukPOS() {
-  const [active, setActive] = useState("dashboard");
+  const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
+  const [active, setActive] = useState("pos");
   const [products, setProducts] = useState(initialProducts);
   const [tables] = useState(initialTables);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
   const [reservations, setReservations] = useState(initialReservations);
+  const [employees, setEmployees] = useState(initialEmployees);
   const [toast, setToast] = useState("");
   const [features, setFeatures] = useState({
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
   });
 
-  // Lifted cart state: open tickets keyed by table id or "walk-in"
-  const [openTickets, setOpenTickets] = useState({});
+  const [openTickets, setOpenTickets] = useState<Record<string, any>>({});
   const [activeTicketId, setActiveTicketId] = useState("walk-in");
 
-  // Get or create the active ticket
   const activeTicket = openTickets[activeTicketId] || emptyTicket(activeTicketId);
 
-  function setActiveTicket(updaterOrValue) {
+  function setActiveTicket(updaterOrValue: any) {
     setOpenTickets((prev) => {
       const current = prev[activeTicketId] || emptyTicket(activeTicketId);
       const next = typeof updaterOrValue === "function" ? updaterOrValue(current) : updaterOrValue;
@@ -1792,8 +1980,7 @@ export default function SaakoukPOS() {
     });
   }
 
-  function handleSelectTable(tableId) {
-    // Create ticket for table if it doesn't exist
+  function handleSelectTable(tableId: string) {
     setOpenTickets((prev) => {
       if (!prev[tableId]) return { ...prev, [tableId]: emptyTicket(tableId) };
       return prev;
@@ -1802,7 +1989,7 @@ export default function SaakoukPOS() {
     setActive("pos");
   }
 
-  function handleCloseTable(tableId) {
+  function handleCloseTable(tableId: string) {
     setOpenTickets((prev) => {
       const next = { ...prev };
       delete next[tableId];
@@ -1811,15 +1998,14 @@ export default function SaakoukPOS() {
     if (activeTicketId === tableId) setActiveTicketId("walk-in");
   }
 
-  function handleSeatReservation(table) {
-    // Find matching reservation and mark as seated
+  function handleSeatReservation(table: any) {
     setReservations((prev) => prev.map((r) =>
       r.table === table.name && r.status === "confirmed" ? { ...r, status: "seated" } : r
     ));
     handleSelectTable(table.id);
   }
 
-  function handleRedeemGiftCard(giftCardId, amount) {
+  function handleRedeemGiftCard(giftCardId: string, amount: number) {
     setGiftCards((prev) => prev.map((gc) => {
       if (gc.id !== giftCardId) return gc;
       const newBalance = Math.max(0, gc.balance - amount);
@@ -1827,10 +2013,8 @@ export default function SaakoukPOS() {
     }));
   }
 
-  function handleOrderComplete(order) {
+  function handleOrderComplete(order: any) {
     setOrders((prev) => [...prev, order]);
-
-    // Update customer stats by ID
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
@@ -1838,31 +2022,28 @@ export default function SaakoukPOS() {
           : c
       ));
     }
-
-    // Clean up table ticket
     if (order.table) {
-      setOpenTickets((prev) => {
-        const next = { ...prev };
-        delete next[order.table];
-        return next;
-      });
+      setOpenTickets((prev) => { const next = { ...prev }; delete next[order.table]; return next; });
     } else {
-      // Reset walk-in ticket
-      setOpenTickets((prev) => {
-        const next = { ...prev };
-        delete next["walk-in"];
-        return next;
-      });
+      setOpenTickets((prev) => { const next = { ...prev }; delete next["walk-in"]; return next; });
     }
-
     setToast(`Order #${order.id} completed — ${euro(order.total)}`);
   }
 
-  // Today's orders for top bar
-  const todayOrders = orders.filter((o) => isToday(o.date));
-  const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
+  function handleLogout() {
+    setLoggedInEmployee(null);
+    setActive("pos");
+  }
 
-  const titles = {
+  // Show login if not logged in
+  if (!loggedInEmployee) {
+    return <LoginScreen employees={employees} onLogin={(emp) => setLoggedInEmployee(emp)} />;
+  }
+
+  const todayOrders = orders.filter((o: any) => isToday(o.date));
+  const todayRevenue = todayOrders.reduce((s: number, o: any) => s + o.total, 0);
+
+  const titles: Record<string, string> = {
     dashboard: "Dashboard",
     pos: "Point of Sale",
     activity: "Order History",
@@ -1873,14 +2054,15 @@ export default function SaakoukPOS() {
     giftcards: "Gift Cards",
     sales: "Sales Reports",
     accounting: "Accounting",
+    employees: "Medewerkers",
     settings: "Settings",
   };
 
   return (
-    <div className="h-dvh bg-neutral-50 text-neutral-950 flex overflow-hidden select-none">
-      <Sidebar active={active} setActive={setActive} />
+    <div className="h-dvh bg-background text-foreground flex overflow-hidden select-none">
+      <Sidebar active={active} setActive={setActive} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="shrink-0 border-b bg-white px-4 py-2 flex items-center justify-between">
+        <div className="shrink-0 border-b bg-card px-4 py-2 flex items-center justify-between">
           <div>
             <h1 className="text-base font-bold leading-tight">{titles[active] || "Saakouk"}</h1>
             <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
@@ -1901,25 +2083,14 @@ export default function SaakoukPOS() {
                 </TabsList>
                 <TabsContent value="counter">
                   <CounterView
-                    products={products}
-                    tables={tables}
-                    features={features}
-                    customers={customers}
-                    giftCards={giftCards}
-                    onRedeemGiftCard={handleRedeemGiftCard}
-                    ticket={activeTicket}
-                    setTicket={setActiveTicket}
-                    onOrderComplete={handleOrderComplete}
+                    products={products} tables={tables} features={features} customers={customers}
+                    giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
+                    ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
                   />
                 </TabsContent>
                 <TabsContent value="table">
-                  <TableView
-                    tables={tables}
-                    openTickets={openTickets}
-                    reservations={reservations}
-                    onSelectTable={handleSelectTable}
-                    onCloseTable={handleCloseTable}
-                    onSeatReservation={handleSeatReservation}
+                  <TableView tables={tables} openTickets={openTickets} reservations={reservations}
+                    onSelectTable={handleSelectTable} onCloseTable={handleCloseTable} onSeatReservation={handleSeatReservation}
                   />
                 </TabsContent>
               </Tabs>
@@ -1932,6 +2103,7 @@ export default function SaakoukPOS() {
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
             {active === "sales" && <SalesView orders={orders} products={products} />}
             {active === "accounting" && <AccountingView orders={orders} />}
+            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} />}
           </div>
         </div>
