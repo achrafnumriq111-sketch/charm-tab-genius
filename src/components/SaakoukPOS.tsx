@@ -2385,6 +2385,7 @@ export default function SaakoukPOS() {
                     products={products} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
+                    passkitConfig={passkitConfig} onToast={setToast}
                   />
                 </TabsContent>
                 <TabsContent value="table">
@@ -2403,7 +2404,7 @@ export default function SaakoukPOS() {
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} />}
-            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} />}
+            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
           </div>
         </div>
       </main>
