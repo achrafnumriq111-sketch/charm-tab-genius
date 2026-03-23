@@ -2106,12 +2106,6 @@ function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: 
               </div>
             </button>
           ))}
-        </div>
-                {d}
-              </button>
-            )
-          )}
-        </div>
       </div>
     </div>
   );
