@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1430,7 +1431,41 @@ function ProductsView({ products: allProducts, setProducts }: any) {
 
 // ─── QR ORDERING ─────────────────────────────────────────────────────────────
 
-function QrView({ features }: any) {
+function QrView({ features, tables }: any) {
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+  function downloadQr(tableId: string, tableName: string) {
+    const svg = document.getElementById(`qr-${tableId}`);
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, 600, 600);
+      ctx.drawImage(img, 50, 50, 500, 500);
+      // Add table name below
+      ctx.font = "bold 28px sans-serif";
+      ctx.fillStyle = "#000";
+      ctx.textAlign = "center";
+      const a = document.createElement("a");
+      a.download = `saakouk-qr-tafel-${tableName}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  }
+
+  function downloadAll() {
+    tables.forEach((t: any, i: number) => {
+      setTimeout(() => downloadQr(t.id, t.name), i * 300);
+    });
+  }
+
   return (
     <div className="space-y-4">
       <Card className="rounded-2xl">
@@ -1438,35 +1473,82 @@ function QrView({ features }: any) {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-semibold text-lg">QR Table Ordering</h3>
-              <p className="text-sm text-muted-foreground">Customers scan a QR code on their table to browse your menu and order from their phone.</p>
+              <p className="text-sm text-muted-foreground">Each table has a unique QR code linking to your digital menu.</p>
             </div>
-            <Badge variant={features?.qr ? "default" : "secondary"}>{features?.qr ? "Enabled" : "Disabled"}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={features?.qr ? "default" : "secondary"}>{features?.qr ? "Enabled" : "Disabled"}</Badge>
+              <Button size="sm" onClick={downloadAll} disabled={!features?.qr}>
+                <Printer className="h-4 w-4 mr-1" /> Download alle QR's
+              </Button>
+            </div>
           </div>
           {!features?.qr && (
             <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800 mb-4">
-              QR ordering is disabled. Enable it in Settings → Features.
+              QR ordering is uitgeschakeld. Schakel het in via Instellingen → Features.
             </div>
           )}
-          <Separator className="my-4" />
-          <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-xl border p-4 text-center">
-              <QrCode className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <div className="text-sm font-medium">Generate QR codes</div>
-              <div className="text-xs text-muted-foreground mt-1">One per table, links to your digital menu.</div>
-              <Button variant="outline" size="sm" className="mt-3 w-full" disabled={!features?.qr}>Generate</Button>
-            </div>
-            <div className="rounded-xl border p-4 text-center">
-              <Smartphone className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <div className="text-sm font-medium">Menu customization</div>
-              <div className="text-xs text-muted-foreground mt-1">Set which products appear on the QR menu.</div>
-              <Button variant="outline" size="sm" className="mt-3 w-full" disabled={!features?.qr}>Configure</Button>
-            </div>
-            <div className="rounded-xl border p-4 text-center">
-              <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <div className="text-sm font-medium">Order notifications</div>
-              <div className="text-xs text-muted-foreground mt-1">Get alerted when QR orders come in.</div>
-              <Button variant="outline" size="sm" className="mt-3 w-full" disabled={!features?.qr}>Settings</Button>
-            </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {tables.map((table: any) => {
+          const menuUrl = `${baseUrl}/menu/${table.id}`;
+          return (
+            <Card key={table.id} className="rounded-2xl overflow-hidden">
+              <CardContent className="p-4 flex flex-col items-center gap-3">
+                <div className="text-sm font-semibold">Tafel {table.name}</div>
+                <div className="bg-white p-2 rounded-xl border">
+                  <QRCodeSVG
+                    id={`qr-${table.id}`}
+                    value={menuUrl}
+                    size={140}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground text-center break-all leading-tight">{menuUrl}</p>
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => downloadQr(table.id, table.name)}
+                  >
+                    <Printer className="h-3 w-3 mr-1" /> Download
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(menuUrl);
+                    }}
+                  >
+                    <FileText className="h-3 w-3 mr-1" /> Copy link
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Preview section */}
+      <Card className="rounded-2xl">
+        <CardContent className="p-6">
+          <h3 className="font-semibold mb-3">Menu preview</h3>
+          <p className="text-sm text-muted-foreground mb-3">Open the menu as your customers would see it:</p>
+          <div className="flex flex-wrap gap-2">
+            {tables.map((table: any) => (
+              <Button
+                key={table.id}
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`${baseUrl}/menu/${table.id}`, "_blank")}
+              >
+                <Eye className="h-3 w-3 mr-1" /> Tafel {table.name}
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
