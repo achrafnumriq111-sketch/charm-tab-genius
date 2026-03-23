@@ -705,39 +705,44 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 
   async function lookupLoyalty() {
     if (!scanValue.trim()) return;
-    // Local customer lookup first
-    const found = customers.find((c) =>
-      c.loyaltyId.toLowerCase() === scanValue.toLowerCase() ||
-      c.name.toLowerCase().includes(scanValue.toLowerCase()) ||
-      (c.email || "").toLowerCase().includes(scanValue.toLowerCase())
+    const query = scanValue.trim();
+
+    // Local customer lookup by name, email, phone, or loyaltyId
+    const found = customers.find((c: any) =>
+      c.loyaltyId?.toLowerCase() === query.toLowerCase() ||
+      c.name.toLowerCase().includes(query.toLowerCase()) ||
+      (c.email || "").toLowerCase().includes(query.toLowerCase()) ||
+      (c.phone || "").replace(/\s/g, "").includes(query.replace(/\s/g, ""))
     );
     if (found) {
-      updateTicket({ loyaltyCustomer: found, customerName: found.name, customerId: found.id });
-      if (found.provider !== "none") updateTicket({ loyaltyProvider: found.provider });
+      updateTicket({ loyaltyCustomer: found, customerName: found.name, customerId: found.id, loyaltyProvider: "passkit" });
     }
 
-    // If PassKit is selected and configured, also check PassKit API
-    if (loyaltyProvider === "passkit" && passkitConfig?.programId) {
+    // Always check PassKit API when configured
+    if (passkitConfig?.programId) {
       setLoyaltyLoading(true);
       try {
-        const member = await passkitGetMember(passkitConfig.programId, scanValue.trim());
+        const member = await passkitGetMember(passkitConfig.programId, query);
         if (member.found) {
           const fullName = [member.person?.forename, member.person?.surname].filter(Boolean).join(" ");
           updateTicket({
             loyaltyCustomer: {
-              name: fullName || scanValue,
+              name: fullName || query,
               points: member.points?.currentPoints || 0,
               visits: 0,
               provider: "passkit",
-              loyaltyId: scanValue,
+              loyaltyId: member.externalId || query,
               passkitMemberId: member.id,
+              email: member.person?.emailAddress || "",
+              phone: member.person?.mobileNumber || "",
             },
-            customerName: fullName || customerName || scanValue,
+            customerName: fullName || customerName || query,
+            loyaltyProvider: "passkit",
           });
-          onToast?.(`PassKit member found: ${fullName || scanValue}`);
+          onToast?.(`Lid gevonden: ${fullName || query} (${member.points?.currentPoints || 0} pts)`);
         } else if (!found) {
           updateTicket({ loyaltyCustomer: null });
-          onToast?.("No PassKit member found");
+          onToast?.("Geen lid gevonden — probeer telefoon, email of scan de pas");
         }
       } catch (err) {
         console.error("PassKit lookup error:", err);
