@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -643,13 +644,14 @@ function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void })
 // ─── COUNTER POS VIEW ────────────────────────────────────────────────────────
 // Cart state is now lifted: ticket comes from parent via props
 
-function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete }: any) {
+function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast }: any) {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("Signature Drinks");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [scanValue, setScanValue] = useState("");
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
 
   const cart = ticket.cart;
   const selectedDiscount = ticket.selectedDiscount;
@@ -701,8 +703,9 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     setScanValue("");
   }
 
-  function lookupLoyalty() {
+  async function lookupLoyalty() {
     if (!scanValue.trim()) return;
+    // Local customer lookup first
     const found = customers.find((c) =>
       c.loyaltyId.toLowerCase() === scanValue.toLowerCase() ||
       c.name.toLowerCase().includes(scanValue.toLowerCase()) ||
@@ -711,7 +714,38 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     if (found) {
       updateTicket({ loyaltyCustomer: found, customerName: found.name, customerId: found.id });
       if (found.provider !== "none") updateTicket({ loyaltyProvider: found.provider });
-    } else {
+    }
+
+    // If PassKit is selected and configured, also check PassKit API
+    if (loyaltyProvider === "passkit" && passkitConfig?.programId) {
+      setLoyaltyLoading(true);
+      try {
+        const member = await passkitGetMember(passkitConfig.programId, scanValue.trim());
+        if (member.found) {
+          const fullName = [member.person?.forename, member.person?.surname].filter(Boolean).join(" ");
+          updateTicket({
+            loyaltyCustomer: {
+              name: fullName || scanValue,
+              points: member.points?.currentPoints || 0,
+              visits: 0,
+              provider: "passkit",
+              loyaltyId: scanValue,
+              passkitMemberId: member.id,
+            },
+            customerName: fullName || customerName || scanValue,
+          });
+          onToast?.(`PassKit member found: ${fullName || scanValue}`);
+        } else if (!found) {
+          updateTicket({ loyaltyCustomer: null });
+          onToast?.("No PassKit member found");
+        }
+      } catch (err) {
+        console.error("PassKit lookup error:", err);
+        if (!found) updateTicket({ loyaltyCustomer: null });
+      } finally {
+        setLoyaltyLoading(false);
+      }
+    } else if (!found) {
       updateTicket({ loyaltyCustomer: null });
     }
   }
