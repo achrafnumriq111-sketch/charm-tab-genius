@@ -2234,7 +2234,7 @@ export default function SaakoukPOS() {
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
   });
   const [passkitConfig, setPasskitConfig] = useState({
-    programId: "",
+    programId: "24RMbRfRp5Y9h9ptYWnwFe",
     tierId: "",
     pointsPerEuro: 1,
     autoEnrol: true,
