@@ -2473,7 +2473,7 @@ export default function SaakoukPOS() {
             {active === "activity" && <ActivityView orders={orders} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} />}
-            {active === "qr" && <QrView features={features} />}
+            {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
