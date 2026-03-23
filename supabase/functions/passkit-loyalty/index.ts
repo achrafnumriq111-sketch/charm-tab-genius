@@ -59,14 +59,49 @@ serve(async (req) => {
         break;
       }
 
-      // ─── GET MEMBER BY EXTERNAL ID ──────────────────────
+      // ─── GET MEMBER BY EXTERNAL ID, EMAIL, OR PHONE ──
       case "getMember": {
         const { programId, externalId } = params;
-        const res = await fetch(
-          `${PASSKIT_BASE}/members/member/externalId/${programId}/${externalId}`,
+        // Try by externalId first
+        let res = await fetch(
+          `${PASSKIT_BASE}/members/member/externalId/${programId}/${encodeURIComponent(externalId)}`,
           { method: "GET", headers }
         );
         if (res.status === 404) {
+          // Try listing members filtered by email or phone
+          const searchRes = await fetch(`${PASSKIT_BASE}/members/member/list`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              programId,
+              limit: 1,
+              filters: [
+                { fieldPath: "person.emailAddress", operator: "eq", value: externalId },
+              ],
+            }),
+          });
+          const searchData = await searchRes.json();
+          if (searchData?.members?.length > 0) {
+            result = { ...searchData.members[0], found: true };
+            break;
+          }
+          // Try by phone
+          const phoneRes = await fetch(`${PASSKIT_BASE}/members/member/list`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              programId,
+              limit: 1,
+              filters: [
+                { fieldPath: "person.mobileNumber", operator: "eq", value: externalId },
+              ],
+            }),
+          });
+          const phoneData = await phoneRes.json();
+          if (phoneData?.members?.length > 0) {
+            result = { ...phoneData.members[0], found: true };
+            break;
+          }
           result = { found: false };
           break;
         }
