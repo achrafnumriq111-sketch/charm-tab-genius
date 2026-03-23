@@ -200,7 +200,7 @@ function isToday(date: Date) {
 }
 
 function emptyTicket(tableId: string) {
-  return { tableId, cart: [], selectedDiscount: null, customerId: null, customerName: "", loyaltyProvider: "none", loyaltyCustomer: null };
+  return { tableId, cart: [], selectedDiscount: null, customerId: null, customerName: "", loyaltyProvider: "passkit", loyaltyCustomer: null };
 }
 
 function cartSubtotal(cart: any[]) {
