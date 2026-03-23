@@ -850,30 +850,33 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
             </div>
           </CardHeader>
           <div className="flex-1 overflow-auto px-4">
-            {/* Loyalty */}
-            {(features.passkit || features.piggy || features.leat) && (
+            {/* Loyalty — PassKit only */}
+            {features.passkit && (
               <div className="rounded-xl border p-3 mb-3 bg-neutral-50">
-                <div className="font-medium text-xs flex items-center gap-1.5 mb-2"><Wallet className="h-3.5 w-3.5" /> Loyalty</div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  <Button size="sm" variant={loyaltyProvider === "none" ? "default" : "outline"} className="text-xs h-7" onClick={() => updateTicket({ loyaltyProvider: "none" })}>None</Button>
-                  {features.passkit && <Button size="sm" variant={loyaltyProvider === "passkit" ? "default" : "outline"} className="text-xs h-7" onClick={() => updateTicket({ loyaltyProvider: "passkit" })}>PassKit</Button>}
-                  {features.piggy && <Button size="sm" variant={loyaltyProvider === "piggy" ? "default" : "outline"} className="text-xs h-7" onClick={() => updateTicket({ loyaltyProvider: "piggy" })}>Piggy</Button>}
-                  {features.leat && <Button size="sm" variant={loyaltyProvider === "leat" ? "default" : "outline"} className="text-xs h-7" onClick={() => updateTicket({ loyaltyProvider: "leat" })}>Leat</Button>}
-                </div>
+                <div className="font-medium text-xs flex items-center gap-1.5 mb-2"><Wallet className="h-3.5 w-3.5" /> Loyalty (PassKit)</div>
                 <div className="flex gap-1.5">
-                  <Input value={scanValue} onChange={(e) => setScanValue(e.target.value)} placeholder={loyaltyProvider === "passkit" ? "PassKit external ID / email" : "Scan / search loyalty"} className="text-xs h-8"
+                  <Input value={scanValue} onChange={(e) => setScanValue(e.target.value)}
+                    placeholder="Scan pas / telefoon / email / naam"
+                    className="text-xs h-8"
                     onKeyDown={(e) => e.key === "Enter" && lookupLoyalty()} />
                   <Button variant="outline" size="sm" className="h-8 px-2" onClick={lookupLoyalty} disabled={loyaltyLoading}>
                     {loyaltyLoading ? <span className="animate-spin h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" /> : <Search className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
                 {loyaltyCustomer && (
-                  <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200 text-xs">
-                    <div className="font-medium text-green-800">{loyaltyCustomer.name}</div>
-                    <div className="text-green-600">
-                      {loyaltyCustomer.points} pts · {loyaltyCustomer.visits} visits · {loyaltyCustomer.provider}
-                      {loyaltyCustomer.passkitMemberId && <span className="ml-1">· PassKit ✓</span>}
+                  <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200 text-xs flex items-center justify-between">
+                    <div>
+                      <div className="font-medium text-green-800">{loyaltyCustomer.name}</div>
+                      <div className="text-green-600">
+                        {loyaltyCustomer.points} punten
+                        {loyaltyCustomer.phone && ` · ${loyaltyCustomer.phone}`}
+                        {loyaltyCustomer.passkitMemberId && <span className="ml-1">· PassKit ✓</span>}
+                      </div>
                     </div>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-green-600 hover:text-red-500"
+                      onClick={() => { updateTicket({ loyaltyCustomer: null, loyaltyProvider: "none" }); setScanValue(""); }}>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 )}
               </div>
