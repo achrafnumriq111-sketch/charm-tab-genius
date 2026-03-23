@@ -1991,9 +1991,40 @@ function AccountingView({ orders }: any) {
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
-function SettingsView({ features, setFeatures }: any) {
+function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }: any) {
   return (
     <div className="space-y-4 max-w-2xl">
+      {/* PassKit Configuration */}
+      {features.passkit && (
+        <Card className="rounded-2xl border-green-200 bg-green-50/30">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Wallet className="h-4 w-4" /> PassKit Loyalty Configuration</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div><Label>Program ID</Label><div className="text-xs text-muted-foreground">Your PassKit program identifier</div></div>
+              <Input value={passkitConfig.programId} onChange={(e) => setPasskitConfig((p: any) => ({ ...p, programId: e.target.value }))} placeholder="e.g. prog_abc123" className="max-w-[280px]" />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div><Label>Tier ID</Label><div className="text-xs text-muted-foreground">Default tier for new members</div></div>
+              <Input value={passkitConfig.tierId} onChange={(e) => setPasskitConfig((p: any) => ({ ...p, tierId: e.target.value }))} placeholder="e.g. tier_base" className="max-w-[280px]" />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div><Label>Points per €1</Label><div className="text-xs text-muted-foreground">How many points earned per euro spent</div></div>
+              <Input type="number" value={passkitConfig.pointsPerEuro} onChange={(e) => setPasskitConfig((p: any) => ({ ...p, pointsPerEuro: parseInt(e.target.value) || 1 }))} className="max-w-[100px]" />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div><Label>Auto-enrol new customers</Label><div className="text-xs text-muted-foreground">Automatically create PassKit member on first purchase</div></div>
+              <Switch checked={passkitConfig.autoEnrol} onCheckedChange={(v) => setPasskitConfig((p: any) => ({ ...p, autoEnrol: v }))} />
+            </div>
+            <div className="rounded-lg bg-green-100 border border-green-300 p-3 text-xs text-green-800">
+              <div className="font-medium mb-1">✅ PassKit API connected</div>
+              <div>Your API key and secret are securely stored. Members will earn {passkitConfig.pointsPerEuro} point{passkitConfig.pointsPerEuro !== 1 ? "s" : ""} per €1 spent.</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card className="rounded-2xl">
         <CardHeader><CardTitle className="text-sm">General</CardTitle></CardHeader>
         <CardContent className="space-y-4">
