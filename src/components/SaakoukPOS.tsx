@@ -2084,74 +2084,28 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }
 // ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
 
 function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: any) => void }) {
-  const [pin, setPin] = useState("");
-  const [error, setError] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  function handleDigit(d: string) {
-    if (pin.length >= 4) return;
-    const next = pin + d;
-    setPin(next);
-    setError("");
-    if (next.length === 4) {
-      const emp = selectedId
-        ? employees.find((e) => e.id === selectedId && e.pin === next)
-        : employees.find((e) => e.pin === next);
-      if (emp) {
-        onLogin(emp);
-      } else {
-        setError("Verkeerde PIN");
-        setTimeout(() => { setPin(""); setError(""); }, 1200);
-      }
-    }
-  }
-
-  function handleBackspace() {
-    setPin((p) => p.slice(0, -1));
-    setError("");
-  }
-
   return (
     <div className="h-dvh bg-background flex items-center justify-center select-none">
-      <div className="w-full max-w-sm space-y-6 px-6">
+      <div className="w-full max-w-md space-y-8 px-6">
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-black tracking-tight">saakouk</h1>
-          <p className="text-sm text-muted-foreground">Voer je PIN in om te beginnen</p>
+          <p className="text-sm text-muted-foreground">Tik op je naam om te beginnen</p>
         </div>
 
-        {/* Employee quick-select */}
-        <div className="flex flex-wrap justify-center gap-2">
+        {/* Employee grid — tap to login */}
+        <div className="grid grid-cols-2 gap-3">
           {employees.map((emp) => (
-            <button key={emp.id} onClick={() => { setSelectedId(emp.id === selectedId ? null : emp.id); setPin(""); setError(""); }}
-              className={clsx("flex flex-col items-center gap-1 rounded-xl px-3 py-2 transition-all text-xs",
-                selectedId === emp.id ? "bg-primary text-primary-foreground" : "bg-card border hover:bg-accent")}>
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
+            <button key={emp.id} onClick={() => onLogin(emp)}
+              className="flex items-center gap-3 rounded-xl border bg-card px-4 py-4 text-left transition-all hover:bg-accent active:scale-[0.97] touch-manipulation">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground shrink-0">
                 {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
               </div>
-              <span className="truncate max-w-[60px]">{emp.name.split(" ")[0]}</span>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">{emp.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{emp.role}</p>
+              </div>
             </button>
           ))}
-        </div>
-
-        {/* PIN dots */}
-        <div className="flex justify-center gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className={clsx("w-4 h-4 rounded-full transition-all",
-              error ? "bg-destructive" : i < pin.length ? "bg-foreground" : "bg-border")} />
-          ))}
-        </div>
-        {error && <p className="text-center text-sm text-destructive font-medium">{error}</p>}
-
-        {/* Numpad */}
-        <div className="grid grid-cols-3 gap-2 max-w-[240px] mx-auto">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "←"].map((d) =>
-            d === "" ? <div key="empty" /> : (
-              <button key={d} onClick={() => d === "←" ? handleBackspace() : handleDigit(d)}
-                className="h-14 rounded-xl bg-card border text-lg font-semibold hover:bg-accent active:scale-95 transition-all touch-manipulation">
-                {d}
-              </button>
-            )
-          )}
         </div>
       </div>
     </div>
