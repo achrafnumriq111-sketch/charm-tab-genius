@@ -856,14 +856,19 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                   {features.leat && <Button size="sm" variant={loyaltyProvider === "leat" ? "default" : "outline"} className="text-xs h-7" onClick={() => updateTicket({ loyaltyProvider: "leat" })}>Leat</Button>}
                 </div>
                 <div className="flex gap-1.5">
-                  <Input value={scanValue} onChange={(e) => setScanValue(e.target.value)} placeholder="Scan / search loyalty" className="text-xs h-8"
+                  <Input value={scanValue} onChange={(e) => setScanValue(e.target.value)} placeholder={loyaltyProvider === "passkit" ? "PassKit external ID / email" : "Scan / search loyalty"} className="text-xs h-8"
                     onKeyDown={(e) => e.key === "Enter" && lookupLoyalty()} />
-                  <Button variant="outline" size="sm" className="h-8 px-2" onClick={lookupLoyalty}><Search className="h-3.5 w-3.5" /></Button>
+                  <Button variant="outline" size="sm" className="h-8 px-2" onClick={lookupLoyalty} disabled={loyaltyLoading}>
+                    {loyaltyLoading ? <span className="animate-spin h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full" /> : <Search className="h-3.5 w-3.5" />}
+                  </Button>
                 </div>
                 {loyaltyCustomer && (
                   <div className="mt-2 p-2 rounded-lg bg-green-50 border border-green-200 text-xs">
                     <div className="font-medium text-green-800">{loyaltyCustomer.name}</div>
-                    <div className="text-green-600">{loyaltyCustomer.points} pts · {loyaltyCustomer.visits} visits · {loyaltyCustomer.provider}</div>
+                    <div className="text-green-600">
+                      {loyaltyCustomer.points} pts · {loyaltyCustomer.visits} visits · {loyaltyCustomer.provider}
+                      {loyaltyCustomer.passkitMemberId && <span className="ml-1">· PassKit ✓</span>}
+                    </div>
                   </div>
                 )}
               </div>
@@ -2235,6 +2240,12 @@ export default function SaakoukPOS() {
   const [features, setFeatures] = useState({
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
   });
+  const [passkitConfig, setPasskitConfig] = useState({
+    programId: "",
+    tierId: "",
+    pointsPerEuro: 1,
+    autoEnrol: true,
+  });
 
   const [openTickets, setOpenTickets] = useState<Record<string, any>>({});
   const [activeTicketId, setActiveTicketId] = useState("walk-in");
@@ -2282,7 +2293,7 @@ export default function SaakoukPOS() {
     }));
   }
 
-  function handleOrderComplete(order: any) {
+  async function handleOrderComplete(order: any) {
     const stamped = { ...order, employeeId: loggedInEmployee?.id || null, employeeName: loggedInEmployee?.name || null };
     setOrders((prev) => [...prev, stamped]);
     if (order.customerId) {
@@ -2292,6 +2303,24 @@ export default function SaakoukPOS() {
           : c
       ));
     }
+
+    // PassKit: earn points after order completion
+    if (order.loyaltyProvider === "passkit" && passkitConfig.programId && order.loyaltyId) {
+      const pointsToEarn = Math.floor(order.total * passkitConfig.pointsPerEuro);
+      if (pointsToEarn > 0) {
+        try {
+          await passkitEarnPoints({
+            externalId: order.loyaltyId,
+            programId: passkitConfig.programId,
+            points: pointsToEarn,
+          });
+          setToast(`+${pointsToEarn} PassKit points earned!`);
+        } catch (err) {
+          console.error("PassKit earn points error:", err);
+        }
+      }
+    }
+
     if (order.table) {
       setOpenTickets((prev) => { const next = { ...prev }; delete next[order.table]; return next; });
     } else {
