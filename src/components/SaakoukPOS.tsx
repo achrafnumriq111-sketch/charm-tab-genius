@@ -2386,6 +2386,7 @@ export default function SaakoukPOS() {
   const [products, setProducts] = useState(initialProducts);
   const [tables] = useState(initialTables);
   const [orders, setOrders] = useState<any[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
   const [reservations, setReservations] = useState(initialReservations);
@@ -2402,6 +2403,40 @@ export default function SaakoukPOS() {
   });
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
+
+  // Load saved transactions from database
+  useEffect(() => {
+    async function loadTransactions() {
+      const { data } = await supabase.from("pos_transactions").select("*").order("created_at", { ascending: false }).limit(500);
+      if (data) {
+        const mapped = data.map((t: any) => ({
+          id: t.order_id,
+          date: new Date(t.created_at),
+          items: t.items || [],
+          subtotal: t.subtotal,
+          discount: t.discount,
+          discountName: t.discount_name,
+          total: t.total,
+          tip: t.tip,
+          method: t.payment_method,
+          customerId: t.customer_id,
+          customerName: t.customer_name,
+          table: t.table_id,
+          employeeId: t.employee_id,
+          employeeName: t.employee_name,
+          loyaltyProvider: t.loyalty_provider,
+          loyaltyId: t.loyalty_id,
+          giftCardDeduction: t.gift_card_deduction,
+          giftCardId: t.gift_card_id,
+          status: t.status,
+          source: t.source,
+        }));
+        setOrders(mapped);
+      }
+      setDbLoaded(true);
+    }
+    loadTransactions();
+  }, []);
 
   // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
   useEffect(() => {
@@ -2487,7 +2522,35 @@ export default function SaakoukPOS() {
 
   async function handleOrderComplete(order: any) {
     const stamped = { ...order, employeeId: loggedInEmployee?.id || null, employeeName: loggedInEmployee?.name || null };
-    setOrders((prev) => [...prev, stamped]);
+    setOrders((prev) => [stamped, ...prev]);
+
+    // Persist to database
+    try {
+      await supabase.from("pos_transactions").insert({
+        order_id: stamped.id,
+        created_at: stamped.date?.toISOString() || new Date().toISOString(),
+        items: stamped.items || [],
+        subtotal: stamped.subtotal || 0,
+        discount: stamped.discount || 0,
+        discount_name: stamped.discountName || null,
+        total: stamped.total || 0,
+        tip: stamped.tip || 0,
+        payment_method: stamped.method || 'card',
+        customer_id: stamped.customerId || null,
+        customer_name: stamped.customerName || null,
+        table_id: stamped.table || null,
+        employee_id: stamped.employeeId || null,
+        employee_name: stamped.employeeName || null,
+        loyalty_provider: stamped.loyaltyProvider || null,
+        loyalty_id: stamped.loyaltyId || null,
+        gift_card_deduction: stamped.giftCardDeduction || 0,
+        gift_card_id: stamped.giftCardId || null,
+        status: stamped.status || 'completed',
+        source: 'pos',
+      });
+    } catch (err) {
+      console.error("Failed to save transaction:", err);
+    }
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
