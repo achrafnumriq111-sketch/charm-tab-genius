@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Plus, Minus, X, Send, Check, Loader2 } from "lucide-react";
+import { ShoppingCart, Plus, Minus, X, Send, Check, Loader2, User, Mail, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 // ─── Menu data (mirrors POS products) ────────────────────────────────────────
 
@@ -103,6 +104,9 @@ export default function MenuPage() {
   const [customizing, setCustomizing] = useState<string | null>(null);
   const [selectedMods, setSelectedMods] = useState<Record<string, string[]>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   const sectionProducts = useMemo(
     () => menuProducts.filter((p) => p.section === activeSection),
@@ -164,6 +168,7 @@ export default function MenuPage() {
 
   async function handleSubmit() {
     if (submitting || cart.length === 0) return;
+    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) return;
     setSubmitting(true);
     try {
       const items = cart.map((item) => ({
@@ -178,7 +183,10 @@ export default function MenuPage() {
         items: items as any,
         total: cartTotal,
         status: "pending",
-      });
+        customer_name: customerName.trim(),
+        customer_email: customerEmail.trim(),
+        customer_phone: customerPhone.trim(),
+      } as any);
       setSubmitted(true);
       setCart([]);
     } catch (err) {
@@ -187,6 +195,8 @@ export default function MenuPage() {
       setSubmitting(false);
     }
   }
+
+  const customerValid = customerName.trim().length > 0 && customerEmail.trim().length > 0 && customerPhone.trim().length > 0;
 
   if (submitted) {
     return (
@@ -393,10 +403,26 @@ export default function MenuPage() {
                   <span>Totaal</span>
                   <span className="text-green-700 text-lg">{euro(cartTotal)}</span>
                 </div>
+                <Separator />
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-foreground">Jouw gegevens</p>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Naam *" className="pl-9 h-10 rounded-xl text-sm" />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="E-mail *" className="pl-9 h-10 rounded-xl text-sm" />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Telefoonnummer *" className="pl-9 h-10 rounded-xl text-sm" />
+                  </div>
+                </div>
                 <Button
                   className="w-full rounded-xl h-12 bg-green-700 hover:bg-green-800 font-semibold text-base"
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || !customerValid}
                 >
                   {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verzenden...</> : <><Send className="h-4 w-4 mr-2" /> Bestelling plaatsen</>}
                 </Button>

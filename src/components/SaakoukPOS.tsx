@@ -1089,6 +1089,12 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder }
           </div>
           <Badge className={clsx("text-[10px]", statusColor)}>{statusLabel}</Badge>
         </div>
+        {order.customer_name && (
+          <div className="text-xs text-muted-foreground flex items-center gap-3">
+            <span className="font-medium text-foreground">{order.customer_name}</span>
+            {order.customer_phone && <span>{order.customer_phone}</span>}
+          </div>
+        )}
         <div className="space-y-0.5">
           {(order.items || []).map((item: any, idx: number) => (
             <div key={idx} className="text-xs flex justify-between">
