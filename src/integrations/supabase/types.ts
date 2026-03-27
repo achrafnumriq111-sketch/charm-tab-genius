@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      pos_transactions: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          discount: number
+          discount_name: string | null
+          employee_id: string | null
+          employee_name: string | null
+          gift_card_deduction: number
+          gift_card_id: string | null
+          id: string
+          items: Json
+          loyalty_id: string | null
+          loyalty_provider: string | null
+          order_id: string
+          payment_method: string
+          source: string
+          status: string
+          subtotal: number
+          table_id: string | null
+          tip: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          discount?: number
+          discount_name?: string | null
+          employee_id?: string | null
+          employee_name?: string | null
+          gift_card_deduction?: number
+          gift_card_id?: string | null
+          id?: string
+          items?: Json
+          loyalty_id?: string | null
+          loyalty_provider?: string | null
+          order_id: string
+          payment_method?: string
+          source?: string
+          status?: string
+          subtotal?: number
+          table_id?: string | null
+          tip?: number
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          discount?: number
+          discount_name?: string | null
+          employee_id?: string | null
+          employee_name?: string | null
+          gift_card_deduction?: number
+          gift_card_id?: string | null
+          id?: string
+          items?: Json
+          loyalty_id?: string | null
+          loyalty_provider?: string | null
+          order_id?: string
+          payment_method?: string
+          source?: string
+          status?: string
+          subtotal?: number
+          table_id?: string | null
+          tip?: number
+          total?: number
+        }
+        Relationships: []
+      }
       qr_orders: {
         Row: {
           created_at: string
