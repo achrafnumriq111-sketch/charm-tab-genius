@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Plus, Minus, X, Send, Check } from "lucide-react";
+import { ShoppingCart, Plus, Minus, X, Send, Check, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── Menu data (mirrors POS products) ────────────────────────────────────────
 
@@ -159,9 +160,32 @@ export default function MenuPage() {
     setCart((prev) => prev.filter((i) => i.id !== itemId));
   }
 
-  function handleSubmit() {
-    setSubmitted(true);
-    setCart([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    if (submitting || cart.length === 0) return;
+    setSubmitting(true);
+    try {
+      const items = cart.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        qty: item.qty,
+        modifiers: item.modifiers,
+      }));
+      await supabase.from("qr_orders").insert({
+        table_id: tableId || "unknown",
+        items: items as any,
+        total: cartTotal,
+        status: "pending",
+      });
+      setSubmitted(true);
+      setCart([]);
+    } catch (err) {
+      console.error("Failed to submit order:", err);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
