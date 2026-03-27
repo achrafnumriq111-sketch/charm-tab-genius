@@ -17,6 +17,9 @@ export type Database = {
       qr_orders: {
         Row: {
           created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
           id: string
           items: Json
           status: string
@@ -25,6 +28,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
           id?: string
           items?: Json
           status?: string
@@ -33,6 +39,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
           id?: string
           items?: Json
           status?: string
