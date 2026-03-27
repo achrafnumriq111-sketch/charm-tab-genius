@@ -396,8 +396,9 @@ export default function MenuPage() {
                 <Button
                   className="w-full rounded-xl h-12 bg-green-700 hover:bg-green-800 font-semibold text-base"
                   onClick={handleSubmit}
+                  disabled={submitting}
                 >
-                  <Send className="h-4 w-4 mr-2" /> Bestelling plaatsen
+                  {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verzenden...</> : <><Send className="h-4 w-4 mr-2" /> Bestelling plaatsen</>}
                 </Button>
                 <p className="text-[11px] text-center text-muted-foreground">Betaling vindt plaats aan tafel</p>
               </div>
