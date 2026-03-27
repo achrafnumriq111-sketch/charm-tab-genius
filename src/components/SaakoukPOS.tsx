@@ -2526,7 +2526,7 @@ export default function SaakoukPOS() {
 
     // Persist to database
     try {
-      await supabase.from("pos_transactions").insert({
+      const { error } = await supabase.from("pos_transactions").insert({
         order_id: stamped.id,
         created_at: stamped.date?.toISOString() || new Date().toISOString(),
         items: stamped.items || [],
@@ -2547,7 +2547,8 @@ export default function SaakoukPOS() {
         gift_card_id: stamped.giftCardId || null,
         status: stamped.status || 'completed',
         source: 'pos',
-      });
+      } as any);
+      if (error) console.error("Failed to save transaction:", error);
     } catch (err) {
       console.error("Failed to save transaction:", err);
     }
