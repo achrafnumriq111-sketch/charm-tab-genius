@@ -1060,12 +1060,15 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-function DashboardView({ orders, tables, openTickets }: any) {
+function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder }: any) {
   const todayOrders = orders.filter((o) => isToday(o.date));
   const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
   const tips = todayOrders.reduce((s, o) => s + (o.tip || 0), 0);
   const avgTicket = todayOrders.length > 0 ? revenue / todayOrders.length : 0;
   const occupiedTables = tables.filter((t) => !!openTickets[t.id]).length;
+
+  const preparingOrders = (qrOrders || []).filter((o: any) => o.status === "preparing");
+  const readyOrders = (qrOrders || []).filter((o: any) => o.status === "ready");
 
   const topProducts: Record<string, number> = {};
   todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
@@ -1076,8 +1079,77 @@ function DashboardView({ orders, tables, openTickets }: any) {
   const paymentBreakdown = { card: 0, cash: 0, qr: 0, giftcard: 0 };
   todayOrders.forEach((o) => { paymentBreakdown[o.method] = (paymentBreakdown[o.method] || 0) + o.total; });
 
+  function OrderCard({ order, statusLabel, statusColor, actionLabel, actionColor }: any) {
+    return (
+      <div className="rounded-xl border bg-card p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            <span className="font-bold text-sm">Tafel {order.table_id}</span>
+          </div>
+          <Badge className={clsx("text-[10px]", statusColor)}>{statusLabel}</Badge>
+        </div>
+        <div className="space-y-0.5">
+          {(order.items || []).map((item: any, idx: number) => (
+            <div key={idx} className="text-xs flex justify-between">
+              <span className="text-foreground">{item.qty}× {item.name}{item.modifiers?.length > 0 && <span className="text-muted-foreground ml-1">({item.modifiers.map((m: any) => m.name).join(", ")})</span>}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}</span>
+          <Button size="sm" className={clsx("text-xs rounded-lg h-7", actionColor)} onClick={() => onAdvanceOrder(order)}>
+            {actionLabel}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Live Order Board */}
+      {(preparingOrders.length > 0 || readyOrders.length > 0) && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ChefHat className="h-5 w-5 text-orange-600" />
+            <h2 className="text-base font-bold">Live Bestellingen</h2>
+            <Badge variant="secondary" className="text-xs">{preparingOrders.length + readyOrders.length} actief</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Preparing column */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-2.5 w-2.5 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-sm font-semibold text-orange-700">In bereiding ({preparingOrders.length})</span>
+              </div>
+              {preparingOrders.length === 0 ? (
+                <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen bestellingen</div>
+              ) : (
+                preparingOrders.map((o: any) => (
+                  <OrderCard key={o.id} order={o} statusLabel="Bereiding" statusColor="bg-orange-100 text-orange-800 border-orange-200" actionLabel="✓ Klaar" actionColor="bg-green-600 hover:bg-green-700" />
+                ))
+              )}
+            </div>
+            {/* Ready column */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                <span className="text-sm font-semibold text-green-700">Klaar ({readyOrders.length})</span>
+              </div>
+              {readyOrders.length === 0 ? (
+                <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen bestellingen</div>
+              ) : (
+                readyOrders.map((o: any) => (
+                  <OrderCard key={o.id} order={o} statusLabel="Klaar" statusColor="bg-green-100 text-green-800 border-green-200" actionLabel="✓ Geserveerd" actionColor="bg-blue-600 hover:bg-blue-700" />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KPI Strip */}
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: "Today's Revenue", value: euro(revenue), icon: DollarSign, sub: `${todayOrders.length} orders`, color: "bg-green-50 text-green-700" },
@@ -2324,12 +2396,11 @@ export default function SaakoukPOS() {
   });
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
-  const [showQrOrders, setShowQrOrders] = useState(false);
 
-  // Fetch pending QR orders and subscribe to real-time
+  // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
   useEffect(() => {
     async function fetchQrOrders() {
-      const { data } = await supabase.from("qr_orders").select("*").eq("status", "pending").order("created_at", { ascending: true });
+      const { data } = await supabase.from("qr_orders").select("*").in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
       if (data) setQrOrders(data);
     }
     fetchQrOrders();
@@ -2344,40 +2415,23 @@ export default function SaakoukPOS() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  async function acceptQrOrder(qrOrder: any) {
-    // Mark as accepted in DB
-    await supabase.from("qr_orders").update({ status: "accepted" } as any).eq("id", qrOrder.id);
-    setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
-
-    // Create a ticket for this table with the items
-    const tableId = qrOrder.table_id;
-    const cartItems = (qrOrder.items || []).map((item: any) => ({
-      lineId: `${item.productId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      productId: item.productId,
-      name: item.name,
-      price: item.price,
-      qty: item.qty,
-      notes: "",
-      modifiers: (item.modifiers || []).map((m: any) => ({ groupName: "", optionName: m.name, price: m.price })),
-    }));
-
-    setOpenTickets((prev) => {
-      const existing = prev[tableId];
-      if (existing && existing.cart.length > 0) {
-        // Merge into existing ticket
-        return { ...prev, [tableId]: { ...existing, cart: [...existing.cart, ...cartItems] } };
-      }
-      return { ...prev, [tableId]: { ...emptyTicket(tableId), cart: cartItems } };
+  // Auto-accept: new "pending" orders get moved to "preparing" automatically
+  useEffect(() => {
+    const pendingOrders = qrOrders.filter((o) => o.status === "pending");
+    pendingOrders.forEach(async (qo) => {
+      await supabase.from("qr_orders").update({ status: "preparing" } as any).eq("id", qo.id);
     });
-    setActiveTicketId(tableId);
-    setActive("pos");
-    setToast(`QR bestelling van Tafel ${tableId} geaccepteerd!`);
+  }, [qrOrders]);
+
+  async function advanceQrOrder(qrOrder: any) {
+    const nextStatus = qrOrder.status === "preparing" ? "ready" : qrOrder.status === "ready" ? "served" : null;
+    if (!nextStatus) return;
+    await supabase.from("qr_orders").update({ status: nextStatus } as any).eq("id", qrOrder.id);
+    if (nextStatus === "served") {
+      setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
+    }
   }
 
-  async function dismissQrOrder(qrOrder: any) {
-    await supabase.from("qr_orders").update({ status: "dismissed" } as any).eq("id", qrOrder.id);
-    setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
-  }
 
   const [openTickets, setOpenTickets] = useState<Record<string, any>>({});
   const [activeTicketId, setActiveTicketId] = useState("walk-in");
@@ -2499,69 +2553,23 @@ export default function SaakoukPOS() {
             <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
           </div>
           <div className="flex items-center gap-2">
-            {/* QR Orders notification bell */}
-            <div className="relative">
+            {/* QR Orders indicator */}
+            {qrOrders.length > 0 && (
               <button
-                onClick={() => setShowQrOrders(!showQrOrders)}
-                className={clsx("relative p-2 rounded-xl transition-all", qrOrders.length > 0 ? "bg-orange-100 text-orange-700 animate-pulse" : "hover:bg-accent text-muted-foreground")}
+                onClick={() => setActive("dashboard")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-100 text-orange-700 text-xs font-semibold animate-pulse"
               >
-                <Bell className="h-5 w-5" />
-                {qrOrders.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {qrOrders.length}
-                  </span>
-                )}
+                <Bell className="h-4 w-4" />
+                {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
               </button>
-              {showQrOrders && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-2xl shadow-2xl border z-50 max-h-[70vh] overflow-auto">
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <h3 className="font-bold text-sm">Inkomende QR Bestellingen</h3>
-                    <button onClick={() => setShowQrOrders(false)} className="p-1 rounded-lg hover:bg-accent"><X className="h-4 w-4" /></button>
-                  </div>
-                  {qrOrders.length === 0 ? (
-                    <div className="p-6 text-center text-sm text-muted-foreground">Geen nieuwe bestellingen</div>
-                  ) : (
-                    <div className="divide-y">
-                      {qrOrders.map((qo) => (
-                        <div key={qo.id} className="p-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Smartphone className="h-4 w-4 text-orange-500" />
-                              <span className="font-semibold text-sm">Tafel {qo.table_id}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{new Date(qo.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                          <div className="space-y-1">
-                            {(qo.items || []).map((item: any, idx: number) => (
-                              <div key={idx} className="flex justify-between text-xs">
-                                <span>{item.qty}× {item.name} {item.modifiers?.length > 0 && <span className="text-muted-foreground">({item.modifiers.map((m: any) => m.name).join(", ")})</span>}</span>
-                                <span className="font-medium">{euro((item.price + (item.modifiers || []).reduce((s: number, m: any) => s + m.price, 0)) * item.qty)}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="flex items-center justify-between pt-1">
-                            <span className="font-bold text-sm">{euro(Number(qo.total))}</span>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="ghost" className="text-xs text-destructive" onClick={() => dismissQrOrder(qo)}>Afwijzen</Button>
-                              <Button size="sm" className="text-xs rounded-lg" onClick={() => { acceptQrOrder(qo); setShowQrOrders(false); }}>
-                                <Check className="h-3 w-3 mr-1" /> Accepteren
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
             <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
             <Badge variant="secondary" className="text-[11px]">{euro(todayRevenue)}</Badge>
           </div>
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} />}
+            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-xl">
