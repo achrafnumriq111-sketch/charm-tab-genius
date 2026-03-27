@@ -1060,12 +1060,15 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-function DashboardView({ orders, tables, openTickets }: any) {
+function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder }: any) {
   const todayOrders = orders.filter((o) => isToday(o.date));
   const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
   const tips = todayOrders.reduce((s, o) => s + (o.tip || 0), 0);
   const avgTicket = todayOrders.length > 0 ? revenue / todayOrders.length : 0;
   const occupiedTables = tables.filter((t) => !!openTickets[t.id]).length;
+
+  const preparingOrders = (qrOrders || []).filter((o: any) => o.status === "preparing");
+  const readyOrders = (qrOrders || []).filter((o: any) => o.status === "ready");
 
   const topProducts: Record<string, number> = {};
   todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
@@ -1076,8 +1079,77 @@ function DashboardView({ orders, tables, openTickets }: any) {
   const paymentBreakdown = { card: 0, cash: 0, qr: 0, giftcard: 0 };
   todayOrders.forEach((o) => { paymentBreakdown[o.method] = (paymentBreakdown[o.method] || 0) + o.total; });
 
+  function OrderCard({ order, statusLabel, statusColor, actionLabel, actionColor }: any) {
+    return (
+      <div className="rounded-xl border bg-card p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            <span className="font-bold text-sm">Tafel {order.table_id}</span>
+          </div>
+          <Badge className={clsx("text-[10px]", statusColor)}>{statusLabel}</Badge>
+        </div>
+        <div className="space-y-0.5">
+          {(order.items || []).map((item: any, idx: number) => (
+            <div key={idx} className="text-xs flex justify-between">
+              <span className="text-foreground">{item.qty}× {item.name}{item.modifiers?.length > 0 && <span className="text-muted-foreground ml-1">({item.modifiers.map((m: any) => m.name).join(", ")})</span>}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}</span>
+          <Button size="sm" className={clsx("text-xs rounded-lg h-7", actionColor)} onClick={() => onAdvanceOrder(order)}>
+            {actionLabel}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Live Order Board */}
+      {(preparingOrders.length > 0 || readyOrders.length > 0) && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <ChefHat className="h-5 w-5 text-orange-600" />
+            <h2 className="text-base font-bold">Live Bestellingen</h2>
+            <Badge variant="secondary" className="text-xs">{preparingOrders.length + readyOrders.length} actief</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Preparing column */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-2.5 w-2.5 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-sm font-semibold text-orange-700">In bereiding ({preparingOrders.length})</span>
+              </div>
+              {preparingOrders.length === 0 ? (
+                <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen bestellingen</div>
+              ) : (
+                preparingOrders.map((o: any) => (
+                  <OrderCard key={o.id} order={o} statusLabel="Bereiding" statusColor="bg-orange-100 text-orange-800 border-orange-200" actionLabel="✓ Klaar" actionColor="bg-green-600 hover:bg-green-700" />
+                ))
+              )}
+            </div>
+            {/* Ready column */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+                <span className="text-sm font-semibold text-green-700">Klaar ({readyOrders.length})</span>
+              </div>
+              {readyOrders.length === 0 ? (
+                <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen bestellingen</div>
+              ) : (
+                readyOrders.map((o: any) => (
+                  <OrderCard key={o.id} order={o} statusLabel="Klaar" statusColor="bg-green-100 text-green-800 border-green-200" actionLabel="✓ Geserveerd" actionColor="bg-blue-600 hover:bg-blue-700" />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KPI Strip */}
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: "Today's Revenue", value: euro(revenue), icon: DollarSign, sub: `${todayOrders.length} orders`, color: "bg-green-50 text-green-700" },
@@ -2324,12 +2396,11 @@ export default function SaakoukPOS() {
   });
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
-  const [showQrOrders, setShowQrOrders] = useState(false);
 
-  // Fetch pending QR orders and subscribe to real-time
+  // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
   useEffect(() => {
     async function fetchQrOrders() {
-      const { data } = await supabase.from("qr_orders").select("*").eq("status", "pending").order("created_at", { ascending: true });
+      const { data } = await supabase.from("qr_orders").select("*").in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
       if (data) setQrOrders(data);
     }
     fetchQrOrders();
@@ -2344,40 +2415,23 @@ export default function SaakoukPOS() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  async function acceptQrOrder(qrOrder: any) {
-    // Mark as accepted in DB
-    await supabase.from("qr_orders").update({ status: "accepted" } as any).eq("id", qrOrder.id);
-    setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
-
-    // Create a ticket for this table with the items
-    const tableId = qrOrder.table_id;
-    const cartItems = (qrOrder.items || []).map((item: any) => ({
-      lineId: `${item.productId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      productId: item.productId,
-      name: item.name,
-      price: item.price,
-      qty: item.qty,
-      notes: "",
-      modifiers: (item.modifiers || []).map((m: any) => ({ groupName: "", optionName: m.name, price: m.price })),
-    }));
-
-    setOpenTickets((prev) => {
-      const existing = prev[tableId];
-      if (existing && existing.cart.length > 0) {
-        // Merge into existing ticket
-        return { ...prev, [tableId]: { ...existing, cart: [...existing.cart, ...cartItems] } };
-      }
-      return { ...prev, [tableId]: { ...emptyTicket(tableId), cart: cartItems } };
+  // Auto-accept: new "pending" orders get moved to "preparing" automatically
+  useEffect(() => {
+    const pendingOrders = qrOrders.filter((o) => o.status === "pending");
+    pendingOrders.forEach(async (qo) => {
+      await supabase.from("qr_orders").update({ status: "preparing" } as any).eq("id", qo.id);
     });
-    setActiveTicketId(tableId);
-    setActive("pos");
-    setToast(`QR bestelling van Tafel ${tableId} geaccepteerd!`);
+  }, [qrOrders]);
+
+  async function advanceQrOrder(qrOrder: any) {
+    const nextStatus = qrOrder.status === "preparing" ? "ready" : qrOrder.status === "ready" ? "served" : null;
+    if (!nextStatus) return;
+    await supabase.from("qr_orders").update({ status: nextStatus } as any).eq("id", qrOrder.id);
+    if (nextStatus === "served") {
+      setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
+    }
   }
 
-  async function dismissQrOrder(qrOrder: any) {
-    await supabase.from("qr_orders").update({ status: "dismissed" } as any).eq("id", qrOrder.id);
-    setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
-  }
 
   const [openTickets, setOpenTickets] = useState<Record<string, any>>({});
   const [activeTicketId, setActiveTicketId] = useState("walk-in");
