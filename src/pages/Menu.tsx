@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Plus, Minus, X, Send, Check, Loader2 } from "lucide-react";
+import { ShoppingCart, Plus, Minus, X, Send, Check, Loader2, User, Mail, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 // ─── Menu data (mirrors POS products) ────────────────────────────────────────
 
@@ -103,6 +104,9 @@ export default function MenuPage() {
   const [customizing, setCustomizing] = useState<string | null>(null);
   const [selectedMods, setSelectedMods] = useState<Record<string, string[]>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   const sectionProducts = useMemo(
     () => menuProducts.filter((p) => p.section === activeSection),
@@ -164,6 +168,7 @@ export default function MenuPage() {
 
   async function handleSubmit() {
     if (submitting || cart.length === 0) return;
+    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) return;
     setSubmitting(true);
     try {
       const items = cart.map((item) => ({
@@ -178,7 +183,10 @@ export default function MenuPage() {
         items: items as any,
         total: cartTotal,
         status: "pending",
-      });
+        customer_name: customerName.trim(),
+        customer_email: customerEmail.trim(),
+        customer_phone: customerPhone.trim(),
+      } as any);
       setSubmitted(true);
       setCart([]);
     } catch (err) {
@@ -187,6 +195,8 @@ export default function MenuPage() {
       setSubmitting(false);
     }
   }
+
+  const customerValid = customerName.trim().length > 0 && customerEmail.trim().length > 0 && customerPhone.trim().length > 0;
 
   if (submitted) {
     return (
