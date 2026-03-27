@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,7 @@ import {
   ChefHat, Printer, Edit, Eye, DollarSign, TrendingUp,
   UserPlus, MapPin, FileText, Mail, Lock,
   Shield, Zap, Bell, LogOut,
-  ChevronRight, Banknote,
+  ChevronRight, ChevronLeft, Banknote,
   UtensilsCrossed, Armchair, Play, UserCog,
 } from "lucide-react";
 
@@ -1818,24 +1819,32 @@ function GiftCardsView({ giftCards, setGiftCards }: any) {
 
 function SalesView({ orders, products, employees }: any) {
   const [tab, setTab] = useState("overview");
-  const [dateRange, setDateRange] = useState("today");
+  const [rangeMode, setRangeMode] = useState<"today" | "week" | "month" | "custom">("today");
+  const [customStart, setCustomStart] = useState<Date | undefined>(undefined);
+  const [customEnd, setCustomEnd] = useState<Date | undefined>(undefined);
+  const [showCalendar, setShowCalendar] = useState<"start" | "end" | null>(null);
 
-  function getFilteredOrders() {
+  function getDateRange(): { start: Date; end: Date; label: string } {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (dateRange === "today") return orders.filter((o: any) => o.date >= startOfDay);
-    if (dateRange === "week") {
-      const weekAgo = new Date(startOfDay); weekAgo.setDate(weekAgo.getDate() - 7);
-      return orders.filter((o: any) => o.date >= weekAgo);
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    if (rangeMode === "today") return { start: startOfDay, end: endOfDay, label: "Vandaag" };
+    if (rangeMode === "week") {
+      const weekAgo = new Date(startOfDay); weekAgo.setDate(weekAgo.getDate() - 6);
+      return { start: weekAgo, end: endOfDay, label: "Afgelopen 7 dagen" };
     }
-    if (dateRange === "month") {
+    if (rangeMode === "month") {
       const monthAgo = new Date(startOfDay); monthAgo.setMonth(monthAgo.getMonth() - 1);
-      return orders.filter((o: any) => o.date >= monthAgo);
+      return { start: monthAgo, end: endOfDay, label: "Afgelopen 30 dagen" };
     }
-    return orders;
+    // custom
+    const cs = customStart || startOfDay;
+    const ce = customEnd ? new Date(customEnd.getFullYear(), customEnd.getMonth(), customEnd.getDate(), 23, 59, 59, 999) : endOfDay;
+    return { start: cs, end: ce, label: `${cs.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })} – ${new Date(ce).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}` };
   }
 
-  const filtered = getFilteredOrders();
+  const range = getDateRange();
+  const filtered = orders.filter((o: any) => o.date >= range.start && o.date <= range.end);
   const revenue = filtered.reduce((s: number, o: any) => s + o.total, 0);
   const itemsSold = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + i.qty, 0), 0);
   const avgTicket = filtered.length > 0 ? revenue / filtered.length : 0;
@@ -1850,21 +1859,26 @@ function SalesView({ orders, products, employees }: any) {
     bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
   }));
 
-  // By employee
-  const byEmployee: Record<string, { name: string; orders: number; revenue: number; items: number; tips: number }> = {};
+  // By employee — with daily breakdown
+  const byEmployee: Record<string, { name: string; orders: number; revenue: number; items: number; tips: number; byDay: Record<string, { orders: number; revenue: number; tips: number }> }> = {};
   filtered.forEach((o: any) => {
     const eid = o.employeeId || "unknown";
     const ename = o.employeeName || "Onbekend";
-    if (!byEmployee[eid]) byEmployee[eid] = { name: ename, orders: 0, revenue: 0, items: 0, tips: 0 };
+    if (!byEmployee[eid]) byEmployee[eid] = { name: ename, orders: 0, revenue: 0, items: 0, tips: 0, byDay: {} };
     byEmployee[eid].orders++;
     byEmployee[eid].revenue += o.total;
     byEmployee[eid].items += o.items.reduce((a: number, i: any) => a + i.qty, 0);
     byEmployee[eid].tips += o.tip || 0;
+    const dayKey = o.date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    if (!byEmployee[eid].byDay[dayKey]) byEmployee[eid].byDay[dayKey] = { orders: 0, revenue: 0, tips: 0 };
+    byEmployee[eid].byDay[dayKey].orders++;
+    byEmployee[eid].byDay[dayKey].revenue += o.total;
+    byEmployee[eid].byDay[dayKey].tips += o.tip || 0;
   });
 
-  // By hour
+  // By hour — with best hours analysis
   const byHour: Record<number, { orders: number; revenue: number }> = {};
-  for (let h = 8; h <= 22; h++) byHour[h] = { orders: 0, revenue: 0 };
+  for (let h = 6; h <= 23; h++) byHour[h] = { orders: 0, revenue: 0 };
   filtered.forEach((o: any) => {
     const h = o.date.getHours();
     if (!byHour[h]) byHour[h] = { orders: 0, revenue: 0 };
@@ -1872,15 +1886,21 @@ function SalesView({ orders, products, employees }: any) {
     byHour[h].revenue += o.total;
   });
   const peakHourRevenue = Math.max(...Object.values(byHour).map((v) => v.revenue), 1);
+  const sortedHours = Object.entries(byHour).filter(([, v]) => v.revenue > 0).sort((a, b) => b[1].revenue - a[1].revenue);
+  const bestHours = sortedHours.slice(0, 3);
+  const slowestHours = sortedHours.length > 3 ? sortedHours.slice(-3).reverse() : [];
 
   // By day
-  const byDay: Record<string, { orders: number; revenue: number; date: string }> = {};
+  const byDay: Record<string, { orders: number; revenue: number; tips: number; date: string; rawDate: Date }> = {};
   filtered.forEach((o: any) => {
     const key = o.date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
-    if (!byDay[key]) byDay[key] = { orders: 0, revenue: 0, date: key };
+    if (!byDay[key]) byDay[key] = { orders: 0, revenue: 0, tips: 0, date: key, rawDate: new Date(o.date.getFullYear(), o.date.getMonth(), o.date.getDate()) };
     byDay[key].orders++;
     byDay[key].revenue += o.total;
+    byDay[key].tips += o.tip || 0;
   });
+  const sortedDays = Object.values(byDay).sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime());
+  const bestDay = sortedDays.length > 0 ? sortedDays.reduce((a, b) => a.revenue > b.revenue ? a : b) : null;
 
   // Top products
   const topProducts: Record<string, { name: string; qty: number; revenue: number }> = {};
@@ -1895,52 +1915,149 @@ function SalesView({ orders, products, employees }: any) {
   const byMethod: Record<string, number> = {};
   filtered.forEach((o: any) => { byMethod[o.method] = (byMethod[o.method] || 0) + o.total; });
 
+  const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null);
+
   const tabs = [
-    { key: "overview", label: "Overzicht" },
-    { key: "employees", label: "Per medewerker" },
-    { key: "hourly", label: "Per uur" },
-    { key: "daily", label: "Per dag" },
-    { key: "products", label: "Producten" },
+    { key: "overview", label: "Overzicht", icon: TrendingUp },
+    { key: "employees", label: "Per medewerker", icon: Users },
+    { key: "hourly", label: "Piek uren", icon: Zap },
+    { key: "daily", label: "Per dag", icon: CalendarDays },
+    { key: "products", label: "Producten", icon: Package },
   ];
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex gap-1">
-          {tabs.map((t) => (
-            <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" className="rounded-full text-xs" onClick={() => setTab(t.key)}>
-              {t.label}
-            </Button>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {[
-            { key: "today", label: "Vandaag" },
-            { key: "week", label: "7 dagen" },
-            { key: "month", label: "30 dagen" },
-            { key: "all", label: "Alles" },
-          ].map((r) => (
-            <Button key={r.key} variant={dateRange === r.key ? "secondary" : "ghost"} size="sm" className="text-xs" onClick={() => setDateRange(r.key)}>
-              {r.label}
-            </Button>
-          ))}
-        </div>
+      {/* Period selector with calendar */}
+      <Card className="rounded-2xl">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-1">
+              {([
+                { key: "today", label: "Vandaag" },
+                { key: "week", label: "7 dagen" },
+                { key: "month", label: "30 dagen" },
+                { key: "custom", label: "📅 Aangepast" },
+              ] as const).map((r) => (
+                <Button key={r.key} variant={rangeMode === r.key ? "default" : "outline"} size="sm" className="text-xs rounded-full" onClick={() => setRangeMode(r.key)}>
+                  {r.label}
+                </Button>
+              ))}
+            </div>
+            {rangeMode === "custom" && (
+              <div className="flex items-center gap-2 relative">
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowCalendar(showCalendar === "start" ? null : "start")}>
+                    {customStart ? customStart.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : "Startdatum"}
+                  </Button>
+                  {showCalendar === "start" && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border rounded-xl shadow-xl">
+                      <div className="p-3 pointer-events-auto">
+                        <DayPicker
+                          mode="single"
+                          selected={customStart}
+                          onSelect={(d) => { setCustomStart(d || undefined); setShowCalendar(null); }}
+                          className="pointer-events-auto"
+                          classNames={{
+                            months: "flex flex-col",
+                            month: "space-y-2",
+                            caption: "flex justify-center pt-1 relative items-center",
+                            caption_label: "text-sm font-medium",
+                            nav: "space-x-1 flex items-center",
+                            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-input",
+                            nav_button_previous: "absolute left-1",
+                            nav_button_next: "absolute right-1",
+                            table: "w-full border-collapse",
+                            head_row: "flex",
+                            head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+                            row: "flex w-full mt-1",
+                            cell: "h-8 w-8 text-center text-sm p-0 relative",
+                            day: "h-8 w-8 p-0 font-normal rounded-md hover:bg-accent cursor-pointer inline-flex items-center justify-center",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_outside: "text-muted-foreground opacity-50",
+                            day_disabled: "text-muted-foreground opacity-50",
+                          }}
+                          components={{
+                            IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+                            IconRight: () => <ChevronRight className="h-4 w-4" />,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">t/m</span>
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowCalendar(showCalendar === "end" ? null : "end")}>
+                    {customEnd ? customEnd.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : "Einddatum"}
+                  </Button>
+                  {showCalendar === "end" && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border rounded-xl shadow-xl">
+                      <div className="p-3 pointer-events-auto">
+                        <DayPicker
+                          mode="single"
+                          selected={customEnd}
+                          onSelect={(d) => { setCustomEnd(d || undefined); setShowCalendar(null); }}
+                          className="pointer-events-auto"
+                          classNames={{
+                            months: "flex flex-col",
+                            month: "space-y-2",
+                            caption: "flex justify-center pt-1 relative items-center",
+                            caption_label: "text-sm font-medium",
+                            nav: "space-x-1 flex items-center",
+                            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-input",
+                            nav_button_previous: "absolute left-1",
+                            nav_button_next: "absolute right-1",
+                            table: "w-full border-collapse",
+                            head_row: "flex",
+                            head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+                            row: "flex w-full mt-1",
+                            cell: "h-8 w-8 text-center text-sm p-0 relative",
+                            day: "h-8 w-8 p-0 font-normal rounded-md hover:bg-accent cursor-pointer inline-flex items-center justify-center",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_outside: "text-muted-foreground opacity-50",
+                            day_disabled: "text-muted-foreground opacity-50",
+                          }}
+                          components={{
+                            IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+                            IconRight: () => <ChevronRight className="h-4 w-4" />,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <Badge variant="secondary" className="text-xs ml-auto">{range.label} · {filtered.length} orders</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tab navigation */}
+      <div className="flex gap-1">
+        {tabs.map((t) => (
+          <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1.5" onClick={() => setTab(t.key)}>
+            <t.icon className="h-3.5 w-3.5" />
+            {t.label}
+          </Button>
+        ))}
       </div>
 
       {/* KPI strip */}
       <div className="grid grid-cols-5 gap-3">
         {[
-          { label: "Omzet", value: euro(revenue), sub: `${filtered.length} orders` },
+          { label: "Omzet", value: euro(revenue), sub: `${filtered.length} orders`, highlight: true },
           { label: "Gem. ticket", value: euro(avgTicket), sub: "per order" },
           { label: "Items", value: String(itemsSold), sub: "verkocht" },
           { label: "Fooi", value: euro(totalTips), sub: "totaal" },
           { label: "Korting", value: euro(totalDiscount), sub: "gegeven" },
         ].map((kpi, i) => (
-          <Card key={i} className="rounded-2xl">
+          <Card key={i} className={clsx("rounded-2xl", kpi.highlight && "border-primary/30 bg-primary/5")}>
             <CardContent className="p-3">
               <div className="text-[11px] text-muted-foreground">{kpi.label}</div>
-              <div className="text-xl font-bold tabular-nums">{kpi.value}</div>
+              <div className={clsx("text-xl font-bold tabular-nums", kpi.highlight && "text-primary")}>{kpi.value}</div>
               <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
             </CardContent>
           </Card>
@@ -1959,7 +2076,7 @@ function SalesView({ orders, products, employees }: any) {
                     <div key={section} className="space-y-1">
                       <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium tabular-nums">{euro(amount)}</span></div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-foreground rounded-full transition-all" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
                       </div>
                     </div>
                   ))}
@@ -1976,7 +2093,7 @@ function SalesView({ orders, products, employees }: any) {
                     <div key={method} className="space-y-1">
                       <div className="flex justify-between text-sm"><span className="capitalize">{method === "giftcard" ? "Cadeaubon" : method}</span><span className="font-medium tabular-nums">{euro(amount as number)}</span></div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-foreground rounded-full transition-all" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
                       </div>
                     </div>
                   ))}
@@ -1984,10 +2101,40 @@ function SalesView({ orders, products, employees }: any) {
               )}
             </CardContent>
           </Card>
+          {/* Quick insights */}
+          <Card className="rounded-2xl col-span-2">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">📊 Snelle inzichten</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                {bestHours.length > 0 && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">🔥 Beste uren</div>
+                    {bestHours.map(([h, data]) => (
+                      <div key={h} className="text-sm"><span className="font-mono font-medium">{String(h).padStart(2, "0")}:00</span> — {euro(data.revenue)} ({data.orders}x)</div>
+                    ))}
+                  </div>
+                )}
+                {bestDay && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">🏆 Beste dag</div>
+                    <div className="text-sm font-medium">{bestDay.date}</div>
+                    <div className="text-sm">{euro(bestDay.revenue)} · {bestDay.orders} orders</div>
+                  </div>
+                )}
+                {topList.length > 0 && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">⭐ Bestseller</div>
+                    <div className="text-sm font-medium">{topList[0].name}</div>
+                    <div className="text-sm">{topList[0].qty}x verkocht · {euro(topList[0].revenue)}</div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* TAB: By Employee */}
+      {/* TAB: By Employee — with daily breakdown */}
       {tab === "employees" && (
         <Card className="rounded-2xl">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per medewerker</CardTitle></CardHeader>
@@ -1995,21 +2142,51 @@ function SalesView({ orders, products, employees }: any) {
             {Object.keys(byEmployee).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
               <div className="space-y-1">
                 {Object.entries(byEmployee).sort((a, b) => b[1].revenue - a[1].revenue).map(([eid, data]) => (
-                  <div key={eid} className="flex items-center gap-3 py-2.5 border-b last:border-0">
-                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
-                      {data.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{data.name}</div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-1">
-                        <div className="h-full bg-foreground rounded-full transition-all" style={{ width: revenue > 0 ? `${(data.revenue / revenue) * 100}%` : "0%" }} />
+                  <div key={eid}>
+                    <div
+                      className="flex items-center gap-3 py-2.5 border-b last:border-0 cursor-pointer hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                      onClick={() => setExpandedEmployee(expandedEmployee === eid ? null : eid)}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                        {data.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{data.name}</div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: revenue > 0 ? `${(data.revenue / revenue) * 100}%` : "0%" }} />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-sm tabular-nums">{euro(data.revenue)}</div>
+                        <div className="text-[10px] text-muted-foreground">{data.orders} orders · {data.items} items</div>
+                      </div>
+                      {data.tips > 0 && <Badge variant="secondary" className="text-[10px] shrink-0">{euro(data.tips)} fooi</Badge>}
+                      <ChevronRight className={clsx("h-4 w-4 text-muted-foreground transition-transform shrink-0", expandedEmployee === eid && "rotate-90")} />
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="font-bold text-sm tabular-nums">{euro(data.revenue)}</div>
-                      <div className="text-[10px] text-muted-foreground">{data.orders} orders · {data.items} items</div>
-                    </div>
-                    {data.tips > 0 && <Badge variant="secondary" className="text-[10px] shrink-0">{euro(data.tips)} fooi</Badge>}
+                    {/* Daily breakdown */}
+                    {expandedEmployee === eid && (
+                      <div className="ml-12 mb-3 mt-1 space-y-1">
+                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Dagelijks overzicht</div>
+                        {Object.entries(data.byDay).map(([day, dd]) => (
+                          <div key={day} className="flex items-center justify-between text-xs py-1 px-2 bg-muted/30 rounded">
+                            <span className="text-muted-foreground">{day}</span>
+                            <div className="flex gap-3">
+                              <span className="tabular-nums font-medium">{euro(dd.revenue)}</span>
+                              <span className="text-muted-foreground">{dd.orders} orders</span>
+                              {dd.tips > 0 && <span className="text-green-600">{euro(dd.tips)} fooi</span>}
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-xs py-1 px-2 bg-primary/10 rounded font-medium">
+                          <span>Totaal</span>
+                          <div className="flex gap-3">
+                            <span className="tabular-nums">{euro(data.revenue)}</span>
+                            <span>{data.orders} orders</span>
+                            {data.tips > 0 && <span className="text-green-600">{euro(data.tips)} fooi</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2018,29 +2195,72 @@ function SalesView({ orders, products, employees }: any) {
         </Card>
       )}
 
-      {/* TAB: By Hour */}
+      {/* TAB: Peak Hours */}
       {tab === "hourly" && (
-        <Card className="rounded-2xl">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per uur</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {Object.entries(byHour).map(([hour, data]) => (
-                <div key={hour} className="flex items-center gap-3 py-1.5">
-                  <span className="text-xs text-muted-foreground w-12 tabular-nums shrink-0">{String(hour).padStart(2, "0")}:00</span>
-                  <div className="flex-1 h-6 bg-muted rounded overflow-hidden relative">
-                    <div className={clsx("h-full rounded transition-all", data.revenue > 0 ? "bg-foreground" : "")}
-                      style={{ width: `${(data.revenue / peakHourRevenue) * 100}%` }} />
-                    {data.revenue > 0 && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground">
-                        {euro(data.revenue)} · {data.orders}x
-                      </span>
-                    )}
+        <div className="space-y-4">
+          {/* Best & slowest hours cards */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="rounded-2xl border-green-200 bg-green-50/30">
+              <CardHeader className="pb-2"><CardTitle className="text-sm text-green-700">🔥 Piekuren (top 3)</CardTitle></CardHeader>
+              <CardContent>
+                {bestHours.length === 0 ? <div className="text-sm text-muted-foreground">Geen data.</div> : (
+                  <div className="space-y-2">
+                    {bestHours.map(([h, data], i) => (
+                      <div key={h} className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-green-700 w-6">{i + 1}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{String(h).padStart(2, "0")}:00 – {String(Number(h) + 1).padStart(2, "0")}:00</div>
+                          <div className="text-xs text-muted-foreground">{data.orders} bestellingen</div>
+                        </div>
+                        <span className="font-bold text-sm tabular-nums text-green-700">{euro(data.revenue)}</span>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-orange-200 bg-orange-50/30">
+              <CardHeader className="pb-2"><CardTitle className="text-sm text-orange-700">💤 Rustige uren</CardTitle></CardHeader>
+              <CardContent>
+                {slowestHours.length === 0 ? <div className="text-sm text-muted-foreground">Geen data.</div> : (
+                  <div className="space-y-2">
+                    {slowestHours.map(([h, data]) => (
+                      <div key={h} className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{String(h).padStart(2, "0")}:00 – {String(Number(h) + 1).padStart(2, "0")}:00</div>
+                          <div className="text-xs text-muted-foreground">{data.orders} bestellingen</div>
+                        </div>
+                        <span className="font-medium text-sm tabular-nums text-orange-700">{euro(data.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          {/* Full hourly breakdown */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per uur</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {Object.entries(byHour).map(([hour, data]) => (
+                  <div key={hour} className="flex items-center gap-3 py-1.5">
+                    <span className="text-xs text-muted-foreground w-12 tabular-nums shrink-0">{String(hour).padStart(2, "0")}:00</span>
+                    <div className="flex-1 h-6 bg-muted rounded overflow-hidden relative">
+                      <div className={clsx("h-full rounded transition-all", data.revenue > 0 ? (data.revenue === peakHourRevenue ? "bg-primary" : "bg-primary/60") : "")}
+                        style={{ width: `${(data.revenue / peakHourRevenue) * 100}%` }} />
+                      {data.revenue > 0 && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground">
+                          {euro(data.revenue)} · {data.orders}x
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* TAB: By Day */}
@@ -2048,23 +2268,35 @@ function SalesView({ orders, products, employees }: any) {
         <Card className="rounded-2xl">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per dag</CardTitle></CardHeader>
           <CardContent>
-            {Object.keys(byDay).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+            {sortedDays.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
               <div className="space-y-1">
-                {Object.values(byDay).map((data) => {
-                  const maxDayRevenue = Math.max(...Object.values(byDay).map((d) => d.revenue), 1);
+                {sortedDays.map((data) => {
+                  const maxDayRevenue = Math.max(...sortedDays.map((d) => d.revenue), 1);
+                  const isBest = bestDay && data.date === bestDay.date;
                   return (
-                    <div key={data.date} className="flex items-center gap-3 py-2 border-b last:border-0">
-                      <span className="text-xs w-24 shrink-0">{data.date}</span>
+                    <div key={data.date} className={clsx("flex items-center gap-3 py-2 border-b last:border-0 px-2 -mx-2 rounded", isBest && "bg-primary/5")}>
+                      <span className="text-xs w-28 shrink-0">{data.date} {isBest && "🏆"}</span>
                       <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
-                        <div className="h-full bg-foreground rounded transition-all" style={{ width: `${(data.revenue / maxDayRevenue) * 100}%` }} />
+                        <div className={clsx("h-full rounded transition-all", isBest ? "bg-primary" : "bg-primary/60")} style={{ width: `${(data.revenue / maxDayRevenue) * 100}%` }} />
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex items-center gap-2">
                         <span className="text-sm font-bold tabular-nums">{euro(data.revenue)}</span>
-                        <span className="text-[10px] text-muted-foreground ml-2">{data.orders} orders</span>
+                        <span className="text-[10px] text-muted-foreground">{data.orders} orders</span>
+                        {data.tips > 0 && <span className="text-[10px] text-green-600">{euro(data.tips)} fooi</span>}
                       </div>
                     </div>
                   );
                 })}
+                {/* Totals row */}
+                <div className="flex items-center gap-3 py-2 px-2 -mx-2 bg-muted/50 rounded-lg font-medium mt-2">
+                  <span className="text-xs w-28 shrink-0">Totaal</span>
+                  <div className="flex-1" />
+                  <div className="text-right shrink-0 flex items-center gap-2">
+                    <span className="text-sm font-bold tabular-nums">{euro(revenue)}</span>
+                    <span className="text-[10px] text-muted-foreground">{filtered.length} orders</span>
+                    {totalTips > 0 && <span className="text-[10px] text-green-600">{euro(totalTips)} fooi</span>}
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
@@ -2080,7 +2312,7 @@ function SalesView({ orders, products, employees }: any) {
               <div className="space-y-1">
                 {topList.map((item, i) => (
                   <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
-                    <span className="w-6 text-center text-xs text-muted-foreground font-mono">{i + 1}</span>
+                    <span className={clsx("w-6 text-center text-xs font-mono", i < 3 ? "font-bold text-primary" : "text-muted-foreground")}>{i + 1}</span>
                     <span className="flex-1 text-sm font-medium truncate">{item.name}</span>
                     <span className="text-xs text-muted-foreground tabular-nums">{item.qty}x</span>
                     <span className="text-sm font-bold tabular-nums w-20 text-right">{euro(item.revenue)}</span>
