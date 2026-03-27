@@ -2522,7 +2522,35 @@ export default function SaakoukPOS() {
 
   async function handleOrderComplete(order: any) {
     const stamped = { ...order, employeeId: loggedInEmployee?.id || null, employeeName: loggedInEmployee?.name || null };
-    setOrders((prev) => [...prev, stamped]);
+    setOrders((prev) => [stamped, ...prev]);
+
+    // Persist to database
+    try {
+      await supabase.from("pos_transactions").insert({
+        order_id: stamped.id,
+        created_at: stamped.date?.toISOString() || new Date().toISOString(),
+        items: stamped.items || [],
+        subtotal: stamped.subtotal || 0,
+        discount: stamped.discount || 0,
+        discount_name: stamped.discountName || null,
+        total: stamped.total || 0,
+        tip: stamped.tip || 0,
+        payment_method: stamped.method || 'card',
+        customer_id: stamped.customerId || null,
+        customer_name: stamped.customerName || null,
+        table_id: stamped.table || null,
+        employee_id: stamped.employeeId || null,
+        employee_name: stamped.employeeName || null,
+        loyalty_provider: stamped.loyaltyProvider || null,
+        loyalty_id: stamped.loyaltyId || null,
+        gift_card_deduction: stamped.giftCardDeduction || 0,
+        gift_card_id: stamped.giftCardId || null,
+        status: stamped.status || 'completed',
+        source: 'pos',
+      });
+    } catch (err) {
+      console.error("Failed to save transaction:", err);
+    }
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
