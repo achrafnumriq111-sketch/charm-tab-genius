@@ -2323,6 +2323,62 @@ export default function SaakoukPOS() {
     autoEnrol: true,
   });
 
+  const [qrOrders, setQrOrders] = useState<any[]>([]);
+  const [showQrOrders, setShowQrOrders] = useState(false);
+
+  // Fetch pending QR orders and subscribe to real-time
+  useEffect(() => {
+    async function fetchQrOrders() {
+      const { data } = await supabase.from("qr_orders").select("*").eq("status", "pending").order("created_at", { ascending: true });
+      if (data) setQrOrders(data);
+    }
+    fetchQrOrders();
+
+    const channel = supabase
+      .channel("qr-orders-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "qr_orders" }, () => {
+        fetchQrOrders();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  async function acceptQrOrder(qrOrder: any) {
+    // Mark as accepted in DB
+    await supabase.from("qr_orders").update({ status: "accepted" } as any).eq("id", qrOrder.id);
+    setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
+
+    // Create a ticket for this table with the items
+    const tableId = qrOrder.table_id;
+    const cartItems = (qrOrder.items || []).map((item: any) => ({
+      lineId: `${item.productId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      productId: item.productId,
+      name: item.name,
+      price: item.price,
+      qty: item.qty,
+      notes: "",
+      modifiers: (item.modifiers || []).map((m: any) => ({ groupName: "", optionName: m.name, price: m.price })),
+    }));
+
+    setOpenTickets((prev) => {
+      const existing = prev[tableId];
+      if (existing && existing.cart.length > 0) {
+        // Merge into existing ticket
+        return { ...prev, [tableId]: { ...existing, cart: [...existing.cart, ...cartItems] } };
+      }
+      return { ...prev, [tableId]: { ...emptyTicket(tableId), cart: cartItems } };
+    });
+    setActiveTicketId(tableId);
+    setActive("pos");
+    setToast(`QR bestelling van Tafel ${tableId} geaccepteerd!`);
+  }
+
+  async function dismissQrOrder(qrOrder: any) {
+    await supabase.from("qr_orders").update({ status: "dismissed" } as any).eq("id", qrOrder.id);
+    setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
+  }
+
   const [openTickets, setOpenTickets] = useState<Record<string, any>>({});
   const [activeTicketId, setActiveTicketId] = useState("walk-in");
 
