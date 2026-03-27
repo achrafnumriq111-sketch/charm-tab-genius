@@ -2553,69 +2553,23 @@ export default function SaakoukPOS() {
             <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
           </div>
           <div className="flex items-center gap-2">
-            {/* QR Orders notification bell */}
-            <div className="relative">
+            {/* QR Orders indicator */}
+            {qrOrders.length > 0 && (
               <button
-                onClick={() => setShowQrOrders(!showQrOrders)}
-                className={clsx("relative p-2 rounded-xl transition-all", qrOrders.length > 0 ? "bg-orange-100 text-orange-700 animate-pulse" : "hover:bg-accent text-muted-foreground")}
+                onClick={() => setActive("dashboard")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-100 text-orange-700 text-xs font-semibold animate-pulse"
               >
-                <Bell className="h-5 w-5" />
-                {qrOrders.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center">
-                    {qrOrders.length}
-                  </span>
-                )}
+                <Bell className="h-4 w-4" />
+                {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
               </button>
-              {showQrOrders && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-2xl shadow-2xl border z-50 max-h-[70vh] overflow-auto">
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <h3 className="font-bold text-sm">Inkomende QR Bestellingen</h3>
-                    <button onClick={() => setShowQrOrders(false)} className="p-1 rounded-lg hover:bg-accent"><X className="h-4 w-4" /></button>
-                  </div>
-                  {qrOrders.length === 0 ? (
-                    <div className="p-6 text-center text-sm text-muted-foreground">Geen nieuwe bestellingen</div>
-                  ) : (
-                    <div className="divide-y">
-                      {qrOrders.map((qo) => (
-                        <div key={qo.id} className="p-4 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Smartphone className="h-4 w-4 text-orange-500" />
-                              <span className="font-semibold text-sm">Tafel {qo.table_id}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{new Date(qo.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}</span>
-                          </div>
-                          <div className="space-y-1">
-                            {(qo.items || []).map((item: any, idx: number) => (
-                              <div key={idx} className="flex justify-between text-xs">
-                                <span>{item.qty}× {item.name} {item.modifiers?.length > 0 && <span className="text-muted-foreground">({item.modifiers.map((m: any) => m.name).join(", ")})</span>}</span>
-                                <span className="font-medium">{euro((item.price + (item.modifiers || []).reduce((s: number, m: any) => s + m.price, 0)) * item.qty)}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="flex items-center justify-between pt-1">
-                            <span className="font-bold text-sm">{euro(Number(qo.total))}</span>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="ghost" className="text-xs text-destructive" onClick={() => dismissQrOrder(qo)}>Afwijzen</Button>
-                              <Button size="sm" className="text-xs rounded-lg" onClick={() => { acceptQrOrder(qo); setShowQrOrders(false); }}>
-                                <Check className="h-3 w-3 mr-1" /> Accepteren
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
             <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
             <Badge variant="secondary" className="text-[11px]">{euro(todayRevenue)}</Badge>
           </div>
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} />}
+            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-xl">
