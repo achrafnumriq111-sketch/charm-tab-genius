@@ -14,7 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      qr_orders: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          status: string
+          table_id: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          status?: string
+          table_id: string
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          status?: string
+          table_id?: string
+          total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
