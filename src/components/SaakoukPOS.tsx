@@ -2404,6 +2404,40 @@ export default function SaakoukPOS() {
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
 
+  // Load saved transactions from database
+  useEffect(() => {
+    async function loadTransactions() {
+      const { data } = await supabase.from("pos_transactions").select("*").order("created_at", { ascending: false }).limit(500);
+      if (data) {
+        const mapped = data.map((t: any) => ({
+          id: t.order_id,
+          date: new Date(t.created_at),
+          items: t.items || [],
+          subtotal: t.subtotal,
+          discount: t.discount,
+          discountName: t.discount_name,
+          total: t.total,
+          tip: t.tip,
+          method: t.payment_method,
+          customerId: t.customer_id,
+          customerName: t.customer_name,
+          table: t.table_id,
+          employeeId: t.employee_id,
+          employeeName: t.employee_name,
+          loyaltyProvider: t.loyalty_provider,
+          loyaltyId: t.loyalty_id,
+          giftCardDeduction: t.gift_card_deduction,
+          giftCardId: t.gift_card_id,
+          status: t.status,
+          source: t.source,
+        }));
+        setOrders(mapped);
+      }
+      setDbLoaded(true);
+    }
+    loadTransactions();
+  }, []);
+
   // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
   useEffect(() => {
     async function fetchQrOrders() {
