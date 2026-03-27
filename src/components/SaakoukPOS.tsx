@@ -2386,6 +2386,7 @@ export default function SaakoukPOS() {
   const [products, setProducts] = useState(initialProducts);
   const [tables] = useState(initialTables);
   const [orders, setOrders] = useState<any[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
   const [reservations, setReservations] = useState(initialReservations);
