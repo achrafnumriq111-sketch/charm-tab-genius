@@ -403,10 +403,26 @@ export default function MenuPage() {
                   <span>Totaal</span>
                   <span className="text-green-700 text-lg">{euro(cartTotal)}</span>
                 </div>
+                <Separator />
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-foreground">Jouw gegevens</p>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Naam *" className="pl-9 h-10 rounded-xl text-sm" />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="E-mail *" className="pl-9 h-10 rounded-xl text-sm" />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Telefoonnummer *" className="pl-9 h-10 rounded-xl text-sm" />
+                  </div>
+                </div>
                 <Button
                   className="w-full rounded-xl h-12 bg-green-700 hover:bg-green-800 font-semibold text-base"
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || !customerValid}
                 >
                   {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Verzenden...</> : <><Send className="h-4 w-4 mr-2" /> Bestelling plaatsen</>}
                 </Button>
