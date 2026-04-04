@@ -1424,10 +1424,11 @@ function ProductsView({ products: allProducts, setProducts }: any) {
     if (!form.name || !form.price) return;
     const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
     if (editing === "new") {
-      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), tags, modifierGroups, color: form.color }]);
+      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color }]);
     } else {
-      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), tags, modifierGroups, color: form.color } : p));
+      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
     }
     setEditing(null);
   }
