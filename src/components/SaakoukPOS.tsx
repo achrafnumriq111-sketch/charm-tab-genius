@@ -99,29 +99,29 @@ const extraGroup = {
 const ALL_MODIFIER_GROUPS = [milkGroup, syrupGroup, lemonadeFlavorGroup, sizeGroup, extraGroup];
 
 const initialProducts = [
-  { id: "sig-1", name: "Tropical Matcha Medium", section: "Signature Drinks", price: 7, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635" },
-  { id: "sig-2", name: "Tropical Matcha Large", section: "Signature Drinks", price: 8, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635" },
-  { id: "sig-3", name: "Berry Matcha Medium", section: "Signature Drinks", price: 7, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc" },
-  { id: "sig-4", name: "Berry Matcha Large", section: "Signature Drinks", price: 8, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc" },
-  { id: "special-1", name: "Papa Smurf", section: "Specials", price: 8.5, tags: ["Special"], modifierGroups: [milkGroup, extraGroup], color: "#60a5fa" },
-  { id: "special-2", name: "HOT Crème Brûlée", section: "Specials", price: 6.5, tags: ["Special", "Hot"], modifierGroups: [milkGroup, extraGroup], color: "#fbbf24" },
-  { id: "cold-1", name: "Iced Matcha Medium", section: "Cold Drinks", price: 6.5, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399" },
-  { id: "cold-2", name: "Iced Matcha Large", section: "Cold Drinks", price: 7.5, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399" },
-  { id: "cold-3", name: "Iced Latte Medium", section: "Cold Drinks", price: 4.5, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa" },
-  { id: "cold-4", name: "Iced Latte Large", section: "Cold Drinks", price: 5.25, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa" },
-  { id: "cold-5", name: "Matcha Lemonade Medium", section: "Cold Drinks", price: 5.5, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
-  { id: "cold-6", name: "Matcha Lemonade Large", section: "Cold Drinks", price: 6.25, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
-  { id: "cold-7", name: "Lemonade", section: "Cold Drinks", price: 4.75, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
-  { id: "hot-1", name: "Espresso", section: "Hot Drinks", price: 2.8, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#92400e" },
-  { id: "hot-2", name: "Flat White", section: "Hot Drinks", price: 4.5, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, extraGroup], color: "#d4a574" },
-  { id: "hot-3", name: "Cappuccino Medium", section: "Hot Drinks", price: 4.5, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574" },
-  { id: "hot-4", name: "Cappuccino Large", section: "Hot Drinks", price: 5.2, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574" },
-  { id: "hot-5", name: "Americano Medium", section: "Hot Drinks", price: 3.5, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f" },
-  { id: "hot-6", name: "Americano Large", section: "Hot Drinks", price: 4.5, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f" },
-  { id: "hot-7", name: "Tea", section: "Hot Drinks", price: 3.2, tags: ["Hot"], modifierGroups: [], color: "#fbbf24" },
-  { id: "sweet-1", name: "Sticky Date Toffee Cake", section: "Sweets", price: 4.5, tags: ["Sweets"], modifierGroups: [], color: "#b45309" },
-  { id: "sweet-2", name: "Pistachio Baklava", section: "Sweets", price: 3.5, tags: ["Sweets"], modifierGroups: [], color: "#65a30d" },
-  { id: "sweet-3", name: "Cookie", section: "Sweets", price: 2.5, tags: ["Sweets"], modifierGroups: [], color: "#d97706" },
+  { id: "sig-1", name: "Tropical Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635" },
+  { id: "sig-2", name: "Tropical Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635" },
+  { id: "sig-3", name: "Berry Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc" },
+  { id: "sig-4", name: "Berry Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc" },
+  { id: "special-1", name: "Papa Smurf", section: "Specials", price: 8.5, costPrice: 2.80, tags: ["Special"], modifierGroups: [milkGroup, extraGroup], color: "#60a5fa" },
+  { id: "special-2", name: "HOT Crème Brûlée", section: "Specials", price: 6.5, costPrice: 2.00, tags: ["Special", "Hot"], modifierGroups: [milkGroup, extraGroup], color: "#fbbf24" },
+  { id: "cold-1", name: "Iced Matcha Medium", section: "Cold Drinks", price: 6.5, costPrice: 1.80, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399" },
+  { id: "cold-2", name: "Iced Matcha Large", section: "Cold Drinks", price: 7.5, costPrice: 2.20, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399" },
+  { id: "cold-3", name: "Iced Latte Medium", section: "Cold Drinks", price: 4.5, costPrice: 1.20, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa" },
+  { id: "cold-4", name: "Iced Latte Large", section: "Cold Drinks", price: 5.25, costPrice: 1.50, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa" },
+  { id: "cold-5", name: "Matcha Lemonade Medium", section: "Cold Drinks", price: 5.5, costPrice: 1.60, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
+  { id: "cold-6", name: "Matcha Lemonade Large", section: "Cold Drinks", price: 6.25, costPrice: 1.90, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
+  { id: "cold-7", name: "Lemonade", section: "Cold Drinks", price: 4.75, costPrice: 1.00, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
+  { id: "hot-1", name: "Espresso", section: "Hot Drinks", price: 2.8, costPrice: 0.60, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#92400e" },
+  { id: "hot-2", name: "Flat White", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, extraGroup], color: "#d4a574" },
+  { id: "hot-3", name: "Cappuccino Medium", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574" },
+  { id: "hot-4", name: "Cappuccino Large", section: "Hot Drinks", price: 5.2, costPrice: 1.40, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574" },
+  { id: "hot-5", name: "Americano Medium", section: "Hot Drinks", price: 3.5, costPrice: 0.70, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f" },
+  { id: "hot-6", name: "Americano Large", section: "Hot Drinks", price: 4.5, costPrice: 0.90, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f" },
+  { id: "hot-7", name: "Tea", section: "Hot Drinks", price: 3.2, costPrice: 0.50, tags: ["Hot"], modifierGroups: [], color: "#fbbf24" },
+  { id: "sweet-1", name: "Sticky Date Toffee Cake", section: "Sweets", price: 4.5, costPrice: 1.80, tags: ["Sweets"], modifierGroups: [], color: "#b45309" },
+  { id: "sweet-2", name: "Pistachio Baklava", section: "Sweets", price: 3.5, costPrice: 1.50, tags: ["Sweets"], modifierGroups: [], color: "#65a30d" },
+  { id: "sweet-3", name: "Cookie", section: "Sweets", price: 2.5, costPrice: 0.80, tags: ["Sweets"], modifierGroups: [], color: "#d97706" },
 ];
 
 const discounts = [
@@ -364,6 +364,7 @@ function ModifierPicker({ product, onAdd, onClose }: { product: any; onAdd: (ite
       productId: product.id,
       name: product.name,
       price: product.price,
+      costPrice: product.costPrice || 0,
       qty,
       notes,
       modifiers: chosen,
@@ -694,7 +695,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       setSelectedProduct(product);
       return;
     }
-    addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, qty: 1, notes: "", modifiers: [] });
+    addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] });
   }
 
   function updateQty(lineId, delta) {
@@ -1387,7 +1388,7 @@ function ProductsView({ products: allProducts, setProducts }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
 
   const filtered = allProducts.filter((p) =>
     (filterSection === "all" || p.section === filterSection) &&
@@ -1401,13 +1402,14 @@ function ProductsView({ products: allProducts, setProducts }: any) {
         name: product.name,
         section: product.section,
         price: String(product.price),
+        costPrice: String(product.costPrice || ""),
         color: product.color || "#94a3b8",
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
       });
     } else {
       setEditing("new");
-      setForm({ name: "", section: "Hot Drinks", price: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
     }
   }
 
@@ -1422,10 +1424,11 @@ function ProductsView({ products: allProducts, setProducts }: any) {
     if (!form.name || !form.price) return;
     const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
     if (editing === "new") {
-      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), tags, modifierGroups, color: form.color }]);
+      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color }]);
     } else {
-      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), tags, modifierGroups, color: form.color } : p));
+      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
     }
     setEditing(null);
   }
@@ -1456,7 +1459,7 @@ function ProductsView({ products: allProducts, setProducts }: any) {
                   {product.color && <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: product.color }} />}
                   <div>
                     <div className="font-medium text-sm">{product.name}</div>
-                    <div className="text-xs text-muted-foreground">{product.section} · {product.modifierGroups?.length || 0} modifiers · {(product.tags || []).join(", ") || "no tags"}</div>
+                    <div className="text-xs text-muted-foreground">{product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1480,7 +1483,8 @@ function ProductsView({ products: allProducts, setProducts }: any) {
                 {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <div><Label>Price</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
+            <div><Label>Verkoopprijs (€)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
+            <div><Label>Inkoopprijs (€)</Label><Input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="Kostprijs" className="mt-1" /></div>
             <div>
               <Label>Color</Label>
               <div className="flex items-center gap-2 mt-1">
@@ -1855,6 +1859,11 @@ function SalesView({ orders, products, employees }: any) {
   const totalTips = filtered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
   const totalDiscount = filtered.reduce((s: number, o: any) => s + (o.discount || 0), 0);
 
+  // Profit/Loss calculations
+  const totalCost = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + (i.costPrice || 0) * i.qty, 0), 0);
+  const grossProfit = revenue - totalCost;
+  const profitMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+
   // By section
   const bySection: Record<string, number> = {};
   filtered.forEach((o: any) => o.items.forEach((item: any) => {
@@ -1907,13 +1916,24 @@ function SalesView({ orders, products, employees }: any) {
   const bestDay = sortedDays.length > 0 ? sortedDays.reduce((a, b) => a.revenue > b.revenue ? a : b) : null;
 
   // Top products
-  const topProducts: Record<string, { name: string; qty: number; revenue: number }> = {};
+  const topProducts: Record<string, { name: string; qty: number; revenue: number; cost: number }> = {};
   filtered.forEach((o: any) => o.items.forEach((item: any) => {
-    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0 };
+    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0, cost: 0 };
     topProducts[item.productId].qty += item.qty;
     topProducts[item.productId].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    topProducts[item.productId].cost += (item.costPrice || 0) * item.qty;
   }));
   const topList = Object.values(topProducts).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+  // Profit by section
+  const profitBySection: Record<string, { revenue: number; cost: number }> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    const product = products.find((p: any) => p.id === item.productId);
+    const sec = product?.section || "Other";
+    if (!profitBySection[sec]) profitBySection[sec] = { revenue: 0, cost: 0 };
+    profitBySection[sec].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    profitBySection[sec].cost += (item.costPrice || 0) * item.qty;
+  }));
 
   // Payment methods
   const byMethod: Record<string, number> = {};
@@ -1927,6 +1947,7 @@ function SalesView({ orders, products, employees }: any) {
     { key: "hourly", label: "Piek uren", icon: Zap },
     { key: "daily", label: "Per dag", icon: CalendarDays },
     { key: "products", label: "Producten", icon: Package },
+    { key: "profit", label: "Winst & Verlies", icon: DollarSign },
   ];
 
   return (
@@ -2050,18 +2071,20 @@ function SalesView({ orders, products, employees }: any) {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-7 gap-3">
         {[
           { label: "Omzet", value: euro(revenue), sub: `${filtered.length} orders`, highlight: true },
+          { label: "Inkoopkosten", value: euro(totalCost), sub: "totaal", className: "text-red-600" },
+          { label: "Brutowinst", value: euro(grossProfit), sub: `${profitMargin.toFixed(1)}% marge`, className: grossProfit >= 0 ? "text-green-600" : "text-red-600" },
           { label: "Gem. ticket", value: euro(avgTicket), sub: "per order" },
           { label: "Items", value: String(itemsSold), sub: "verkocht" },
           { label: "Fooi", value: euro(totalTips), sub: "totaal" },
           { label: "Korting", value: euro(totalDiscount), sub: "gegeven" },
-        ].map((kpi, i) => (
+        ].map((kpi: any, i) => (
           <Card key={i} className={clsx("rounded-2xl", kpi.highlight && "border-primary/30 bg-primary/5")}>
             <CardContent className="p-3">
               <div className="text-[11px] text-muted-foreground">{kpi.label}</div>
-              <div className={clsx("text-xl font-bold tabular-nums", kpi.highlight && "text-primary")}>{kpi.value}</div>
+              <div className={clsx("text-xl font-bold tabular-nums", kpi.highlight && "text-primary", kpi.className)}>{kpi.value}</div>
               <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
             </CardContent>
           </Card>
@@ -2326,6 +2349,110 @@ function SalesView({ orders, products, employees }: any) {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* TAB: Profit & Loss */}
+      {tab === "profit" && (
+        <div className="space-y-4">
+          {/* P&L Summary */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">💰 Winst & Verlies overzicht</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-w-lg">
+                {[
+                  { label: "Omzet (verkoop)", value: euro(revenue), className: "font-bold" },
+                  { label: "Inkoopkosten (COGS)", value: `-${euro(totalCost)}`, className: "text-red-600" },
+                  { label: "Brutowinst", value: euro(grossProfit), className: grossProfit >= 0 ? "font-bold text-green-600" : "font-bold text-red-600" },
+                  { label: "Brutomarge", value: `${profitMargin.toFixed(1)}%`, className: profitMargin >= 60 ? "text-green-600" : profitMargin >= 40 ? "text-orange-600" : "text-red-600" },
+                  { label: "Kortingen gegeven", value: `-${euro(totalDiscount)}`, className: "text-orange-600" },
+                  { label: "Fooi ontvangen", value: euro(totalTips), className: "text-green-600" },
+                ].map((row, i) => (
+                  <div key={i} className={clsx("flex justify-between py-1.5 border-b last:border-0", i === 2 && "border-t-2 border-b-2 py-2.5")}>
+                    <span className="text-sm">{row.label}</span>
+                    <span className={clsx("text-sm tabular-nums", row.className)}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profit by category */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Winst per categorie</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(profitBySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-3">
+                  {Object.entries(profitBySection).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).map(([section, data]) => {
+                    const sectionProfit = data.revenue - data.cost;
+                    const sectionMargin = data.revenue > 0 ? (sectionProfit / data.revenue) * 100 : 0;
+                    return (
+                      <div key={section} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{section}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">Omzet: {euro(data.revenue)}</span>
+                            <span className="text-xs text-muted-foreground">Inkoop: {euro(data.cost)}</span>
+                            <span className={clsx("font-bold tabular-nums", sectionProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(sectionProfit)}</span>
+                            <Badge variant="secondary" className="text-[10px]">{sectionMargin.toFixed(0)}%</Badge>
+                          </div>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div className={clsx("h-full rounded-full transition-all", sectionMargin >= 60 ? "bg-green-500" : sectionMargin >= 40 ? "bg-orange-400" : "bg-red-400")}
+                            style={{ width: `${Math.min(sectionMargin, 100)}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Profit per product */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Winst per product (top 10)</CardTitle></CardHeader>
+            <CardContent>
+              {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <span className="w-6">#</span>
+                    <span className="flex-1">Product</span>
+                    <span className="w-12 text-right">Qty</span>
+                    <span className="w-20 text-right">Omzet</span>
+                    <span className="w-20 text-right">Inkoop</span>
+                    <span className="w-20 text-right">Winst</span>
+                    <span className="w-16 text-right">Marge</span>
+                  </div>
+                  {topList.map((item, i) => {
+                    const itemProfit = item.revenue - item.cost;
+                    const itemMargin = item.revenue > 0 ? (itemProfit / item.revenue) * 100 : 0;
+                    return (
+                      <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
+                        <span className={clsx("w-6 text-center text-xs font-mono", i < 3 ? "font-bold text-primary" : "text-muted-foreground")}>{i + 1}</span>
+                        <span className="flex-1 text-sm font-medium truncate">{item.name}</span>
+                        <span className="w-12 text-right text-xs text-muted-foreground tabular-nums">{item.qty}x</span>
+                        <span className="w-20 text-right text-sm tabular-nums">{euro(item.revenue)}</span>
+                        <span className="w-20 text-right text-sm tabular-nums text-red-600">{euro(item.cost)}</span>
+                        <span className={clsx("w-20 text-right text-sm font-bold tabular-nums", itemProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(itemProfit)}</span>
+                        <span className={clsx("w-16 text-right text-xs font-medium", itemMargin >= 60 ? "text-green-600" : itemMargin >= 40 ? "text-orange-600" : "text-red-600")}>{itemMargin.toFixed(0)}%</span>
+                      </div>
+                    );
+                  })}
+                  {/* Totals */}
+                  <div className="flex items-center gap-3 py-2 bg-muted/50 rounded-lg mt-2 font-medium">
+                    <span className="w-6" />
+                    <span className="flex-1 text-sm">Totaal</span>
+                    <span className="w-12 text-right text-xs tabular-nums">{topList.reduce((s, i) => s + i.qty, 0)}x</span>
+                    <span className="w-20 text-right text-sm tabular-nums">{euro(topList.reduce((s, i) => s + i.revenue, 0))}</span>
+                    <span className="w-20 text-right text-sm tabular-nums text-red-600">{euro(topList.reduce((s, i) => s + i.cost, 0))}</span>
+                    <span className={clsx("w-20 text-right text-sm font-bold tabular-nums", grossProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(topList.reduce((s, i) => s + i.revenue - i.cost, 0))}</span>
+                    <span className="w-16 text-right text-xs font-medium">{profitMargin.toFixed(0)}%</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
