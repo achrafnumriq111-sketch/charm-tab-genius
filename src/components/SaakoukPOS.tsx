@@ -1483,7 +1483,8 @@ function ProductsView({ products: allProducts, setProducts }: any) {
                 {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <div><Label>Price</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
+            <div><Label>Verkoopprijs (€)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
+            <div><Label>Inkoopprijs (€)</Label><Input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="Kostprijs" className="mt-1" /></div>
             <div>
               <Label>Color</Label>
               <div className="flex items-center gap-2 mt-1">
