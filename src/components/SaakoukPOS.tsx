@@ -695,7 +695,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       setSelectedProduct(product);
       return;
     }
-    addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, qty: 1, notes: "", modifiers: [] });
+    addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] });
   }
 
   function updateQty(lineId, delta) {
