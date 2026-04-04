@@ -174,6 +174,10 @@ const initialEmployees = [
   { id: "e6", name: "Djemaro Dalloesingh", email: "djemaro@gmail.com", role: "sales", pin: "6789" },
   { id: "e7", name: "Achraf Idrissi", email: "Acidrissi@icloud.com", role: "owner", pin: "7890" },
   { id: "e8", name: "Anouar Azif", email: "anouar_azif@outlook.com", role: "sales", pin: "8901" },
+  { id: "e9", name: "Rayan Azzimachi", email: "rayanazzimachi@gmail.com", role: "sales", pin: "9012" },
+  { id: "e10", name: "Othman Ami", email: "othmanami16@hotmail.com", role: "sales", pin: "0123" },
+  { id: "e11", name: "Ezra Belkacem", email: "ezrabelkacem@hotmail.com", role: "sales", pin: "1357" },
+  { id: "e12", name: "Ibrahim Aakouk", email: "ibrahimaakouk@gmail.com", role: "manager", pin: "2468" },
 ];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
