@@ -1388,7 +1388,7 @@ function ProductsView({ products: allProducts, setProducts }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
 
   const filtered = allProducts.filter((p) =>
     (filterSection === "all" || p.section === filterSection) &&
