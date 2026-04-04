@@ -2071,9 +2071,11 @@ function SalesView({ orders, products, employees }: any) {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-7 gap-3">
         {[
           { label: "Omzet", value: euro(revenue), sub: `${filtered.length} orders`, highlight: true },
+          { label: "Inkoopkosten", value: euro(totalCost), sub: "totaal", className: "text-red-600" },
+          { label: "Brutowinst", value: euro(grossProfit), sub: `${profitMargin.toFixed(1)}% marge`, className: grossProfit >= 0 ? "text-green-600" : "text-red-600" },
           { label: "Gem. ticket", value: euro(avgTicket), sub: "per order" },
           { label: "Items", value: String(itemsSold), sub: "verkocht" },
           { label: "Fooi", value: euro(totalTips), sub: "totaal" },
