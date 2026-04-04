@@ -1947,6 +1947,7 @@ function SalesView({ orders, products, employees }: any) {
     { key: "hourly", label: "Piek uren", icon: Zap },
     { key: "daily", label: "Per dag", icon: CalendarDays },
     { key: "products", label: "Producten", icon: Package },
+    { key: "profit", label: "Winst & Verlies", icon: DollarSign },
   ];
 
   return (
