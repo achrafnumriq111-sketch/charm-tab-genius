@@ -2080,11 +2080,11 @@ function SalesView({ orders, products, employees }: any) {
           { label: "Items", value: String(itemsSold), sub: "verkocht" },
           { label: "Fooi", value: euro(totalTips), sub: "totaal" },
           { label: "Korting", value: euro(totalDiscount), sub: "gegeven" },
-        ].map((kpi, i) => (
+        ].map((kpi: any, i) => (
           <Card key={i} className={clsx("rounded-2xl", kpi.highlight && "border-primary/30 bg-primary/5")}>
             <CardContent className="p-3">
               <div className="text-[11px] text-muted-foreground">{kpi.label}</div>
-              <div className={clsx("text-xl font-bold tabular-nums", kpi.highlight && "text-primary")}>{kpi.value}</div>
+              <div className={clsx("text-xl font-bold tabular-nums", kpi.highlight && "text-primary", kpi.className)}>{kpi.value}</div>
               <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
             </CardContent>
           </Card>
