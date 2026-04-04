@@ -1402,13 +1402,14 @@ function ProductsView({ products: allProducts, setProducts }: any) {
         name: product.name,
         section: product.section,
         price: String(product.price),
+        costPrice: String(product.costPrice || ""),
         color: product.color || "#94a3b8",
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
       });
     } else {
       setEditing("new");
-      setForm({ name: "", section: "Hot Drinks", price: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
     }
   }
 
