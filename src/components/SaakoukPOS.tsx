@@ -2350,6 +2350,110 @@ function SalesView({ orders, products, employees }: any) {
           </CardContent>
         </Card>
       )}
+
+      {/* TAB: Profit & Loss */}
+      {tab === "profit" && (
+        <div className="space-y-4">
+          {/* P&L Summary */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">💰 Winst & Verlies overzicht</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-w-lg">
+                {[
+                  { label: "Omzet (verkoop)", value: euro(revenue), className: "font-bold" },
+                  { label: "Inkoopkosten (COGS)", value: `-${euro(totalCost)}`, className: "text-red-600" },
+                  { label: "Brutowinst", value: euro(grossProfit), className: grossProfit >= 0 ? "font-bold text-green-600" : "font-bold text-red-600" },
+                  { label: "Brutomarge", value: `${profitMargin.toFixed(1)}%`, className: profitMargin >= 60 ? "text-green-600" : profitMargin >= 40 ? "text-orange-600" : "text-red-600" },
+                  { label: "Kortingen gegeven", value: `-${euro(totalDiscount)}`, className: "text-orange-600" },
+                  { label: "Fooi ontvangen", value: euro(totalTips), className: "text-green-600" },
+                ].map((row, i) => (
+                  <div key={i} className={clsx("flex justify-between py-1.5 border-b last:border-0", i === 2 && "border-t-2 border-b-2 py-2.5")}>
+                    <span className="text-sm">{row.label}</span>
+                    <span className={clsx("text-sm tabular-nums", row.className)}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profit by category */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Winst per categorie</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(profitBySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-3">
+                  {Object.entries(profitBySection).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).map(([section, data]) => {
+                    const sectionProfit = data.revenue - data.cost;
+                    const sectionMargin = data.revenue > 0 ? (sectionProfit / data.revenue) * 100 : 0;
+                    return (
+                      <div key={section} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{section}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">Omzet: {euro(data.revenue)}</span>
+                            <span className="text-xs text-muted-foreground">Inkoop: {euro(data.cost)}</span>
+                            <span className={clsx("font-bold tabular-nums", sectionProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(sectionProfit)}</span>
+                            <Badge variant="secondary" className="text-[10px]">{sectionMargin.toFixed(0)}%</Badge>
+                          </div>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div className={clsx("h-full rounded-full transition-all", sectionMargin >= 60 ? "bg-green-500" : sectionMargin >= 40 ? "bg-orange-400" : "bg-red-400")}
+                            style={{ width: `${Math.min(sectionMargin, 100)}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Profit per product */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Winst per product (top 10)</CardTitle></CardHeader>
+            <CardContent>
+              {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <span className="w-6">#</span>
+                    <span className="flex-1">Product</span>
+                    <span className="w-12 text-right">Qty</span>
+                    <span className="w-20 text-right">Omzet</span>
+                    <span className="w-20 text-right">Inkoop</span>
+                    <span className="w-20 text-right">Winst</span>
+                    <span className="w-16 text-right">Marge</span>
+                  </div>
+                  {topList.map((item, i) => {
+                    const itemProfit = item.revenue - item.cost;
+                    const itemMargin = item.revenue > 0 ? (itemProfit / item.revenue) * 100 : 0;
+                    return (
+                      <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
+                        <span className={clsx("w-6 text-center text-xs font-mono", i < 3 ? "font-bold text-primary" : "text-muted-foreground")}>{i + 1}</span>
+                        <span className="flex-1 text-sm font-medium truncate">{item.name}</span>
+                        <span className="w-12 text-right text-xs text-muted-foreground tabular-nums">{item.qty}x</span>
+                        <span className="w-20 text-right text-sm tabular-nums">{euro(item.revenue)}</span>
+                        <span className="w-20 text-right text-sm tabular-nums text-red-600">{euro(item.cost)}</span>
+                        <span className={clsx("w-20 text-right text-sm font-bold tabular-nums", itemProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(itemProfit)}</span>
+                        <span className={clsx("w-16 text-right text-xs font-medium", itemMargin >= 60 ? "text-green-600" : itemMargin >= 40 ? "text-orange-600" : "text-red-600")}>{itemMargin.toFixed(0)}%</span>
+                      </div>
+                    );
+                  })}
+                  {/* Totals */}
+                  <div className="flex items-center gap-3 py-2 bg-muted/50 rounded-lg mt-2 font-medium">
+                    <span className="w-6" />
+                    <span className="flex-1 text-sm">Totaal</span>
+                    <span className="w-12 text-right text-xs tabular-nums">{topList.reduce((s, i) => s + i.qty, 0)}x</span>
+                    <span className="w-20 text-right text-sm tabular-nums">{euro(topList.reduce((s, i) => s + i.revenue, 0))}</span>
+                    <span className="w-20 text-right text-sm tabular-nums text-red-600">{euro(topList.reduce((s, i) => s + i.cost, 0))}</span>
+                    <span className={clsx("w-20 text-right text-sm font-bold tabular-nums", grossProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(topList.reduce((s, i) => s + i.revenue - i.cost, 0))}</span>
+                    <span className="w-16 text-right text-xs font-medium">{profitMargin.toFixed(0)}%</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
