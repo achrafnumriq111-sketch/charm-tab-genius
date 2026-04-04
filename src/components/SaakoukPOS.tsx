@@ -251,7 +251,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
 function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string }) {
-  const isAdmin = role === "owner";
+  const isAdmin = role === "owner" || role === "manager";
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false },
