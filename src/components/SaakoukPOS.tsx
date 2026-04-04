@@ -364,6 +364,7 @@ function ModifierPicker({ product, onAdd, onClose }: { product: any; onAdd: (ite
       productId: product.id,
       name: product.name,
       price: product.price,
+      costPrice: product.costPrice || 0,
       qty,
       notes,
       modifiers: chosen,
