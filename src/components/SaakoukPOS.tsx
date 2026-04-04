@@ -1916,13 +1916,24 @@ function SalesView({ orders, products, employees }: any) {
   const bestDay = sortedDays.length > 0 ? sortedDays.reduce((a, b) => a.revenue > b.revenue ? a : b) : null;
 
   // Top products
-  const topProducts: Record<string, { name: string; qty: number; revenue: number }> = {};
+  const topProducts: Record<string, { name: string; qty: number; revenue: number; cost: number }> = {};
   filtered.forEach((o: any) => o.items.forEach((item: any) => {
-    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0 };
+    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0, cost: 0 };
     topProducts[item.productId].qty += item.qty;
     topProducts[item.productId].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    topProducts[item.productId].cost += (item.costPrice || 0) * item.qty;
   }));
   const topList = Object.values(topProducts).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+  // Profit by section
+  const profitBySection: Record<string, { revenue: number; cost: number }> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    const product = products.find((p: any) => p.id === item.productId);
+    const sec = product?.section || "Other";
+    if (!profitBySection[sec]) profitBySection[sec] = { revenue: 0, cost: 0 };
+    profitBySection[sec].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    profitBySection[sec].cost += (item.costPrice || 0) * item.qty;
+  }));
 
   // Payment methods
   const byMethod: Record<string, number> = {};
