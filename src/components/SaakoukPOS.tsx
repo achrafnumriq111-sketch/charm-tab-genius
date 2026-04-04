@@ -1859,6 +1859,11 @@ function SalesView({ orders, products, employees }: any) {
   const totalTips = filtered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
   const totalDiscount = filtered.reduce((s: number, o: any) => s + (o.discount || 0), 0);
 
+  // Profit/Loss calculations
+  const totalCost = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + (i.costPrice || 0) * i.qty, 0), 0);
+  const grossProfit = revenue - totalCost;
+  const profitMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+
   // By section
   const bySection: Record<string, number> = {};
   filtered.forEach((o: any) => o.items.forEach((item: any) => {
