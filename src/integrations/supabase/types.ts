@@ -86,6 +86,33 @@ export type Database = {
         }
         Relationships: []
       }
+      product_costs: {
+        Row: {
+          buying_price: number
+          created_at: string | null
+          id: string
+          product_name: string
+          selling_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          buying_price?: number
+          created_at?: string | null
+          id?: string
+          product_name: string
+          selling_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          buying_price?: number
+          created_at?: string | null
+          id?: string
+          product_name?: string
+          selling_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       qr_orders: {
         Row: {
           created_at: string
