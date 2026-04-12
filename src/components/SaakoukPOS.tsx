@@ -1390,11 +1390,13 @@ function ReservationsView({ reservations, setReservations, tables }: any) {
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, notifications, setNotifications }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+
+  const isOwner = currentRole === "owner";
 
   const filtered = allProducts.filter((p) =>
     (filterSection === "all" || p.section === filterSection) &&
@@ -1413,11 +1415,152 @@ function ProductsView({ products: allProducts, setProducts }: any) {
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
       });
+      addLog?.("product_edit_open", `Begonnen met bewerken van product: ${product.name}`);
     } else {
       setEditing("new");
       setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
+
+  function toggleModifierGroup(groupId) {
+    setForm((prev) => {
+      const ids = prev.modifierGroupIds;
+      return { ...prev, modifierGroupIds: ids.includes(groupId) ? ids.filter((x) => x !== groupId) : [...ids, groupId] };
+    });
+  }
+
+  function saveProduct() {
+    if (!form.name || !form.price) return;
+    const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
+    const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
+    if (editing === "new") {
+      const newProduct = {
+        id: generateId(),
+        name: form.name,
+        section: form.section,
+        price: parseFloat(form.price),
+        costPrice,
+        tags,
+        modifierGroups,
+        color: form.color,
+        createdBy: currentEmployee?.name || "Onbekend",
+        createdById: currentEmployee?.id || null,
+        createdAt: new Date().toISOString(),
+      };
+      setProducts((prev) => [...prev, newProduct]);
+      addLog?.("product_created", `Product aangemaakt: ${form.name} (${euro(parseFloat(form.price))})`);
+      // Notify owners if sales created a product
+      if (currentRole !== "owner") {
+        setNotifications?.((prev: any[]) => [
+          ...prev,
+          {
+            id: generateId(),
+            type: "product_created",
+            message: `${currentEmployee?.name} heeft een nieuw product aangemaakt: ${form.name}`,
+            timestamp: new Date(),
+            read: false,
+          },
+        ]);
+      }
+    } else {
+      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
+      addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
+    }
+    setEditing(null);
+  }
+
+  function deleteProduct(id) {
+    const product = allProducts.find((p) => p.id === id);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+    addLog?.("product_deleted", `Product verwijderd: ${product?.name || id}`);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="pl-9" />
+        </div>
+        <select value={filterSection} onChange={(e) => setFilterSection(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+          <option value="all">All sections</option>
+          {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <Button onClick={() => openEdit(null)}><Plus className="h-4 w-4 mr-2" />Add product</Button>
+      </div>
+      <Card className="rounded-2xl">
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {filtered.map((product) => (
+              <div key={product.id} className="flex items-center justify-between p-3 hover:bg-neutral-50">
+                <div className="flex items-center gap-3">
+                  {product.color && <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: product.color }} />}
+                  <div>
+                    <div className="font-medium text-sm">{product.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers
+                      {product.createdBy && <span className="ml-1">· Aangemaakt door: {product.createdBy}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="font-semibold">{euro(product.price)}</div>
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(product)}><Edit className="h-3 w-3" /></Button>
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Modal open={!!editing} onClose={() => setEditing(null)}>
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-bold">{editing === "new" ? "New product" : "Edit product"}</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+            <div>
+              <Label>Section</Label>
+              <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+                {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div><Label>Verkoopprijs (€)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
+            <div><Label>Inkoopprijs (€)</Label><Input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="Kostprijs" className="mt-1" /></div>
+            <div>
+              <Label>Color</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded border cursor-pointer" />
+                <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="flex-1" />
+              </div>
+            </div>
+            <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Hot, Coffee, Signature" className="mt-1" /></div>
+          </div>
+          <div>
+            <Label>Modifier groups</Label>
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              {ALL_MODIFIER_GROUPS.map((g) => (
+                <button key={g.id} onClick={() => toggleModifierGroup(g.id)}
+                  className={clsx("rounded-xl border px-3 py-2 text-left text-sm transition-all",
+                    form.modifierGroupIds.includes(g.id) ? "border-black bg-black text-white" : "bg-white hover:bg-neutral-50")}>
+                  <div className="font-medium">{g.name}</div>
+                  <div className={clsx("text-xs", form.modifierGroupIds.includes(g.id) ? "text-white/70" : "text-muted-foreground")}>{g.options.length} options</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={saveProduct} disabled={!form.name || !form.price}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
 
   function toggleModifierGroup(groupId) {
     setForm((prev) => {
