@@ -1314,22 +1314,27 @@ function ActivityView({ orders }: any) {
 
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 
-function ReservationsView({ reservations, setReservations, tables }: any) {
+function ReservationsView({ reservations, setReservations, tables, addLog }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
 
   function addReservation() {
     if (!form.name || !form.date || !form.time) return;
     setReservations((prev) => [...prev, { ...form, id: generateId(), guests: parseInt(form.guests) || 2, status: "confirmed" }]);
+    addLog?.("reservation_created", `Reservering aangemaakt: ${form.name} — ${form.date} ${form.time}, ${form.guests} gasten, tafel ${form.table}`);
     setShowAdd(false);
     setForm({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
   }
 
   function updateStatus(id, status) {
+    const r = reservations.find((x) => x.id === id);
     setReservations((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+    addLog?.("reservation_status_changed", `Reservering status gewijzigd: ${r?.name || id} → ${status}`);
   }
 
   function removeReservation(id) {
+    const r = reservations.find((x) => x.id === id);
+    addLog?.("reservation_deleted", `Reservering verwijderd: ${r?.name || id}`);
     setReservations((prev) => prev.filter((r) => r.id !== id));
   }
 
@@ -1691,7 +1696,7 @@ function QrView({ features, tables }: any) {
 
 // ─── CUSTOMERS ───────────────────────────────────────────────────────────────
 
-function CustomersView({ customers, setCustomers }: any) {
+function CustomersView({ customers, setCustomers, addLog }: any) {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", provider: "none" });
@@ -1705,6 +1710,7 @@ function CustomersView({ customers, setCustomers }: any) {
   function addCustomer() {
     if (!form.name || !form.email || !form.phone) return;
     setCustomers((prev) => [...prev, { ...form, id: generateId(), loyaltyId: form.provider !== "none" ? `LYL-${generateId().toUpperCase().slice(0, 3)}` : "", points: 0, visits: 0, totalSpent: 0, lastVisit: "-" }]);
+    addLog?.("customer_created", `Klant aangemaakt: ${form.name} (${form.email})`);
     setShowAdd(false);
     setForm({ name: "", email: "", phone: "", provider: "none" });
   }
@@ -1721,7 +1727,7 @@ function CustomersView({ customers, setCustomers }: any) {
       </div>
       <div className="grid grid-cols-1 gap-3">
         {filtered.map((c) => (
-          <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => setSelected(c)}>
+          <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => { setSelected(c); addLog?.("customer_viewed", `Klant bekeken: ${c.name}`); }}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-sm">
