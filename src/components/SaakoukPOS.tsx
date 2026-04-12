@@ -3806,8 +3806,9 @@ export default function SaakoukPOS() {
                   />
                 </TabsContent>
                 <TabsContent value="table">
-                  <TableView tables={tables} openTickets={openTickets} reservations={reservations}
+                  <FloorPlanEditor tables={tables} setTables={setTables} openTickets={openTickets} reservations={reservations}
                     onSelectTable={handleSelectTable} onCloseTable={handleCloseTable} onSeatReservation={handleSeatReservation}
+                    channels={channels} addLog={addLog}
                   />
                 </TabsContent>
               </Tabs>
