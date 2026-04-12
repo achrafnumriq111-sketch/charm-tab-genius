@@ -3730,6 +3730,382 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
   );
 }
 
+// ─── CASH CLOSING MODAL ──────────────────────────────────────────────────────
+
+function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, onComplete, addLog }: {
+  open: boolean; onClose: () => void; employees: any[]; loggedInEmployee: any; orders: any[];
+  onComplete: (record: any) => void; addLog: (action: string, details: string) => void;
+}) {
+  const [step, setStep] = useState(1);
+  const [countedCash, setCountedCash] = useState("");
+  const [floatAmount, setFloatAmount] = useState("300");
+  const [expenseReceipts, setExpenseReceipts] = useState("");
+  const [expenseNote, setExpenseNote] = useState("");
+  const [secondCheckerId, setSecondCheckerId] = useState("");
+  const [secondPin, setSecondPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [envelopeCode, setEnvelopeCode] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setStep(1); setCountedCash(""); setFloatAmount("300"); setExpenseReceipts("");
+      setExpenseNote(""); setSecondCheckerId(""); setSecondPin(""); setPinError("");
+      setEnvelopeCode(""); setSaving(false);
+    }
+  }, [open]);
+
+  const counted = parseFloat(countedCash) || 0;
+  const float_ = parseFloat(floatAmount) || 300;
+  const expenses = parseFloat(expenseReceipts) || 0;
+  const envelopeAmount = Math.max(0, counted - float_);
+
+  const otherEmployees = employees.filter((e) => e.id !== loggedInEmployee?.id);
+  const selectedChecker = employees.find((e) => e.id === secondCheckerId);
+
+  function generateCode() {
+    const digits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join("");
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)}`;
+  }
+
+  function verifySecondPin() {
+    if (!selectedChecker) return;
+    if (secondPin === selectedChecker.pin) {
+      setPinError("");
+      const code = generateCode();
+      setEnvelopeCode(code);
+
+      // Calculate expected (owner-only data, staff won't see this)
+      const todayOrders = orders.filter((o: any) => isToday(o.date));
+      const cashRevenue = todayOrders
+        .filter((o: any) => o.method === "cash" || (o.method && o.method.includes("cash")))
+        .reduce((s: number, o: any) => s + (o.total || 0), 0);
+      const expectedEnvelope = Math.max(0, cashRevenue - expenses);
+      const diff = envelopeAmount - expectedEnvelope;
+      let status = "correct";
+      if (Math.abs(diff) > 10) status = "onderzoeken";
+      else if (Math.abs(diff) > 2) status = "klein_verschil";
+
+      const record = {
+        closing_date: new Date().toISOString().split("T")[0],
+        primary_employee_id: loggedInEmployee.id,
+        primary_employee_name: loggedInEmployee.name,
+        second_checker_id: selectedChecker.id,
+        second_checker_name: selectedChecker.name,
+        counted_cash: counted,
+        float_amount: float_,
+        expense_receipts: expenses,
+        expense_note: expenseNote || null,
+        envelope_amount: envelopeAmount,
+        envelope_code: code,
+        expected_cash_revenue: cashRevenue,
+        expected_envelope: expectedEnvelope,
+        difference: Math.round(diff * 100) / 100,
+        status,
+      };
+
+      setSaving(true);
+      supabase.from("cash_closings").insert(record as any).then(({ error }) => {
+        setSaving(false);
+        if (error) console.error("Failed to save cash closing:", error);
+        else {
+          addLog("cash_closing", `Kassa afgesloten: ${euro(envelopeAmount)} in enveloppe (code: ${code})`);
+          onComplete(record);
+        }
+      });
+
+      setStep(6);
+    } else {
+      setPinError("Ongeldige PIN. Probeer opnieuw.");
+    }
+  }
+
+  if (!open) return null;
+
+  return (
+    <Modal open={open} onClose={step === 6 ? undefined : onClose}>
+      <div className="p-6 space-y-5">
+        {/* Step indicator */}
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Lock className="h-5 w-5" /> Kassa Afsluiting
+          </h2>
+          {step < 6 && (
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <div key={s} className={clsx("w-2.5 h-2.5 rounded-full transition-all", s === step ? "bg-primary scale-125" : s < step ? "bg-primary/40" : "bg-muted")} />
+              ))}
+            </div>
+          )}
+          {step < 6 && <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>}
+        </div>
+
+        {/* Step 1: Cash count */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="font-semibold text-amber-900 flex items-center gap-2"><Banknote className="h-4 w-4" /> Stap 1: Kas tellen</div>
+              <p className="text-sm text-amber-700 mt-1">Tel al het contante geld in de kassa en voer het totaal in.</p>
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">Kas totaal geteld (€)</Label>
+              <Input type="number" value={countedCash} onChange={(e) => setCountedCash(e.target.value)}
+                placeholder="Bijv. 421" className="mt-1 text-2xl font-bold h-14 text-center" autoFocus />
+            </div>
+            <Button className="w-full h-12" onClick={() => setStep(2)} disabled={!countedCash || counted <= 0}>
+              Volgende <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: Float */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="font-semibold text-blue-900 flex items-center gap-2"><Wallet className="h-4 w-4" /> Stap 2: Wisselgeld achterlaten</div>
+              <p className="text-sm text-blue-700 mt-1">Laat exact €{float_} achter in de kassa voor de volgende dag.</p>
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">Bedrag achterlaten in kassa (€)</Label>
+              <Input type="number" value={floatAmount} onChange={(e) => setFloatAmount(e.target.value)}
+                placeholder="300" className="mt-1 text-2xl font-bold h-14 text-center"
+                disabled={loggedInEmployee?.role !== "owner"} />
+              {loggedInEmployee?.role !== "owner" && (
+                <p className="text-xs text-muted-foreground mt-1">Alleen de owner kan dit bedrag wijzigen.</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(1)} className="flex-1"><ChevronLeft className="h-4 w-4 mr-1" /> Terug</Button>
+              <Button className="flex-1" onClick={() => setStep(3)}>Volgende <ChevronRight className="h-4 w-4 ml-1" /></Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Expense receipts */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+              <div className="font-semibold text-orange-900 flex items-center gap-2"><Receipt className="h-4 w-4" /> Stap 3: Bonnen & uitgaven</div>
+              <p className="text-sm text-orange-700 mt-1">Voer het totaal aan contante uitgaven in die vandaag zijn gedaan (melk, cups, boodschappen).</p>
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">Totaal bonnen / uitgaven vandaag (€)</Label>
+              <Input type="number" value={expenseReceipts} onChange={(e) => setExpenseReceipts(e.target.value)}
+                placeholder="Bijv. 22" className="mt-1 text-2xl font-bold h-14 text-center" />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold">Notitie (optioneel)</Label>
+              <Input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)}
+                placeholder="Bijv. melk + cups" className="mt-1" />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(2)} className="flex-1"><ChevronLeft className="h-4 w-4 mr-1" /> Terug</Button>
+              <Button className="flex-1" onClick={() => setStep(4)}>Volgende <ChevronRight className="h-4 w-4 ml-1" /></Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Envelope amount */}
+        {step === 4 && (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div className="font-semibold text-green-900 flex items-center gap-2"><DollarSign className="h-4 w-4" /> Stap 4: Enveloppe bedrag</div>
+              <p className="text-sm text-green-700 mt-1">Dit bedrag gaat in de enveloppe.</p>
+            </div>
+            <div className="bg-white border-2 border-green-400 rounded-2xl p-6 text-center">
+              <div className="text-sm text-muted-foreground">Geteld: {euro(counted)} − Float: {euro(float_)}</div>
+              <div className="text-5xl font-black text-green-700 mt-2">{euro(envelopeAmount)}</div>
+              <div className="text-sm font-medium text-green-600 mt-2">In enveloppe</div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(3)} className="flex-1"><ChevronLeft className="h-4 w-4 mr-1" /> Terug</Button>
+              <Button className="flex-1" onClick={() => setStep(5)}>Tweede check <ChevronRight className="h-4 w-4 ml-1" /></Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Second person verification */}
+        {step === 5 && (
+          <div className="space-y-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+              <div className="font-semibold text-purple-900 flex items-center gap-2"><Eye className="h-4 w-4" /> Stap 5: Tweede collega check (4-ogen)</div>
+              <p className="text-sm text-purple-700 mt-1">Een tweede medewerker moet de afsluiting bevestigen met hun PIN.</p>
+            </div>
+
+            <div className="bg-white rounded-xl border p-4 space-y-3">
+              <div className="text-sm text-muted-foreground">Samenvatting:</div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>Geteld:</div><div className="font-bold">{euro(counted)}</div>
+                <div>Float:</div><div className="font-bold">{euro(float_)}</div>
+                <div>Bonnen:</div><div className="font-bold">{euro(expenses)}</div>
+                <div>Enveloppe:</div><div className="font-bold text-green-700">{euro(envelopeAmount)}</div>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold">Wie is de tweede collega?</Label>
+              <select value={secondCheckerId} onChange={(e) => { setSecondCheckerId(e.target.value); setSecondPin(""); setPinError(""); }}
+                className="w-full rounded-lg border px-3 py-2 text-sm bg-white mt-1">
+                <option value="">Selecteer collega...</option>
+                {otherEmployees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>)}
+              </select>
+            </div>
+
+            {secondCheckerId && (
+              <div>
+                <Label className="text-sm font-semibold">PIN van {selectedChecker?.name}</Label>
+                <Input type="password" maxLength={6} value={secondPin}
+                  onChange={(e) => { setSecondPin(e.target.value.replace(/\D/g, "").slice(0, 6)); setPinError(""); }}
+                  placeholder="••••••" className="mt-1 font-mono text-center text-xl tracking-[0.5em]" />
+                {pinError && <p className="text-sm text-destructive mt-1">{pinError}</p>}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(4)} className="flex-1"><ChevronLeft className="h-4 w-4 mr-1" /> Terug</Button>
+              <Button className="flex-1" onClick={verifySecondPin}
+                disabled={!secondCheckerId || secondPin.length !== 6 || saving}>
+                {saving ? "Opslaan..." : "Bevestigen"} <Check className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Envelope code */}
+        {step === 6 && (
+          <div className="space-y-6 text-center py-4">
+            <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+            <div className="text-xl font-bold">Kassa afgesloten!</div>
+
+            <div className="bg-black text-white rounded-2xl p-8">
+              <div className="text-sm text-white/60 mb-2">Enveloppe code</div>
+              <div className="text-5xl font-black tracking-[0.15em] font-mono">{envelopeCode}</div>
+              <div className="text-sm text-white/60 mt-4">Schrijf deze code op de enveloppe</div>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-left">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Enveloppe bedrag:</div><div className="font-bold">{euro(envelopeAmount)}</div>
+                <div className="text-muted-foreground">Afgesloten door:</div><div className="font-bold">{loggedInEmployee?.name}</div>
+                <div className="text-muted-foreground">Gecontroleerd door:</div><div className="font-bold">{selectedChecker?.name}</div>
+                <div className="text-muted-foreground">Float in kassa:</div><div className="font-bold">{euro(float_)}</div>
+                <div className="text-muted-foreground">Bonnen/uitgaven:</div><div className="font-bold">{euro(expenses)}</div>
+                {expenseNote && <><div className="text-muted-foreground">Notitie:</div><div className="font-bold">{expenseNote}</div></>}
+              </div>
+            </div>
+
+            <Button className="w-full h-12" onClick={onClose}>Sluiten</Button>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// ─── CASH CLOSING VIEW (trigger for all staff) ──────────────────────────────
+
+function CashCloseView({ onOpen }: { onOpen: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 space-y-6">
+      <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center">
+        <Lock className="h-12 w-12 text-amber-700" />
+      </div>
+      <h2 className="text-2xl font-bold">Kassa Afsluiting</h2>
+      <p className="text-muted-foreground text-center max-w-sm">
+        Start de kassasluiting aan het einde van je dienst. Je telt het contante geld, voert de bonnen in, en een collega bevestigt met een tweede check.
+      </p>
+      <Button size="lg" className="h-14 px-10 text-lg rounded-2xl" onClick={onOpen}>
+        <Banknote className="h-5 w-5 mr-2" /> Start Kassa Afsluiting
+      </Button>
+    </div>
+  );
+}
+
+// ─── CASH AUDIT VIEW (owner only) ───────────────────────────────────────────
+
+function CashAuditView() {
+  const [closings, setClosings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase.from("cash_closings").select("*").order("created_at", { ascending: false }).limit(200);
+      if (data) setClosings(data);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  function statusBadge(status: string, diff: number) {
+    const absDiff = Math.abs(diff);
+    if (absDiff <= 2) return <Badge className="bg-green-100 text-green-800 text-[10px]">Correct</Badge>;
+    if (absDiff <= 10) return <Badge className="bg-orange-100 text-orange-800 text-[10px]">Klein verschil</Badge>;
+    return <Badge className="bg-red-100 text-red-800 text-[10px]">Onderzoeken</Badge>;
+  }
+
+  if (loading) return <div className="py-20 text-center text-muted-foreground">Laden...</div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold">Cash Audit</h2>
+          <p className="text-sm text-muted-foreground">Alleen zichtbaar voor owners. Vergelijk enveloppe bedragen met verwachte cash omzet.</p>
+        </div>
+        <Badge variant="outline">{closings.length} afsluitingen</Badge>
+      </div>
+
+      <Card className="rounded-2xl overflow-hidden">
+        <CardContent className="p-0">
+          <div className="overflow-auto max-h-[70vh]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-3 py-2 text-left font-medium">Datum</th>
+                  <th className="px-3 py-2 text-left font-medium">Code</th>
+                  <th className="px-3 py-2 text-left font-medium">Medewerker</th>
+                  <th className="px-3 py-2 text-left font-medium">2e Check</th>
+                  <th className="px-3 py-2 text-right font-medium">Geteld</th>
+                  <th className="px-3 py-2 text-right font-medium">Float</th>
+                  <th className="px-3 py-2 text-right font-medium">Bonnen</th>
+                  <th className="px-3 py-2 text-right font-medium">Enveloppe</th>
+                  <th className="px-3 py-2 text-right font-medium">Verwacht</th>
+                  <th className="px-3 py-2 text-right font-medium">Verschil</th>
+                  <th className="px-3 py-2 text-center font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {closings.length === 0 && (
+                  <tr><td colSpan={11} className="p-8 text-center text-muted-foreground">Geen afsluitingen gevonden</td></tr>
+                )}
+                {closings.map((c) => (
+                  <tr key={c.id} className="border-b hover:bg-neutral-50">
+                    <td className="px-3 py-2 whitespace-nowrap">{new Date(c.closing_date).toLocaleDateString("nl-NL")}</td>
+                    <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">{c.envelope_code}</td>
+                    <td className="px-3 py-2">{c.primary_employee_name}</td>
+                    <td className="px-3 py-2">{c.second_checker_name}</td>
+                    <td className="px-3 py-2 text-right font-medium">{euro(c.counted_cash)}</td>
+                    <td className="px-3 py-2 text-right">{euro(c.float_amount)}</td>
+                    <td className="px-3 py-2 text-right">{euro(c.expense_receipts)}</td>
+                    <td className="px-3 py-2 text-right font-bold">{euro(c.envelope_amount)}</td>
+                    <td className="px-3 py-2 text-right">{euro(c.expected_envelope)}</td>
+                    <td className={clsx("px-3 py-2 text-right font-bold",
+                      Math.abs(c.difference) <= 2 ? "text-green-700" : Math.abs(c.difference) <= 10 ? "text-orange-600" : "text-red-600"
+                    )}>{c.difference >= 0 ? "+" : ""}{euro(c.difference)}</td>
+                    <td className="px-3 py-2 text-center">{statusBadge(c.status, c.difference)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function SaakoukPOS() {
