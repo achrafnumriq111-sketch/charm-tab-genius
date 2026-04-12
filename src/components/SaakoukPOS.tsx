@@ -999,91 +999,274 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 }
 
 // ─── TABLE VIEW ──────────────────────────────────────────────────────────────
-// Table status is now derived from openTickets (single source of truth)
+// ─── FLOOR PLAN EDITOR ───────────────────────────────────────────────────────
 
-function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation }: any) {
-  const [areaFilter, setAreaFilter] = useState("all");
-  const areas = ["all", ...Array.from(new Set(tables.map((t: any) => String(t.area))))];
-  const filtered = areaFilter === "all" ? tables : tables.filter((t) => t.area === areaFilter);
+function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation, channels, addLog }: any) {
+  const [zones, setZones] = useState(() => {
+    const saved = localStorage.getItem("saakouk_zones");
+    return saved ? JSON.parse(saved) : initialZones;
+  });
+  const [activeZone, setActiveZone] = useState(zones[0]?.name || "Binnen");
+  const [editMode, setEditMode] = useState(false);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showAddTable, setShowAddTable] = useState(false);
+  const [showAddZone, setShowAddZone] = useState(false);
+  const [newZoneName, setNewZoneName] = useState("");
+  const [newTable, setNewTable] = useState({ name: "", seats: 2, shape: "square" as "square" | "circle" | "rect" });
+  const canvasRef = useRef<HTMLDivElement>(null);
 
-  function getTableStatus(table) {
+  useEffect(() => { localStorage.setItem("saakouk_zones", JSON.stringify(zones)); }, [zones]);
+  useEffect(() => { localStorage.setItem("saakouk_tables", JSON.stringify(tables)); }, [tables]);
+
+  const filtered = tables.filter((t: any) => t.area === activeZone);
+
+  function getTableStatus(table: any) {
     const ticket = openTickets[table.id];
-    if (ticket && ticket.cart.length > 0) return "occupied";
     if (ticket) return "occupied";
-    const hasReservation = reservations.some((r) => r.table === table.name && r.status === "confirmed");
+    const hasReservation = reservations.some((r: any) => r.table === table.name && r.status === "confirmed");
     if (hasReservation) return "reserved";
     return "free";
   }
 
-  const statusColors = { free: "bg-green-50 border-green-200", occupied: "bg-orange-50 border-orange-200", reserved: "bg-blue-50 border-blue-200" };
-  const statusBadge: Record<string, "default" | "outline" | "secondary"> = { free: "outline", occupied: "default", reserved: "secondary" };
+  const statusBg: Record<string, string> = { free: "#22c55e", occupied: "#f97316", reserved: "#3b82f6" };
 
-  const tableCounts = { free: 0, occupied: 0, reserved: 0 };
-  tables.forEach((t) => { tableCounts[getTableStatus(t)]++; });
+  const tableCounts: Record<string, number> = { free: 0, occupied: 0, reserved: 0 };
+  tables.forEach((t: any) => { const s = getTableStatus(t); tableCounts[s] = (tableCounts[s] || 0) + 1; });
+
+  function handleMouseDown(e: React.MouseEvent, tableId: string) {
+    if (!editMode) return;
+    e.preventDefault();
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const table = tables.find((t: any) => t.id === tableId);
+    if (!table) return;
+    setDragging(tableId);
+    setDragOffset({ x: e.clientX - rect.left - table.x, y: e.clientY - rect.top - table.y });
+  }
+
+  function handleMouseMove(e: React.MouseEvent) {
+    if (!dragging || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const newX = Math.max(0, Math.min(rect.width - 60, e.clientX - rect.left - dragOffset.x));
+    const newY = Math.max(0, Math.min(rect.height - 60, e.clientY - rect.top - dragOffset.y));
+    setTables((prev: any[]) => prev.map((t: any) => t.id === dragging ? { ...t, x: Math.round(newX), y: Math.round(newY) } : t));
+  }
+
+  function handleMouseUp() { setDragging(null); }
+
+  function addNewTable() {
+    if (!newTable.name.trim()) return;
+    const id = generateId();
+    const t = {
+      id, name: newTable.name.trim(), seats: newTable.seats,
+      area: activeZone, shape: newTable.shape,
+      x: 60 + Math.random() * 200, y: 60 + Math.random() * 150,
+      w: newTable.shape === "rect" ? 120 : 70, h: 70,
+    };
+    setTables((prev: any[]) => [...prev, t]);
+    addLog?.("table_created", `Tafel "${t.name}" aangemaakt in zone ${activeZone}`);
+    setNewTable({ name: "", seats: 2, shape: "square" });
+    setShowAddTable(false);
+  }
+
+  function removeTable(id: string) {
+    const t = tables.find((tb: any) => tb.id === id);
+    setTables((prev: any[]) => prev.filter((tb: any) => tb.id !== id));
+    addLog?.("table_deleted", `Tafel "${t?.name}" verwijderd`);
+  }
+
+  function addZone() {
+    if (!newZoneName.trim()) return;
+    setZones((prev: any[]) => [...prev, { id: generateId(), name: newZoneName.trim() }]);
+    setActiveZone(newZoneName.trim());
+    setNewZoneName("");
+    setShowAddZone(false);
+  }
+
+  function removeZone(zoneId: string) {
+    const zone = zones.find((z: any) => z.id === zoneId);
+    if (!zone) return;
+    setTables((prev: any[]) => prev.filter((t: any) => t.area !== zone.name));
+    setZones((prev: any[]) => prev.filter((z: any) => z.id !== zoneId));
+    if (activeZone === zone.name) {
+      const remaining = zones.filter((z: any) => z.id !== zoneId);
+      if (remaining.length > 0) setActiveZone(remaining[0].name);
+    }
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {(areas as string[]).map((a: string) => (
-            <Button key={a} variant={areaFilter === a ? "default" : "outline"} size="sm" className="rounded-full capitalize" onClick={() => setAreaFilter(a)}>
-              {a === "all" ? "All areas" : a}
-            </Button>
-          ))}
+    <div className="space-y-3">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant={editMode ? "default" : "outline"} size="sm" onClick={() => setEditMode(!editMode)} className="rounded-full">
+            <Edit className="h-3.5 w-3.5 mr-1" /> {editMode ? "Klaar" : "Bewerken"}
+          </Button>
+          {editMode && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setShowAddTable(true)} className="rounded-full">
+                <Plus className="h-3.5 w-3.5 mr-1" /> Tafel
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowAddZone(true)} className="rounded-full">
+                <Plus className="h-3.5 w-3.5 mr-1" /> Zone
+              </Button>
+            </>
+          )}
         </div>
         <div className="flex gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full bg-green-500" /> Free ({tableCounts.free})</span>
-          <span className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Occupied ({tableCounts.occupied})</span>
-          <span className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Reserved ({tableCounts.reserved})</span>
+          <span className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full bg-green-500" /> Vrij ({tableCounts.free})</span>
+          <span className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Bezet ({tableCounts.occupied})</span>
+          <span className="flex items-center gap-1"><div className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Gereserveerd ({tableCounts.reserved})</span>
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-4">
-        {filtered.map((table) => {
+
+      {/* External channels */}
+      <div className="flex gap-2">
+        {channels.map((ch: any) => {
+          const hasTicket = !!openTickets[ch.id];
+          return (
+            <Button key={ch.id} variant={hasTicket ? "default" : "outline"} size="sm" className="rounded-full"
+              onClick={() => onSelectTable(ch.id)}>
+              <span className="mr-1">{ch.icon}</span> {ch.name}
+              {hasTicket && <Badge className="ml-1.5 h-5 text-[10px]" variant="secondary">{cartItemCount(openTickets[ch.id]?.cart || [])}</Badge>}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* Zone tabs */}
+      <div className="flex items-center gap-1 border-b pb-1">
+        {zones.map((z: any) => (
+          <div key={z.id} className="flex items-center">
+            <button
+              onClick={() => setActiveZone(z.name)}
+              className={clsx("px-3 py-1.5 text-xs font-medium rounded-t-lg transition-colors",
+                activeZone === z.name ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent")}
+            >
+              {z.name}
+            </button>
+            {editMode && zones.length > 1 && (
+              <button onClick={() => removeZone(z.id)} className="text-destructive hover:bg-destructive/10 rounded p-0.5 ml-0.5">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Canvas */}
+      <div
+        ref={canvasRef}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        className="relative bg-muted/30 border-2 border-dashed border-border rounded-2xl overflow-hidden"
+        style={{ height: 420, minHeight: 320 }}
+      >
+        {/* Grid pattern */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20">
+          <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" /></pattern></defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
+
+        {filtered.map((table: any) => {
           const status = getTableStatus(table);
           const ticket = openTickets[table.id];
           const ticketTotal = ticket ? cartSubtotal(ticket.cart) : 0;
           const ticketItems = ticket ? cartItemCount(ticket.cart) : 0;
+          const color = statusBg[status];
+          const isCircle = table.shape === "circle";
+
           return (
-            <Card key={table.id} className={clsx("rounded-2xl transition-all hover:shadow-md cursor-pointer", statusColors[status])}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-2xl font-bold">{table.name}</div>
-                  <Badge variant={statusBadge[status]} className="capitalize">{status}</Badge>
-                </div>
-                <div className="text-xs text-muted-foreground space-y-0.5">
-                  <div className="flex items-center gap-1"><Armchair className="h-3 w-3" /> {table.seats} seats</div>
-                  <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {table.area}</div>
-                  {status === "occupied" && ticketItems > 0 && (
-                    <div className="font-medium text-orange-700 mt-1">{ticketItems} items · {euro(ticketTotal)}</div>
-                  )}
-                </div>
-                <div className="flex gap-2 mt-3">
-                  {status === "free" && (
-                    <Button size="sm" className="flex-1 text-xs" onClick={() => onSelectTable(table.id)}>
-                      <Plus className="h-3 w-3 mr-1" /> Open order
-                    </Button>
-                  )}
-                  {status === "occupied" && (
-                    <>
-                      <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => onSelectTable(table.id)}>
-                        <Eye className="h-3 w-3 mr-1" /> View
-                      </Button>
-                      <Button size="sm" className="flex-1 text-xs" onClick={() => onCloseTable(table.id)}>
-                        <Check className="h-3 w-3 mr-1" /> Close
-                      </Button>
-                    </>
-                  )}
-                  {status === "reserved" && (
-                    <Button size="sm" variant="secondary" className="flex-1 text-xs" onClick={() => onSeatReservation(table)}>
-                      <Play className="h-3 w-3 mr-1" /> Seat guests
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div
+              key={table.id}
+              onMouseDown={(e) => handleMouseDown(e, table.id)}
+              onClick={() => {
+                if (!editMode) {
+                  if (status === "reserved") onSeatReservation(table);
+                  else onSelectTable(table.id);
+                }
+              }}
+              className={clsx(
+                "absolute flex flex-col items-center justify-center text-white font-bold text-sm shadow-lg transition-all select-none",
+                isCircle ? "rounded-full" : "rounded-xl",
+                editMode ? "cursor-move ring-2 ring-primary/40" : "cursor-pointer hover:scale-105",
+                dragging === table.id && "opacity-70 z-50"
+              )}
+              style={{
+                left: table.x, top: table.y, width: table.w, height: table.h,
+                backgroundColor: color, minWidth: 50, minHeight: 50,
+              }}
+            >
+              <span className="text-base font-bold drop-shadow">{table.name}</span>
+              <span className="text-[9px] opacity-80">{table.seats} st.</span>
+              {status === "occupied" && ticketItems > 0 && (
+                <span className="text-[9px] font-normal mt-0.5">{euro(ticketTotal)}</span>
+              )}
+              {editMode && (
+                <button onClick={(e) => { e.stopPropagation(); removeTable(table.id); }}
+                  className="absolute -top-2 -right-2 bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] shadow">
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           );
         })}
+
+        {filtered.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+            Geen tafels in deze zone. {editMode ? "Voeg een tafel toe." : "Schakel bewerken in."}
+          </div>
+        )}
       </div>
+
+      {/* Add Table Modal */}
+      <Modal open={showAddTable} onClose={() => setShowAddTable(false)}>
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-bold">Tafel toevoegen</h2>
+          <div className="space-y-3">
+            <div>
+              <Label>Naam</Label>
+              <Input value={newTable.name} onChange={(e) => setNewTable((p) => ({ ...p, name: e.target.value }))} placeholder="bv. A1, Bar, Lounge..." />
+            </div>
+            <div>
+              <Label>Stoelen</Label>
+              <Input type="number" min={1} max={20} value={newTable.seats} onChange={(e) => setNewTable((p) => ({ ...p, seats: parseInt(e.target.value) || 2 }))} />
+            </div>
+            <div>
+              <Label>Vorm</Label>
+              <div className="flex gap-2 mt-1">
+                {(["square", "circle", "rect"] as const).map((s) => (
+                  <Button key={s} variant={newTable.shape === s ? "default" : "outline"} size="sm" onClick={() => setNewTable((p) => ({ ...p, shape: s }))} className="rounded-full">
+                    {s === "square" ? "■ Vierkant" : s === "circle" ? "● Rond" : "▬ Rechthoek"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">Zone: {activeZone}</div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setShowAddTable(false)}>Annuleren</Button>
+            <Button onClick={addNewTable} disabled={!newTable.name.trim()}>Toevoegen</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Add Zone Modal */}
+      <Modal open={showAddZone} onClose={() => setShowAddZone(false)}>
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-bold">Zone toevoegen</h2>
+          <div>
+            <Label>Zone naam</Label>
+            <Input value={newZoneName} onChange={(e) => setNewZoneName(e.target.value)} placeholder="bv. Terras, VIP, Verdieping 2..." />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setShowAddZone(false)}>Annuleren</Button>
+            <Button onClick={addZone} disabled={!newZoneName.trim()}>Toevoegen</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
