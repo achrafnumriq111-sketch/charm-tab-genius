@@ -3676,6 +3676,7 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     view_changed: "bg-gray-100 text-gray-800",
     login: "bg-emerald-100 text-emerald-800",
     logout: "bg-amber-100 text-amber-800",
+    cash_closing: "bg-emerald-100 text-emerald-800",
   };
 
   return (
