@@ -256,7 +256,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
-    { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: false },
+    { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
@@ -658,7 +658,7 @@ function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void })
 // ─── COUNTER POS VIEW ────────────────────────────────────────────────────────
 // Cart state is now lifted: ticket comes from parent via props
 
-function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast }: any) {
+function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast, addLog }: any) {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("Signature Drinks");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -699,9 +699,11 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   function quickAdd(product) {
     if (product.modifierGroups?.length) {
       setSelectedProduct(product);
+      addLog?.("product_selected", `Product geselecteerd met modifiers: ${product.name}`);
       return;
     }
     addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] });
+    addLog?.("item_added_to_cart", `Product toegevoegd aan ticket: ${product.name} (${euro(product.price)})`);
   }
 
   function updateQty(lineId, delta) {
@@ -709,10 +711,13 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   }
 
   function removeLine(lineId) {
+    const item = cart.find((x) => x.lineId === lineId);
+    addLog?.("item_removed_from_cart", `Product verwijderd uit ticket: ${item?.name || lineId}`);
     setCart((prev) => prev.filter((x) => x.lineId !== lineId));
   }
 
   function clearCart() {
+    addLog?.("cart_cleared", `Ticket leeggemaakt (${cart.length} items)`);
     setTicket(emptyTicket(tableId));
     setScanValue("");
   }
@@ -778,6 +783,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     if (cart.length === 0) return;
     setPaymentMethod(method);
     setPaymentOpen(true);
+    addLog?.("payment_started", `Betaling gestart: ${method} — ${cart.length} items, ${euro(subtotal)}`);
   }
 
   function handlePaymentComplete({ method, total: paidTotal, tip, giftCardDeduction, giftCardId }) {
@@ -800,6 +806,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       giftCardId: giftCardId || null,
       status: "completed",
     };
+    addLog?.("payment_completed", `Betaling afgerond: #${order.id} — ${euro(paidTotal)} via ${method}${tip ? ` + ${euro(tip)} fooi` : ""}`);
     onOrderComplete(order);
     clearCart();
   }
@@ -1307,22 +1314,27 @@ function ActivityView({ orders }: any) {
 
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 
-function ReservationsView({ reservations, setReservations, tables }: any) {
+function ReservationsView({ reservations, setReservations, tables, addLog }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
 
   function addReservation() {
     if (!form.name || !form.date || !form.time) return;
     setReservations((prev) => [...prev, { ...form, id: generateId(), guests: parseInt(form.guests) || 2, status: "confirmed" }]);
+    addLog?.("reservation_created", `Reservering aangemaakt: ${form.name} — ${form.date} ${form.time}, ${form.guests} gasten, tafel ${form.table}`);
     setShowAdd(false);
     setForm({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
   }
 
   function updateStatus(id, status) {
+    const r = reservations.find((x) => x.id === id);
     setReservations((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+    addLog?.("reservation_status_changed", `Reservering status gewijzigd: ${r?.name || id} → ${status}`);
   }
 
   function removeReservation(id) {
+    const r = reservations.find((x) => x.id === id);
+    addLog?.("reservation_deleted", `Reservering verwijderd: ${r?.name || id}`);
     setReservations((prev) => prev.filter((r) => r.id !== id));
   }
 
@@ -1684,7 +1696,7 @@ function QrView({ features, tables }: any) {
 
 // ─── CUSTOMERS ───────────────────────────────────────────────────────────────
 
-function CustomersView({ customers, setCustomers }: any) {
+function CustomersView({ customers, setCustomers, addLog }: any) {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", provider: "none" });
@@ -1698,6 +1710,7 @@ function CustomersView({ customers, setCustomers }: any) {
   function addCustomer() {
     if (!form.name || !form.email || !form.phone) return;
     setCustomers((prev) => [...prev, { ...form, id: generateId(), loyaltyId: form.provider !== "none" ? `LYL-${generateId().toUpperCase().slice(0, 3)}` : "", points: 0, visits: 0, totalSpent: 0, lastVisit: "-" }]);
+    addLog?.("customer_created", `Klant aangemaakt: ${form.name} (${form.email})`);
     setShowAdd(false);
     setForm({ name: "", email: "", phone: "", provider: "none" });
   }
@@ -1714,7 +1727,7 @@ function CustomersView({ customers, setCustomers }: any) {
       </div>
       <div className="grid grid-cols-1 gap-3">
         {filtered.map((c) => (
-          <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => setSelected(c)}>
+          <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => { setSelected(c); addLog?.("customer_viewed", `Klant bekeken: ${c.name}`); }}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="h-10 w-10 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-sm">
@@ -1795,7 +1808,7 @@ function CustomersView({ customers, setCustomers }: any) {
 
 // ─── GIFT CARDS ──────────────────────────────────────────────────────────────
 
-function GiftCardsView({ giftCards, setGiftCards }: any) {
+function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ customerName: "", value: "25" });
 
@@ -1804,6 +1817,7 @@ function GiftCardsView({ giftCards, setGiftCards }: any) {
     const code = `SAAK-2026-${generateId().toUpperCase().slice(0, 4)}`;
     const value = parseFloat(form.value);
     setGiftCards((prev) => [...prev, { id: generateId(), code, balance: value, initialValue: value, status: "active", issuedAt: new Date().toISOString().slice(0, 10), customerName: form.customerName }]);
+    addLog?.("giftcard_issued", `Cadeaukaart uitgegeven: ${code} — ${euro(value)} voor ${form.customerName}`);
     setShowAdd(false);
     setForm({ customerName: "", value: "25" });
   }
@@ -2810,9 +2824,21 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     product_created: "Product aangemaakt",
     product_updated: "Product bijgewerkt",
     product_deleted: "Product verwijderd",
-    product_edit_open: "Product bewerken geopend",
-    product_add_open: "Nieuw product geopend",
+    product_edit_open: "Product bewerken",
+    product_add_open: "Nieuw product",
+    product_selected: "Product geselecteerd",
+    item_added_to_cart: "Item toegevoegd",
+    item_removed_from_cart: "Item verwijderd",
+    cart_cleared: "Ticket geleegd",
+    payment_started: "Betaling gestart",
+    payment_completed: "Betaling afgerond",
     order_completed: "Bestelling afgerond",
+    reservation_created: "Reservering aangemaakt",
+    reservation_status_changed: "Reservering status",
+    reservation_deleted: "Reservering verwijderd",
+    customer_created: "Klant aangemaakt",
+    customer_viewed: "Klant bekeken",
+    giftcard_issued: "Cadeaukaart uitgegeven",
     view_changed: "Pagina bekeken",
     login: "Ingelogd",
     logout: "Uitgelogd",
@@ -2822,7 +2848,18 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     product_created: "bg-green-100 text-green-800",
     product_updated: "bg-blue-100 text-blue-800",
     product_deleted: "bg-red-100 text-red-800",
+    item_added_to_cart: "bg-emerald-100 text-emerald-800",
+    item_removed_from_cart: "bg-orange-100 text-orange-800",
+    cart_cleared: "bg-yellow-100 text-yellow-800",
+    payment_started: "bg-indigo-100 text-indigo-800",
+    payment_completed: "bg-purple-100 text-purple-800",
     order_completed: "bg-purple-100 text-purple-800",
+    reservation_created: "bg-cyan-100 text-cyan-800",
+    reservation_status_changed: "bg-sky-100 text-sky-800",
+    reservation_deleted: "bg-red-100 text-red-800",
+    customer_created: "bg-teal-100 text-teal-800",
+    customer_viewed: "bg-slate-100 text-slate-800",
+    giftcard_issued: "bg-pink-100 text-pink-800",
     view_changed: "bg-gray-100 text-gray-800",
     login: "bg-emerald-100 text-emerald-800",
     logout: "bg-amber-100 text-amber-800",
@@ -3184,7 +3221,7 @@ export default function SaakoukPOS() {
                     products={products} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
-                    passkitConfig={passkitConfig} onToast={setToast}
+                    passkitConfig={passkitConfig} onToast={setToast} addLog={addLog}
                   />
                 </TabsContent>
                 <TabsContent value="table">
@@ -3195,11 +3232,11 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "activity" && <ActivityView orders={orders} />}
-            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} />}
+            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
-            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} />}
-            {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
+            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} />}
+            {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
