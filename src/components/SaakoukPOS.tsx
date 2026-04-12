@@ -18,9 +18,9 @@ import {
   Sparkles, Wallet, Percent, Search, Smartphone, X, Check,
   ChefHat, Printer, Edit, Eye, DollarSign, TrendingUp,
   UserPlus, MapPin, FileText, Mail, Lock,
-  Shield, Zap, Bell, LogOut,
+  Shield, Zap, Bell, LogOut, Star,
   ChevronRight, ChevronLeft, Banknote,
-  UtensilsCrossed, Armchair, Play, UserCog,
+  UtensilsCrossed, Armchair, Play, UserCog, Clock,
 } from "lucide-react";
 
 /**
