@@ -4137,6 +4137,7 @@ export default function SaakoukPOS() {
   const [qrOrders, setQrOrders] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [showCashClosing, setShowCashClosing] = useState(false);
 
   const addLog = useCallback((action: string, details: string) => {
     if (!loggedInEmployee) return;
@@ -4353,6 +4354,7 @@ export default function SaakoukPOS() {
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     pos: "Point of Sale",
+    cashclose: "Kassa Afsluiting",
     activity: "Order History",
     reservations: "Reservations",
     products: "Products",
@@ -4361,6 +4363,7 @@ export default function SaakoukPOS() {
     giftcards: "Gift Cards",
     sales: "Sales Reports",
     accounting: "Accounting",
+    cashaudit: "Cash Audit",
     employees: "Medewerkers",
     logs: "Activiteiten Log",
     settings: "Settings",
