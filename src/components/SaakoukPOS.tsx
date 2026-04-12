@@ -2790,6 +2790,97 @@ function EmployeesView({ employees, setEmployees, currentRole }: { employees: an
   );
 }
 
+// ─── LOGS VIEW ───────────────────────────────────────────────────────────────
+
+function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
+  const [filterEmployee, setFilterEmployee] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const actionTypes = [...new Set(logs.map((l) => l.action))];
+
+  const filtered = logs.filter((log) => {
+    if (filterEmployee !== "all" && log.employeeId !== filterEmployee) return false;
+    if (filterType !== "all" && log.action !== filterType) return false;
+    if (searchQuery && !log.details.toLowerCase().includes(searchQuery.toLowerCase()) && !log.employeeName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const actionLabels: Record<string, string> = {
+    product_created: "Product aangemaakt",
+    product_updated: "Product bijgewerkt",
+    product_deleted: "Product verwijderd",
+    product_edit_open: "Product bewerken geopend",
+    product_add_open: "Nieuw product geopend",
+    order_completed: "Bestelling afgerond",
+    view_changed: "Pagina bekeken",
+    login: "Ingelogd",
+    logout: "Uitgelogd",
+  };
+
+  const actionColors: Record<string, string> = {
+    product_created: "bg-green-100 text-green-800",
+    product_updated: "bg-blue-100 text-blue-800",
+    product_deleted: "bg-red-100 text-red-800",
+    order_completed: "bg-purple-100 text-purple-800",
+    view_changed: "bg-gray-100 text-gray-800",
+    login: "bg-emerald-100 text-emerald-800",
+    logout: "bg-amber-100 text-amber-800",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Zoek in logs..." className="pl-9" />
+        </div>
+        <select value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+          <option value="all">Alle medewerkers</option>
+          {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+        </select>
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+          <option value="all">Alle acties</option>
+          {actionTypes.map((t) => <option key={t} value={t}>{actionLabels[t] || t}</option>)}
+        </select>
+        <Badge variant="outline">{filtered.length} logs</Badge>
+      </div>
+
+      <Card className="rounded-2xl">
+        <CardContent className="p-0">
+          <div className="divide-y max-h-[70vh] overflow-auto">
+            {filtered.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Geen logs gevonden</p>
+              </div>
+            )}
+            {filtered.map((log) => (
+              <div key={log.id} className="flex items-start gap-3 p-3 hover:bg-neutral-50">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                  {log.employeeName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm">{log.employeeName}</span>
+                    <Badge className={clsx("text-[10px] rounded-full", actionColors[log.action] || "bg-gray-100 text-gray-800")}>
+                      {actionLabels[log.action] || log.action}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5">{log.details}</p>
+                </div>
+                <div className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                  {formatDate(log.timestamp)} {formatTime(log.timestamp)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function SaakoukPOS() {
