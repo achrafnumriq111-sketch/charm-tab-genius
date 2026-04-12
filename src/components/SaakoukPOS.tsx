@@ -3133,6 +3133,7 @@ export default function SaakoukPOS() {
     sales: "Sales Reports",
     accounting: "Accounting",
     employees: "Medewerkers",
+    logs: "Activiteiten Log",
     settings: "Settings",
   };
 
