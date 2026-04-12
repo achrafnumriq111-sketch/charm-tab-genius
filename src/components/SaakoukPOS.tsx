@@ -1390,11 +1390,13 @@ function ReservationsView({ reservations, setReservations, tables }: any) {
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+
+  const isOwner = currentRole === "owner";
 
   const filtered = allProducts.filter((p) =>
     (filterSection === "all" || p.section === filterSection) &&
@@ -1413,9 +1415,11 @@ function ProductsView({ products: allProducts, setProducts }: any) {
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
       });
+      addLog?.("product_edit_open", `Product bewerken geopend: ${product.name}`);
     } else {
       setEditing("new");
       setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
 
@@ -1432,15 +1436,38 @@ function ProductsView({ products: allProducts, setProducts }: any) {
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
     if (editing === "new") {
-      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color }]);
+      const newProduct = {
+        id: generateId(),
+        name: form.name,
+        section: form.section,
+        price: parseFloat(form.price),
+        costPrice,
+        tags,
+        modifierGroups,
+        color: form.color,
+        createdBy: currentEmployee?.name || "Onbekend",
+        createdById: currentEmployee?.id || null,
+        createdAt: new Date().toISOString(),
+      };
+      setProducts((prev) => [...prev, newProduct]);
+      addLog?.("product_created", `Product aangemaakt: ${form.name} (${euro(parseFloat(form.price))})`);
+      if (currentRole !== "owner") {
+        setNotifications?.((prev: any[]) => [
+          ...prev,
+          { id: generateId(), type: "product_created", message: `${currentEmployee?.name} heeft een nieuw product aangemaakt: ${form.name}`, timestamp: new Date(), read: false },
+        ]);
+      }
     } else {
       setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
+      addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
   }
 
   function deleteProduct(id) {
+    const product = allProducts.find((p) => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
+    addLog?.("product_deleted", `Product verwijderd: ${product?.name || id}`);
   }
 
   return (
@@ -1465,13 +1492,18 @@ function ProductsView({ products: allProducts, setProducts }: any) {
                   {product.color && <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: product.color }} />}
                   <div>
                     <div className="font-medium text-sm">{product.name}</div>
-                    <div className="text-xs text-muted-foreground">{product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers</div>
+                    <div className="text-xs text-muted-foreground">
+                      {product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers
+                      {product.createdBy && <span className="ml-1">· Door: {product.createdBy}</span>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="font-semibold">{euro(product.price)}</div>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(product)}><Edit className="h-3 w-3" /></Button>
-                  <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
+                  )}
                 </div>
               </div>
             ))}
