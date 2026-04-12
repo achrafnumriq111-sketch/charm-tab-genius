@@ -267,6 +267,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
+    { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
@@ -275,6 +276,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
     { key: "sales", label: "Sales", icon: Receipt, adminOnly: true, ownerOnly: true },
     { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true, ownerOnly: true },
+    { key: "cashaudit", label: "Audit", icon: Shield, adminOnly: false, ownerOnly: true },
     { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true },
     { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
     { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
