@@ -134,14 +134,25 @@ const discounts = [
 ];
 
 const initialTables = [
-  { id: "1", name: "1", seats: "1-2", area: "Buiten" },
-  { id: "2", name: "2", seats: "1-2", area: "Buiten" },
-  { id: "3", name: "3", seats: "1-2", area: "Buiten" },
-  { id: "4", name: "4", seats: "1-2", area: "Other" },
-  { id: "5", name: "5", seats: "1-2", area: "Other" },
-  { id: "bar", name: "Bar", seats: "1-2", area: "Other" },
-  { id: "t1", name: "T1", seats: "1-4", area: "Buiten" },
-  { id: "t2", name: "T2", seats: "1-4", area: "Buiten" },
+  { id: "1", name: "1", seats: 2, area: "Binnen", shape: "square" as const, x: 60, y: 60, w: 70, h: 70 },
+  { id: "2", name: "2", seats: 2, area: "Binnen", shape: "square" as const, x: 160, y: 60, w: 70, h: 70 },
+  { id: "3", name: "3", seats: 2, area: "Binnen", shape: "square" as const, x: 260, y: 60, w: 70, h: 70 },
+  { id: "4", name: "4", seats: 4, area: "Binnen", shape: "rect" as const, x: 60, y: 180, w: 120, h: 70 },
+  { id: "5", name: "5", seats: 4, area: "Binnen", shape: "rect" as const, x: 220, y: 180, w: 120, h: 70 },
+  { id: "bar", name: "Bar", seats: 6, area: "Binnen", shape: "rect" as const, x: 400, y: 60, w: 140, h: 50 },
+  { id: "t1", name: "T1", seats: 4, area: "Terras", shape: "circle" as const, x: 80, y: 80, w: 80, h: 80 },
+  { id: "t2", name: "T2", seats: 4, area: "Terras", shape: "circle" as const, x: 220, y: 80, w: 80, h: 80 },
+];
+
+const initialChannels = [
+  { id: "afhaal", name: "Afhaal", icon: "🛍️" },
+  { id: "uber-eats", name: "Uber Eats", icon: "🚗" },
+  { id: "thuisbezorgd", name: "Thuisbezorgd", icon: "🛵" },
+];
+
+const initialZones = [
+  { id: "zone-binnen", name: "Binnen" },
+  { id: "zone-terras", name: "Terras" },
 ];
 
 const initialCustomers = [
