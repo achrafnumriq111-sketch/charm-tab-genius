@@ -3653,6 +3653,7 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     view_changed: "Pagina bekeken",
     login: "Ingelogd",
     logout: "Uitgelogd",
+    cash_closing: "Kassa afgesloten",
   };
 
   const actionColors: Record<string, string> = {
