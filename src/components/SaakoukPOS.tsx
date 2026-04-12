@@ -2906,6 +2906,21 @@ export default function SaakoukPOS() {
   });
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  const addLog = useCallback((action: string, details: string) => {
+    if (!loggedInEmployee) return;
+    setActivityLogs((prev) => [{
+      id: generateId(),
+      action,
+      details,
+      employeeId: loggedInEmployee.id,
+      employeeName: loggedInEmployee.name,
+      employeeRole: loggedInEmployee.role,
+      timestamp: new Date(),
+    }, ...prev]);
+  }, [loggedInEmployee]);
 
   // Load saved transactions from database
   useEffect(() => {
