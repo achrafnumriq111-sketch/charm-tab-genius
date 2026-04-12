@@ -1696,7 +1696,14 @@ function QrView({ features, tables }: any) {
 
 // ─── CUSTOMERS ───────────────────────────────────────────────────────────────
 
-function CustomersView({ customers, setCustomers, addLog }: any) {
+function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
+  const isOwner = currentRole === "owner";
+
+  function deleteCustomer(id: string) {
+    const c = customers.find((x: any) => x.id === id);
+    setCustomers((prev: any[]) => prev.filter((x) => x.id !== id));
+    addLog?.("customer_deleted", `Klant verwijderd: ${c?.name || id}`);
+  }
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", provider: "none" });
