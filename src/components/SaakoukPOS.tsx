@@ -258,12 +258,13 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: false },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
-    { key: "products", label: "Products", icon: Package, adminOnly: true, ownerOnly: false },
+    { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
     { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
     { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
     { key: "sales", label: "Sales", icon: Receipt, adminOnly: true, ownerOnly: true },
     { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true, ownerOnly: true },
+    { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true },
     { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
     { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
   ];
@@ -1389,11 +1390,13 @@ function ReservationsView({ reservations, setReservations, tables }: any) {
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+
+  const isOwner = currentRole === "owner";
 
   const filtered = allProducts.filter((p) =>
     (filterSection === "all" || p.section === filterSection) &&
@@ -1412,9 +1415,11 @@ function ProductsView({ products: allProducts, setProducts }: any) {
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
       });
+      addLog?.("product_edit_open", `Product bewerken geopend: ${product.name}`);
     } else {
       setEditing("new");
       setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
 
@@ -1431,15 +1436,38 @@ function ProductsView({ products: allProducts, setProducts }: any) {
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
     if (editing === "new") {
-      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color }]);
+      const newProduct = {
+        id: generateId(),
+        name: form.name,
+        section: form.section,
+        price: parseFloat(form.price),
+        costPrice,
+        tags,
+        modifierGroups,
+        color: form.color,
+        createdBy: currentEmployee?.name || "Onbekend",
+        createdById: currentEmployee?.id || null,
+        createdAt: new Date().toISOString(),
+      };
+      setProducts((prev) => [...prev, newProduct]);
+      addLog?.("product_created", `Product aangemaakt: ${form.name} (${euro(parseFloat(form.price))})`);
+      if (currentRole !== "owner") {
+        setNotifications?.((prev: any[]) => [
+          ...prev,
+          { id: generateId(), type: "product_created", message: `${currentEmployee?.name} heeft een nieuw product aangemaakt: ${form.name}`, timestamp: new Date(), read: false },
+        ]);
+      }
     } else {
       setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
+      addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
   }
 
   function deleteProduct(id) {
+    const product = allProducts.find((p) => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
+    addLog?.("product_deleted", `Product verwijderd: ${product?.name || id}`);
   }
 
   return (
@@ -1464,13 +1492,18 @@ function ProductsView({ products: allProducts, setProducts }: any) {
                   {product.color && <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: product.color }} />}
                   <div>
                     <div className="font-medium text-sm">{product.name}</div>
-                    <div className="text-xs text-muted-foreground">{product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers</div>
+                    <div className="text-xs text-muted-foreground">
+                      {product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers
+                      {product.createdBy && <span className="ml-1">· Door: {product.createdBy}</span>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="font-semibold">{euro(product.price)}</div>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(product)}><Edit className="h-3 w-3" /></Button>
-                  <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -2757,6 +2790,97 @@ function EmployeesView({ employees, setEmployees, currentRole }: { employees: an
   );
 }
 
+// ─── LOGS VIEW ───────────────────────────────────────────────────────────────
+
+function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
+  const [filterEmployee, setFilterEmployee] = useState("all");
+  const [filterType, setFilterType] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const actionTypes = [...new Set(logs.map((l) => l.action))];
+
+  const filtered = logs.filter((log) => {
+    if (filterEmployee !== "all" && log.employeeId !== filterEmployee) return false;
+    if (filterType !== "all" && log.action !== filterType) return false;
+    if (searchQuery && !log.details.toLowerCase().includes(searchQuery.toLowerCase()) && !log.employeeName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const actionLabels: Record<string, string> = {
+    product_created: "Product aangemaakt",
+    product_updated: "Product bijgewerkt",
+    product_deleted: "Product verwijderd",
+    product_edit_open: "Product bewerken geopend",
+    product_add_open: "Nieuw product geopend",
+    order_completed: "Bestelling afgerond",
+    view_changed: "Pagina bekeken",
+    login: "Ingelogd",
+    logout: "Uitgelogd",
+  };
+
+  const actionColors: Record<string, string> = {
+    product_created: "bg-green-100 text-green-800",
+    product_updated: "bg-blue-100 text-blue-800",
+    product_deleted: "bg-red-100 text-red-800",
+    order_completed: "bg-purple-100 text-purple-800",
+    view_changed: "bg-gray-100 text-gray-800",
+    login: "bg-emerald-100 text-emerald-800",
+    logout: "bg-amber-100 text-amber-800",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Zoek in logs..." className="pl-9" />
+        </div>
+        <select value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+          <option value="all">Alle medewerkers</option>
+          {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+        </select>
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+          <option value="all">Alle acties</option>
+          {actionTypes.map((t) => <option key={t} value={t}>{actionLabels[t] || t}</option>)}
+        </select>
+        <Badge variant="outline">{filtered.length} logs</Badge>
+      </div>
+
+      <Card className="rounded-2xl">
+        <CardContent className="p-0">
+          <div className="divide-y max-h-[70vh] overflow-auto">
+            {filtered.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Geen logs gevonden</p>
+              </div>
+            )}
+            {filtered.map((log) => (
+              <div key={log.id} className="flex items-start gap-3 p-3 hover:bg-neutral-50">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                  {log.employeeName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm">{log.employeeName}</span>
+                    <Badge className={clsx("text-[10px] rounded-full", actionColors[log.action] || "bg-gray-100 text-gray-800")}>
+                      {actionLabels[log.action] || log.action}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5">{log.details}</p>
+                </div>
+                <div className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                  {formatDate(log.timestamp)} {formatTime(log.timestamp)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function SaakoukPOS() {
@@ -2782,6 +2906,21 @@ export default function SaakoukPOS() {
   });
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  const addLog = useCallback((action: string, details: string) => {
+    if (!loggedInEmployee) return;
+    setActivityLogs((prev) => [{
+      id: generateId(),
+      action,
+      details,
+      employeeId: loggedInEmployee.id,
+      employeeName: loggedInEmployee.name,
+      employeeRole: loggedInEmployee.role,
+      timestamp: new Date(),
+    }, ...prev]);
+  }, [loggedInEmployee]);
 
   // Load saved transactions from database
   useEffect(() => {
@@ -2962,16 +3101,21 @@ export default function SaakoukPOS() {
       setOpenTickets((prev) => { const next = { ...prev }; delete next["walk-in"]; return next; });
     }
     setToast(`Order #${order.id} completed — ${euro(order.total)}`);
+    addLog("order_completed", `Bestelling #${order.id} afgerond — ${euro(order.total)} (${order.method})`);
   }
 
   function handleLogout() {
+    addLog("logout", `${loggedInEmployee?.name} uitgelogd`);
     setLoggedInEmployee(null);
     setActive("pos");
   }
 
   // Show login if not logged in
   if (!loggedInEmployee) {
-    return <LoginScreen employees={employees} onLogin={(emp) => setLoggedInEmployee(emp)} />;
+    return <LoginScreen employees={employees} onLogin={(emp) => {
+      setLoggedInEmployee(emp);
+      setActivityLogs((prev) => [{ id: generateId(), action: "login", details: `${emp.name} ingelogd (${emp.role})`, employeeId: emp.id, employeeName: emp.name, employeeRole: emp.role, timestamp: new Date() }, ...prev]);
+    }} />;
   }
 
   const todayOrders = orders.filter((o: any) => isToday(o.date));
@@ -2989,12 +3133,13 @@ export default function SaakoukPOS() {
     sales: "Sales Reports",
     accounting: "Accounting",
     employees: "Medewerkers",
+    logs: "Activiteiten Log",
     settings: "Settings",
   };
 
   return (
     <div className="h-dvh bg-background text-foreground flex overflow-hidden select-none">
-      <Sidebar active={active} setActive={setActive} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
+      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         <div className="shrink-0 border-b bg-card px-4 py-2 flex items-center justify-between">
           <div>
@@ -3010,6 +3155,15 @@ export default function SaakoukPOS() {
               >
                 <Bell className="h-4 w-4" />
                 {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
+              </button>
+            )}
+            {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
+              <button
+                onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-semibold"
+              >
+                <Bell className="h-4 w-4" />
+                {notifications.filter((n) => !n.read).length} melding{notifications.filter((n) => !n.read).length !== 1 ? "en" : ""}
               </button>
             )}
             <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
@@ -3042,12 +3196,13 @@ export default function SaakoukPOS() {
             )}
             {active === "activity" && <ActivityView orders={orders} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} />}
-            {active === "products" && <ProductsView products={products} setProducts={setProducts} />}
+            {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
+            {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
           </div>
