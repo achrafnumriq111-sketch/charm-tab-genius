@@ -3501,7 +3501,11 @@ export default function SaakoukPOS() {
   const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
   const [active, setActive] = useState("pos");
   const [products, setProducts] = useState(initialProducts);
-  const [tables] = useState(initialTables);
+  const [tables, setTables] = useState(() => {
+    const saved = localStorage.getItem("saakouk_tables");
+    return saved ? JSON.parse(saved) : initialTables;
+  });
+  const [channels] = useState(initialChannels);
   const [orders, setOrders] = useState<any[]>([]);
   const [dbLoaded, setDbLoaded] = useState(false);
   const [customers, setCustomers] = useState(initialCustomers);
