@@ -3198,7 +3198,7 @@ export default function SaakoukPOS() {
                     products={products} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
-                    passkitConfig={passkitConfig} onToast={setToast}
+                    passkitConfig={passkitConfig} onToast={setToast} addLog={addLog}
                   />
                 </TabsContent>
                 <TabsContent value="table">
@@ -3209,11 +3209,11 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "activity" && <ActivityView orders={orders} />}
-            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} />}
+            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
-            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} />}
-            {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
+            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} />}
+            {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
