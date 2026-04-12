@@ -1751,6 +1751,11 @@ function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
                   <div className="font-medium">{c.points} pts</div>
                   <div className="text-xs text-muted-foreground">{c.visits} visits · {euro(c.totalSpent)}</div>
                 </div>
+                {isOwner && (
+                  <Button variant="ghost" size="sm" className="text-red-500 shrink-0" onClick={(e) => { e.stopPropagation(); deleteCustomer(c.id); }}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </CardContent>
