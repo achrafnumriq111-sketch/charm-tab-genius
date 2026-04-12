@@ -3048,7 +3048,7 @@ export default function SaakoukPOS() {
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
-            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} />}
+            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
           </div>
         </div>
