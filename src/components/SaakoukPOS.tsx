@@ -1808,7 +1808,7 @@ function CustomersView({ customers, setCustomers, addLog }: any) {
 
 // ─── GIFT CARDS ──────────────────────────────────────────────────────────────
 
-function GiftCardsView({ giftCards, setGiftCards }: any) {
+function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ customerName: "", value: "25" });
 
@@ -1817,6 +1817,7 @@ function GiftCardsView({ giftCards, setGiftCards }: any) {
     const code = `SAAK-2026-${generateId().toUpperCase().slice(0, 4)}`;
     const value = parseFloat(form.value);
     setGiftCards((prev) => [...prev, { id: generateId(), code, balance: value, initialValue: value, status: "active", issuedAt: new Date().toISOString().slice(0, 10), customerName: form.customerName }]);
+    addLog?.("giftcard_issued", `Cadeaukaart uitgegeven: ${code} — ${euro(value)} voor ${form.customerName}`);
     setShowAdd(false);
     setForm({ customerName: "", value: "25" });
   }
