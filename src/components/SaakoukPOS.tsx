@@ -658,7 +658,7 @@ function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void })
 // ─── COUNTER POS VIEW ────────────────────────────────────────────────────────
 // Cart state is now lifted: ticket comes from parent via props
 
-function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast }: any) {
+function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast, addLog }: any) {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("Signature Drinks");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -699,9 +699,11 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   function quickAdd(product) {
     if (product.modifierGroups?.length) {
       setSelectedProduct(product);
+      addLog?.("product_selected", `Product geselecteerd met modifiers: ${product.name}`);
       return;
     }
     addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] });
+    addLog?.("item_added_to_cart", `Product toegevoegd aan ticket: ${product.name} (${euro(product.price)})`);
   }
 
   function updateQty(lineId, delta) {
@@ -709,10 +711,13 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   }
 
   function removeLine(lineId) {
+    const item = cart.find((x) => x.lineId === lineId);
+    addLog?.("item_removed_from_cart", `Product verwijderd uit ticket: ${item?.name || lineId}`);
     setCart((prev) => prev.filter((x) => x.lineId !== lineId));
   }
 
   function clearCart() {
+    addLog?.("cart_cleared", `Ticket leeggemaakt (${cart.length} items)`);
     setTicket(emptyTicket(tableId));
     setScanValue("");
   }
