@@ -3241,6 +3241,7 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     reservation_deleted: "bg-red-100 text-red-800",
     customer_created: "bg-teal-100 text-teal-800",
     customer_viewed: "bg-slate-100 text-slate-800",
+    customer_deleted: "bg-red-100 text-red-800",
     giftcard_issued: "bg-pink-100 text-pink-800",
     view_changed: "bg-gray-100 text-gray-800",
     login: "bg-emerald-100 text-emerald-800",
