@@ -455,19 +455,36 @@ function ModifierPicker({ product, onAdd, onClose }: { product: any; onAdd: (ite
   );
 }
 
-// ─── PAYMENT MODAL ───────────────────────────────────────────────────────────
+// ─── PAYMENT MODAL (with split payments) ─────────────────────────────────────
+
+type SplitPart = { method: "card" | "cash" | "qr" | "giftcard"; amount: number; paid: boolean; cashGiven?: number; giftCardId?: string; giftCardCode?: string };
 
 function PaymentModal({ open, onClose, total, onComplete, method: initialMethod, features, giftCards, onRedeemGiftCard }: any) {
+  const [mode, setMode] = useState<"single" | "split-method" | "split-person">("single");
+  // Single mode state
   const [method, setMethod] = useState(initialMethod || "card");
   const [cashGiven, setCashGiven] = useState("");
   const [step, setStep] = useState("choose");
   const [tipPercent, setTipPercent] = useState(0);
   const [giftCardCode, setGiftCardCode] = useState("");
-  const [giftCardApplied, setGiftCardApplied] = useState(null);
+  const [giftCardApplied, setGiftCardApplied] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
 
+  // Split mode state
+  const [splitParts, setSplitParts] = useState<SplitPart[]>([]);
+  const [splitPersonCount, setSplitPersonCount] = useState(2);
+  const [activeSplitIdx, setActiveSplitIdx] = useState(0);
+  const [splitCashGiven, setSplitCashGiven] = useState("");
+  const [splitGiftCode, setSplitGiftCode] = useState("");
+  const [splitStep, setSplitStep] = useState<"setup" | "paying" | "processing" | "done">("setup");
+
   useEffect(() => {
-    if (open) { setStep("choose"); setCashGiven(""); setTipPercent(0); setMethod(initialMethod || "card"); setGiftCardCode(""); setGiftCardApplied(null); setProcessing(false); }
+    if (open) {
+      setStep("choose"); setCashGiven(""); setTipPercent(0); setMethod(initialMethod || "card");
+      setGiftCardCode(""); setGiftCardApplied(null); setProcessing(false); setMode("single");
+      setSplitParts([]); setSplitPersonCount(2); setActiveSplitIdx(0); setSplitStep("setup");
+      setSplitCashGiven(""); setSplitGiftCode("");
+    }
   }, [open, initialMethod]);
 
   const tipAmount = features?.tips ? total * (tipPercent / 100) : 0;
@@ -477,50 +494,123 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
 
   function lookupGiftCard() {
     if (!giftCardCode.trim()) return;
-    const found = giftCards?.find((gc) => gc.code.toLowerCase() === giftCardCode.toLowerCase() && gc.status === "active" && gc.balance > 0);
+    const found = giftCards?.find((gc: any) => gc.code.toLowerCase() === giftCardCode.toLowerCase() && gc.status === "active" && gc.balance > 0);
     setGiftCardApplied(found || null);
   }
 
   function processPayment() {
     if (processing) return;
-    setProcessing(true);
-    setStep("processing");
-    setTimeout(() => {
-      setStep("done");
-      setProcessing(false);
-    }, 1500);
+    setProcessing(true); setStep("processing");
+    setTimeout(() => { setStep("done"); setProcessing(false); }, 1500);
   }
 
   function finish() {
-    if (giftCardApplied && giftCardDeduction > 0) {
-      onRedeemGiftCard?.(giftCardApplied.id, giftCardDeduction);
-    }
+    if (giftCardApplied && giftCardDeduction > 0) onRedeemGiftCard?.(giftCardApplied.id, giftCardDeduction);
     onComplete({ method: giftCardDeduction >= total + tipAmount ? "giftcard" : method, total: total + tipAmount, tip: tipAmount, giftCardDeduction, giftCardId: giftCardApplied?.id || null });
     onClose();
   }
 
+  // ── Split by method: user adds payment parts that sum to total ──
+  function initSplitMethod() {
+    setMode("split-method");
+    const totalWithTip = total + tipAmount;
+    setSplitParts([{ method: "card", amount: Math.round(totalWithTip * 100) / 100, paid: false }]);
+    setSplitStep("paying"); setActiveSplitIdx(0);
+  }
+
+  function initSplitPerson() {
+    setMode("split-person");
+    setSplitStep("setup");
+  }
+
+  function confirmSplitPersonSetup() {
+    const totalWithTip = total + tipAmount;
+    const perPerson = Math.floor(totalWithTip * 100 / splitPersonCount) / 100;
+    const remainder = Math.round((totalWithTip - perPerson * splitPersonCount) * 100) / 100;
+    const parts: SplitPart[] = Array.from({ length: splitPersonCount }, (_, i) => ({
+      method: "card" as const, amount: Math.round((perPerson + (i === 0 ? remainder : 0)) * 100) / 100, paid: false,
+    }));
+    setSplitParts(parts); setSplitStep("paying"); setActiveSplitIdx(0);
+  }
+
+  function addSplitPart() {
+    const used = splitParts.reduce((s, p) => s + p.amount, 0);
+    const remaining = Math.max(0, Math.round((total + tipAmount - used) * 100) / 100);
+    setSplitParts((prev) => [...prev, { method: "card", amount: remaining, paid: false }]);
+  }
+
+  function updateSplitPart(idx: number, updates: Partial<SplitPart>) {
+    setSplitParts((prev) => prev.map((p, i) => i === idx ? { ...p, ...updates } : p));
+  }
+
+  function removeSplitPart(idx: number) {
+    if (splitParts.length <= 1) return;
+    setSplitParts((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function processSplitPartPayment() {
+    setProcessing(true); setSplitStep("processing");
+    setTimeout(() => {
+      setSplitParts((prev) => prev.map((p, i) => i === activeSplitIdx ? { ...p, paid: true, cashGiven: p.method === "cash" ? parseFloat(splitCashGiven) || 0 : undefined } : p));
+      setProcessing(false); setSplitStep("paying"); setSplitCashGiven("");
+      // Move to next unpaid
+      const nextUnpaid = splitParts.findIndex((p, i) => i > activeSplitIdx && !p.paid);
+      if (nextUnpaid >= 0) setActiveSplitIdx(nextUnpaid);
+      else {
+        const anyUnpaid = splitParts.findIndex((p, i) => i !== activeSplitIdx && !p.paid);
+        if (anyUnpaid >= 0) setActiveSplitIdx(anyUnpaid);
+      }
+    }, 1200);
+  }
+
+  function finishSplit() {
+    splitParts.forEach((p) => {
+      if (p.giftCardId) onRedeemGiftCard?.(p.giftCardId, p.amount);
+    });
+    const methods = [...new Set(splitParts.map((p) => p.method))].join("+");
+    onComplete({ method: `split(${methods})`, total: total + tipAmount, tip: tipAmount, giftCardDeduction: splitParts.filter((p) => p.method === "giftcard").reduce((s, p) => s + p.amount, 0), giftCardId: null, splitParts });
+    onClose();
+  }
+
+  const splitTotalAssigned = splitParts.reduce((s, p) => s + p.amount, 0);
+  const splitAllPaid = splitParts.length > 0 && splitParts.every((p) => p.paid);
+  const splitRemaining = Math.max(0, Math.round((total + tipAmount - splitTotalAssigned) * 100) / 100);
+
   if (!open) return null;
+
   return (
-    <Modal open={open} onClose={step === "processing" ? undefined : onClose}>
+    <Modal open={open} onClose={step === "processing" || splitStep === "processing" ? undefined : onClose} wide={mode !== "single"}>
       <div className="p-6 space-y-5">
-        {step === "choose" && (
+
+        {/* ── SINGLE PAYMENT MODE ── */}
+        {mode === "single" && step === "choose" && (
           <>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">Payment</h2>
+              <h2 className="text-xl font-bold">Betaling</h2>
               <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
             </div>
             <div className="text-center py-4">
-              <div className="text-sm text-muted-foreground">Total due</div>
+              <div className="text-sm text-muted-foreground">Totaal</div>
               <div className="text-4xl font-black">{euro(grandTotal)}</div>
-              {tipAmount > 0 && <div className="text-sm text-green-600 mt-1">Includes {euro(tipAmount)} tip</div>}
-              {giftCardDeduction > 0 && <div className="text-sm text-purple-600 mt-1">Gift card: -{euro(giftCardDeduction)}</div>}
+              {tipAmount > 0 && <div className="text-sm text-green-600 mt-1">Incl. {euro(tipAmount)} fooi</div>}
+              {giftCardDeduction > 0 && <div className="text-sm text-purple-600 mt-1">Cadeaukaart: -{euro(giftCardDeduction)}</div>}
             </div>
 
-            {/* Gift card redemption */}
+            {/* Split payment buttons */}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={initSplitMethod}>
+                <Wallet className="h-3.5 w-3.5 mr-1" /> Split methode
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 rounded-full" onClick={initSplitPerson}>
+                <Users className="h-3.5 w-3.5 mr-1" /> Split per persoon
+              </Button>
+            </div>
+
+            {/* Gift card */}
             <div className="space-y-2">
-              <Label>Gift card</Label>
+              <Label>Cadeaukaart</Label>
               <div className="flex gap-2">
-                <Input value={giftCardCode} onChange={(e) => setGiftCardCode(e.target.value)} placeholder="Enter gift card code" className="text-sm"
+                <Input value={giftCardCode} onChange={(e) => setGiftCardCode(e.target.value)} placeholder="Code invoeren" className="text-sm"
                   onKeyDown={(e) => e.key === "Enter" && lookupGiftCard()} />
                 <Button variant="outline" size="sm" onClick={lookupGiftCard}><Search className="h-3.5 w-3.5" /></Button>
                 {giftCardApplied && <Button variant="ghost" size="sm" onClick={() => setGiftCardApplied(null)}><X className="h-3.5 w-3.5" /></Button>}
@@ -528,21 +618,18 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
               {giftCardApplied && (
                 <div className="p-2 rounded-lg bg-purple-50 border border-purple-200 text-xs">
                   <div className="font-medium text-purple-800">{giftCardApplied.code}</div>
-                  <div className="text-purple-600">Balance: {euro(giftCardApplied.balance)} · Deducting: {euro(giftCardDeduction)}</div>
+                  <div className="text-purple-600">Saldo: {euro(giftCardApplied.balance)} · Aftrek: {euro(giftCardDeduction)}</div>
                 </div>
-              )}
-              {giftCardCode && !giftCardApplied && giftCardCode.length > 3 && (
-                <div className="text-xs text-red-500">No active gift card found with this code.</div>
               )}
             </div>
 
             {grandTotal > 0 && (
               <div className="space-y-3">
-                <Label>Payment method</Label>
+                <Label>Betaalmethode</Label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { key: "card", label: "Card", icon: CreditCard },
-                    { key: "cash", label: "Cash", icon: Banknote },
+                    { key: "card", label: "Pin", icon: CreditCard },
+                    { key: "cash", label: "Contant", icon: Banknote },
                     { key: "qr", label: "QR / App", icon: Smartphone },
                   ].map((m) => (
                     <button key={m.key} onClick={() => setMethod(m.key)}
@@ -558,13 +645,13 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
 
             {features?.tips && (
               <div className="space-y-3">
-                <Label>Tip</Label>
+                <Label>Fooi</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {[0, 5, 10, 15].map((pct) => (
                     <button key={pct} onClick={() => setTipPercent(pct)}
                       className={clsx("rounded-xl border px-3 py-2 text-sm transition",
                         tipPercent === pct ? "border-black bg-black text-white" : "hover:bg-neutral-50")}>
-                      {pct === 0 ? "No tip" : `${pct}%`}
+                      {pct === 0 ? "Geen" : `${pct}%`}
                     </button>
                   ))}
                 </div>
@@ -573,10 +660,10 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
 
             {method === "cash" && grandTotal > 0 && (
               <div className="space-y-2">
-                <Label>Cash received</Label>
+                <Label>Ontvangen bedrag</Label>
                 <Input type="number" value={cashGiven} onChange={(e) => setCashGiven(e.target.value)} placeholder="0.00" className="text-lg" />
                 {cashGiven && parseFloat(cashGiven) >= grandTotal && (
-                  <div className="text-sm text-green-600 font-medium">Change: {euro(cashChange)}</div>
+                  <div className="text-sm text-green-600 font-medium">Wisselgeld: {euro(cashChange)}</div>
                 )}
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {[5, 10, 20, 50].map((v) => (
@@ -588,34 +675,180 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
 
             <Button className="w-full h-12 text-lg" onClick={processPayment}
               disabled={processing || (grandTotal > 0 && method === "cash" && (!cashGiven || parseFloat(cashGiven) < grandTotal))}>
-              {grandTotal === 0 ? "Confirm (fully covered by gift card)" : method === "card" ? "Process card payment" : method === "cash" ? "Confirm cash payment" : "Confirm QR payment"}
+              {grandTotal === 0 ? "Bevestigen (cadeaukaart)" : method === "card" ? "Pin betaling verwerken" : method === "cash" ? "Contant betaling bevestigen" : "QR betaling bevestigen"}
             </Button>
           </>
         )}
-        {step === "processing" && (
+
+        {mode === "single" && step === "processing" && (
           <div className="py-16 text-center space-y-4">
             <div className="animate-spin mx-auto h-12 w-12 border-4 border-black border-t-transparent rounded-full" />
-            <div className="text-lg font-semibold">
-              {grandTotal === 0 ? "Processing..." : method === "card" ? "Waiting for terminal..." : method === "qr" ? "Waiting for QR scan..." : "Processing..."}
-            </div>
+            <div className="text-lg font-semibold">Verwerken...</div>
             <div className="text-sm text-muted-foreground">{euro(grandTotal)}</div>
           </div>
         )}
-        {step === "done" && (
+
+        {mode === "single" && step === "done" && (
           <div className="py-12 text-center space-y-4">
             <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
               <Check className="h-8 w-8 text-green-600" />
             </div>
-            <div className="text-xl font-bold">Payment complete</div>
+            <div className="text-xl font-bold">Betaling voltooid</div>
             <div className="text-2xl font-black">{euro(total + tipAmount)}</div>
-            <div className="text-sm text-muted-foreground capitalize">{giftCardDeduction > 0 ? `Gift card + ${method}` : method} payment</div>
+            <div className="text-sm text-muted-foreground capitalize">{giftCardDeduction > 0 ? `Cadeaukaart + ${method}` : method}</div>
             {method === "cash" && cashChange > 0 && (
-              <div className="text-lg font-semibold text-orange-600">Change due: {euro(cashChange)}</div>
+              <div className="text-lg font-semibold text-orange-600">Wisselgeld: {euro(cashChange)}</div>
             )}
             <div className="flex gap-3 justify-center pt-4">
-              <Button variant="outline" onClick={finish}><Printer className="h-4 w-4 mr-2" />Print receipt</Button>
-              <Button onClick={finish}>Done</Button>
+              <Button variant="outline" onClick={finish}><Printer className="h-4 w-4 mr-2" />Bon printen</Button>
+              <Button onClick={finish}>Klaar</Button>
             </div>
+          </div>
+        )}
+
+        {/* ── SPLIT PAYMENT: PERSON SETUP ── */}
+        {mode === "split-person" && splitStep === "setup" && (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Split per persoon</h2>
+              <button onClick={() => setMode("single")} className="text-xs text-muted-foreground hover:underline">← Terug</button>
+            </div>
+            <div className="text-center py-4">
+              <div className="text-sm text-muted-foreground">Totaal: {euro(total + tipAmount)}</div>
+              <div className="text-3xl font-black mt-2">{splitPersonCount} personen</div>
+              <div className="text-lg text-muted-foreground">{euro(Math.round((total + tipAmount) / splitPersonCount * 100) / 100)} p.p.</div>
+            </div>
+            <div className="flex items-center justify-center gap-4">
+              <Button variant="outline" size="icon" onClick={() => setSplitPersonCount((p) => Math.max(2, p - 1))}><Minus className="h-4 w-4" /></Button>
+              <span className="text-3xl font-bold w-12 text-center">{splitPersonCount}</span>
+              <Button variant="outline" size="icon" onClick={() => setSplitPersonCount((p) => Math.min(20, p + 1))}><Plus className="h-4 w-4" /></Button>
+            </div>
+            <Button className="w-full h-12 text-lg" onClick={confirmSplitPersonSetup}>
+              Verdelen over {splitPersonCount} personen
+            </Button>
+          </>
+        )}
+
+        {/* ── SPLIT PAYMENT: PAYING PARTS ── */}
+        {(mode === "split-method" || mode === "split-person") && splitStep === "paying" && (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">
+                {mode === "split-method" ? "Split betaling" : `Split ${splitParts.length} personen`}
+              </h2>
+              <button onClick={() => { setMode("single"); setSplitParts([]); }} className="text-xs text-muted-foreground hover:underline">← Terug</button>
+            </div>
+
+            <div className="text-center py-2">
+              <div className="text-sm text-muted-foreground">Totaal: {euro(total + tipAmount)}</div>
+              {splitRemaining > 0.01 && <div className="text-sm text-orange-600 font-medium">Nog te verdelen: {euro(splitRemaining)}</div>}
+            </div>
+
+            {/* Parts list */}
+            <div className="space-y-2 max-h-60 overflow-auto">
+              {splitParts.map((part, idx) => (
+                <div key={idx}
+                  onClick={() => !part.paid && setActiveSplitIdx(idx)}
+                  className={clsx(
+                    "rounded-xl border p-3 transition cursor-pointer",
+                    part.paid ? "bg-green-50 border-green-200 opacity-70" : activeSplitIdx === idx ? "border-primary ring-2 ring-primary/20" : "hover:border-primary/40"
+                  )}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {part.paid ? <Check className="h-4 w-4 text-green-600" /> : <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />}
+                      <span className="font-medium text-sm">
+                        {mode === "split-person" ? `Persoon ${idx + 1}` : `Deel ${idx + 1}`}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">{euro(part.amount)}</span>
+                      {!part.paid && splitParts.length > 1 && (
+                        <button onClick={(e) => { e.stopPropagation(); removeSplitPart(idx); }} className="text-destructive hover:bg-destructive/10 rounded p-0.5">
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {part.paid && <div className="text-[10px] text-green-600 mt-1 capitalize">Betaald via {part.method}</div>}
+                </div>
+              ))}
+            </div>
+
+            {mode === "split-method" && (
+              <Button variant="outline" size="sm" className="w-full rounded-full" onClick={addSplitPart} disabled={splitRemaining < 0.01}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Deel toevoegen
+              </Button>
+            )}
+
+            {/* Active part payment */}
+            {!splitAllPaid && splitParts[activeSplitIdx] && !splitParts[activeSplitIdx].paid && (
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="font-bold">{mode === "split-person" ? `Persoon ${activeSplitIdx + 1}` : `Deel ${activeSplitIdx + 1}`} — {euro(splitParts[activeSplitIdx].amount)}</Label>
+                </div>
+
+                {mode === "split-method" && (
+                  <div>
+                    <Label className="text-xs">Bedrag</Label>
+                    <Input type="number" min={0} step={0.01} value={splitParts[activeSplitIdx].amount}
+                      onChange={(e) => updateSplitPart(activeSplitIdx, { amount: Math.max(0, parseFloat(e.target.value) || 0) })}
+                      className="text-sm" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: "card", label: "Pin", icon: CreditCard },
+                    { key: "cash", label: "Contant", icon: Banknote },
+                    { key: "qr", label: "QR", icon: Smartphone },
+                  ].map((m) => (
+                    <button key={m.key} onClick={() => updateSplitPart(activeSplitIdx, { method: m.key as any })}
+                      className={clsx("rounded-xl border p-2.5 flex flex-col items-center gap-1 transition text-xs",
+                        splitParts[activeSplitIdx].method === m.key ? "border-black bg-black text-white" : "hover:bg-neutral-50")}>
+                      <m.icon className="h-4 w-4" />
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                {splitParts[activeSplitIdx].method === "cash" && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">Ontvangen</Label>
+                    <Input type="number" value={splitCashGiven} onChange={(e) => setSplitCashGiven(e.target.value)} placeholder="0.00" className="text-sm" />
+                    {splitCashGiven && parseFloat(splitCashGiven) >= splitParts[activeSplitIdx].amount && (
+                      <div className="text-xs text-green-600">Wisselgeld: {euro(parseFloat(splitCashGiven) - splitParts[activeSplitIdx].amount)}</div>
+                    )}
+                  </div>
+                )}
+
+                <Button className="w-full" onClick={processSplitPartPayment}
+                  disabled={processing || splitParts[activeSplitIdx].amount <= 0 ||
+                    (splitParts[activeSplitIdx].method === "cash" && (!splitCashGiven || parseFloat(splitCashGiven) < splitParts[activeSplitIdx].amount))}>
+                  Betaal {euro(splitParts[activeSplitIdx].amount)} ({splitParts[activeSplitIdx].method})
+                </Button>
+              </div>
+            )}
+
+            {splitAllPaid && (
+              <div className="text-center space-y-3 pt-2">
+                <div className="mx-auto h-14 w-14 bg-green-100 rounded-full flex items-center justify-center">
+                  <Check className="h-7 w-7 text-green-600" />
+                </div>
+                <div className="text-lg font-bold">Alle delen betaald!</div>
+                <div className="flex gap-3 justify-center">
+                  <Button variant="outline" onClick={finishSplit}><Printer className="h-4 w-4 mr-2" />Bon</Button>
+                  <Button onClick={finishSplit}>Klaar</Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {(mode === "split-method" || mode === "split-person") && splitStep === "processing" && (
+          <div className="py-16 text-center space-y-4">
+            <div className="animate-spin mx-auto h-12 w-12 border-4 border-black border-t-transparent rounded-full" />
+            <div className="text-lg font-semibold">Verwerken deel {activeSplitIdx + 1}...</div>
+            <div className="text-sm text-muted-foreground">{euro(splitParts[activeSplitIdx]?.amount || 0)}</div>
           </div>
         )}
       </div>
