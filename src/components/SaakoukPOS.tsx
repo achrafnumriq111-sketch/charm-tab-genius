@@ -4435,6 +4435,8 @@ export default function SaakoukPOS() {
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
+            {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
+            {active === "cashaudit" && <CashAuditView />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
@@ -4442,6 +4444,15 @@ export default function SaakoukPOS() {
         </div>
       </main>
       <Toast message={toast} onClose={() => setToast("")} />
+      <CashClosingModal
+        open={showCashClosing}
+        onClose={() => setShowCashClosing(false)}
+        employees={employees}
+        loggedInEmployee={loggedInEmployee}
+        orders={orders}
+        onComplete={() => setToast("Kassa succesvol afgesloten!")}
+        addLog={addLog}
+      />
     </div>
   );
 }
