@@ -258,13 +258,12 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: false },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
-    { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
+    { key: "products", label: "Products", icon: Package, adminOnly: true, ownerOnly: false },
     { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
     { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
     { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
     { key: "sales", label: "Sales", icon: Receipt, adminOnly: true, ownerOnly: true },
     { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true, ownerOnly: true },
-    { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true },
     { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
     { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
   ];
@@ -1390,13 +1389,11 @@ function ReservationsView({ reservations, setReservations, tables }: any) {
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, notifications, setNotifications }: any) {
+function ProductsView({ products: allProducts, setProducts }: any) {
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
-
-  const isOwner = currentRole === "owner";
 
   const filtered = allProducts.filter((p) =>
     (filterSection === "all" || p.section === filterSection) &&
@@ -1415,11 +1412,9 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
       });
-      addLog?.("product_edit_open", `Begonnen met bewerken van product: ${product.name}`);
     } else {
       setEditing("new");
       setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
-      addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
 
@@ -1436,45 +1431,15 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
     if (editing === "new") {
-      const newProduct = {
-        id: generateId(),
-        name: form.name,
-        section: form.section,
-        price: parseFloat(form.price),
-        costPrice,
-        tags,
-        modifierGroups,
-        color: form.color,
-        createdBy: currentEmployee?.name || "Onbekend",
-        createdById: currentEmployee?.id || null,
-        createdAt: new Date().toISOString(),
-      };
-      setProducts((prev) => [...prev, newProduct]);
-      addLog?.("product_created", `Product aangemaakt: ${form.name} (${euro(parseFloat(form.price))})`);
-      // Notify owners if sales created a product
-      if (currentRole !== "owner") {
-        setNotifications?.((prev: any[]) => [
-          ...prev,
-          {
-            id: generateId(),
-            type: "product_created",
-            message: `${currentEmployee?.name} heeft een nieuw product aangemaakt: ${form.name}`,
-            timestamp: new Date(),
-            read: false,
-          },
-        ]);
-      }
+      setProducts((prev) => [...prev, { id: generateId(), name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color }]);
     } else {
       setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
-      addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
   }
 
   function deleteProduct(id) {
-    const product = allProducts.find((p) => p.id === id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
-    addLog?.("product_deleted", `Product verwijderd: ${product?.name || id}`);
   }
 
   return (
@@ -1499,18 +1464,13 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
                   {product.color && <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: product.color }} />}
                   <div>
                     <div className="font-medium text-sm">{product.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers
-                      {product.createdBy && <span className="ml-1">· Aangemaakt door: {product.createdBy}</span>}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{product.section} · Inkoop: {euro(product.costPrice || 0)} · {product.modifierGroups?.length || 0} modifiers</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="font-semibold">{euro(product.price)}</div>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(product)}><Edit className="h-3 w-3" /></Button>
-                  {isOwner && (
-                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
-                  )}
+                  <Button variant="ghost" size="sm" className="text-red-500" onClick={() => deleteProduct(product.id)}><Trash2 className="h-3 w-3" /></Button>
                 </div>
               </div>
             ))}
@@ -1562,6 +1522,1335 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
   );
 }
 
+// ─── QR ORDERING ─────────────────────────────────────────────────────────────
+
+function QrView({ features, tables }: any) {
+  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+  function downloadQr(tableId: string, tableName: string) {
+    const svg = document.getElementById(`qr-${tableId}`);
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, 600, 600);
+      ctx.drawImage(img, 50, 50, 500, 500);
+      // Add table name below
+      ctx.font = "bold 28px sans-serif";
+      ctx.fillStyle = "#000";
+      ctx.textAlign = "center";
+      const a = document.createElement("a");
+      a.download = `saakouk-qr-tafel-${tableName}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    };
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  }
+
+  function downloadAll() {
+    tables.forEach((t: any, i: number) => {
+      setTimeout(() => downloadQr(t.id, t.name), i * 300);
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-2xl">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-lg">QR Table Ordering</h3>
+              <p className="text-sm text-muted-foreground">Each table has a unique QR code linking to your digital menu.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={features?.qr ? "default" : "secondary"}>{features?.qr ? "Enabled" : "Disabled"}</Badge>
+              <Button size="sm" onClick={downloadAll} disabled={!features?.qr}>
+                <Printer className="h-4 w-4 mr-1" /> Download alle QR's
+              </Button>
+            </div>
+          </div>
+          {!features?.qr && (
+            <div className="rounded-xl bg-yellow-50 border border-yellow-200 p-3 text-sm text-yellow-800 mb-4">
+              QR ordering is uitgeschakeld. Schakel het in via Instellingen → Features.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {tables.map((table: any) => {
+          const menuUrl = `${baseUrl}/menu/${table.id}`;
+          return (
+            <Card key={table.id} className="rounded-2xl overflow-hidden">
+              <CardContent className="p-4 flex flex-col items-center gap-3">
+                <div className="text-sm font-semibold">Tafel {table.name}</div>
+                <div className="bg-white p-2 rounded-xl border">
+                  <QRCodeSVG
+                    id={`qr-${table.id}`}
+                    value={menuUrl}
+                    size={140}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground text-center break-all leading-tight">{menuUrl}</p>
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => downloadQr(table.id, table.name)}
+                  >
+                    <Printer className="h-3 w-3 mr-1" /> Download
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(menuUrl);
+                    }}
+                  >
+                    <FileText className="h-3 w-3 mr-1" /> Copy link
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Preview section */}
+      <Card className="rounded-2xl">
+        <CardContent className="p-6">
+          <h3 className="font-semibold mb-3">Menu preview</h3>
+          <p className="text-sm text-muted-foreground mb-3">Open the menu as your customers would see it:</p>
+          <div className="flex flex-wrap gap-2">
+            {tables.map((table: any) => (
+              <Button
+                key={table.id}
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`${baseUrl}/menu/${table.id}`, "_blank")}
+              >
+                <Eye className="h-3 w-3 mr-1" /> Tafel {table.name}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── CUSTOMERS ───────────────────────────────────────────────────────────────
+
+function CustomersView({ customers, setCustomers }: any) {
+  const [search, setSearch] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", provider: "none" });
+  const [selected, setSelected] = useState(null);
+
+  const filtered = customers.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.email || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  function addCustomer() {
+    if (!form.name || !form.email || !form.phone) return;
+    setCustomers((prev) => [...prev, { ...form, id: generateId(), loyaltyId: form.provider !== "none" ? `LYL-${generateId().toUpperCase().slice(0, 3)}` : "", points: 0, visits: 0, totalSpent: 0, lastVisit: "-" }]);
+    setShowAdd(false);
+    setForm({ name: "", email: "", phone: "", provider: "none" });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers..." className="pl-9" />
+        </div>
+        <Badge variant="secondary">{customers.length} customers</Badge>
+        <Button onClick={() => setShowAdd(true)}><UserPlus className="h-4 w-4 mr-2" />Add customer</Button>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
+        {filtered.map((c) => (
+          <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => setSelected(c)}>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-sm">
+                  {c.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                </div>
+                <div>
+                  <div className="font-medium">{c.name}</div>
+                  <div className="text-xs text-muted-foreground">{c.email || "No email"} · {c.phone || "No phone"}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                {c.loyaltyId && <Badge variant="outline" className="text-xs">{c.provider}</Badge>}
+                <div className="text-right">
+                  <div className="font-medium">{c.points} pts</div>
+                  <div className="text-xs text-muted-foreground">{c.visits} visits · {euro(c.totalSpent)}</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Modal open={showAdd} onClose={() => setShowAdd(false)}>
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-bold">New customer</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
+            <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1" /></div>
+            <div>
+              <Label>Loyalty provider</Label>
+              <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+                <option value="none">None</option>
+                <option value="passkit">PassKit</option>
+                <option value="piggy">Piggy</option>
+                <option value="leat">Leat</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
+            <Button onClick={addCustomer} disabled={!form.name || !form.email || !form.phone}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+      <Modal open={!!selected} onClose={() => setSelected(null)}>
+        {selected && (
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-neutral-200 flex items-center justify-center font-bold">{selected.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
+                <div>
+                  <h2 className="text-lg font-bold">{selected.name}</h2>
+                  <div className="text-sm text-muted-foreground">{selected.email || "No email"}</div>
+                </div>
+              </div>
+              <button onClick={() => setSelected(null)} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{selected.points}</div><div className="text-xs text-muted-foreground">Points</div></div>
+              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{selected.visits}</div><div className="text-xs text-muted-foreground">Visits</div></div>
+              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{euro(selected.totalSpent)}</div><div className="text-xs text-muted-foreground">Spent</div></div>
+              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{selected.lastVisit}</div><div className="text-xs text-muted-foreground">Last visit</div></div>
+            </div>
+            {selected.loyaltyId && (
+              <div className="rounded-xl border p-3">
+                <div className="text-sm font-medium mb-1">Loyalty</div>
+                <div className="text-xs text-muted-foreground">Provider: <span className="capitalize">{selected.provider}</span> · ID: {selected.loyaltyId}</div>
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground">{selected.phone || "No phone"}</div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+// ─── GIFT CARDS ──────────────────────────────────────────────────────────────
+
+function GiftCardsView({ giftCards, setGiftCards }: any) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ customerName: "", value: "25" });
+
+  function issueCard() {
+    if (!form.customerName || !form.value) return;
+    const code = `SAAK-2026-${generateId().toUpperCase().slice(0, 4)}`;
+    const value = parseFloat(form.value);
+    setGiftCards((prev) => [...prev, { id: generateId(), code, balance: value, initialValue: value, status: "active", issuedAt: new Date().toISOString().slice(0, 10), customerName: form.customerName }]);
+    setShowAdd(false);
+    setForm({ customerName: "", value: "25" });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Badge variant="secondary">{giftCards.length} gift cards</Badge>
+        <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-2" />Issue card</Button>
+      </div>
+      <div className="grid grid-cols-1 gap-3">
+        {giftCards.map((gc) => (
+          <Card key={gc.id} className="rounded-2xl">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Gift className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="font-mono font-medium text-sm">{gc.code}</div>
+                  <div className="text-xs text-muted-foreground">{gc.customerName} · Issued {gc.issuedAt}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Badge variant={gc.status === "active" ? "default" : "secondary"} className="capitalize">{gc.status}</Badge>
+                <div className="text-right">
+                  <div className="font-semibold">{euro(gc.balance)}</div>
+                  <div className="text-xs text-muted-foreground">of {euro(gc.initialValue)}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Modal open={showAdd} onClose={() => setShowAdd(false)}>
+        <div className="p-6 space-y-4">
+          <h2 className="text-lg font-bold">Issue gift card</h2>
+          <div><Label>Recipient name</Label><Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} className="mt-1" /></div>
+          <div>
+            <Label>Value</Label>
+            <div className="grid grid-cols-4 gap-2 mt-1">
+              {["10", "15", "25", "50"].map((v) => (
+                <Button key={v} variant={form.value === v ? "default" : "outline"} onClick={() => setForm({ ...form, value: v })}>{euro(parseFloat(v))}</Button>
+              ))}
+            </div>
+            <Input type="number" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="Custom amount" className="mt-2" />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
+            <Button onClick={issueCard} disabled={!form.customerName || !form.value}>Issue card</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── SALES ───────────────────────────────────────────────────────────────────
+
+function SalesView({ orders, products, employees }: any) {
+  const [tab, setTab] = useState("overview");
+  const [rangeMode, setRangeMode] = useState<"today" | "week" | "month" | "custom">("today");
+  const [customStart, setCustomStart] = useState<Date | undefined>(undefined);
+  const [customEnd, setCustomEnd] = useState<Date | undefined>(undefined);
+  const [showCalendar, setShowCalendar] = useState<"start" | "end" | null>(null);
+
+  function getDateRange(): { start: Date; end: Date; label: string } {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    if (rangeMode === "today") return { start: startOfDay, end: endOfDay, label: "Vandaag" };
+    if (rangeMode === "week") {
+      const weekAgo = new Date(startOfDay); weekAgo.setDate(weekAgo.getDate() - 6);
+      return { start: weekAgo, end: endOfDay, label: "Afgelopen 7 dagen" };
+    }
+    if (rangeMode === "month") {
+      const monthAgo = new Date(startOfDay); monthAgo.setMonth(monthAgo.getMonth() - 1);
+      return { start: monthAgo, end: endOfDay, label: "Afgelopen 30 dagen" };
+    }
+    // custom
+    const cs = customStart || startOfDay;
+    const ce = customEnd ? new Date(customEnd.getFullYear(), customEnd.getMonth(), customEnd.getDate(), 23, 59, 59, 999) : endOfDay;
+    return { start: cs, end: ce, label: `${cs.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })} – ${new Date(ce).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}` };
+  }
+
+  const range = getDateRange();
+  const filtered = orders.filter((o: any) => o.date >= range.start && o.date <= range.end);
+  const revenue = filtered.reduce((s: number, o: any) => s + o.total, 0);
+  const itemsSold = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + i.qty, 0), 0);
+  const avgTicket = filtered.length > 0 ? revenue / filtered.length : 0;
+  const totalTips = filtered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
+  const totalDiscount = filtered.reduce((s: number, o: any) => s + (o.discount || 0), 0);
+
+  // Profit/Loss calculations
+  const totalCost = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + (i.costPrice || 0) * i.qty, 0), 0);
+  const grossProfit = revenue - totalCost;
+  const profitMargin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+
+  // By section
+  const bySection: Record<string, number> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    const product = products.find((p: any) => p.id === item.productId);
+    const sec = product?.section || "Other";
+    bySection[sec] = (bySection[sec] || 0) + (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+  }));
+
+  // By employee — with daily breakdown
+  const byEmployee: Record<string, { name: string; orders: number; revenue: number; items: number; tips: number; byDay: Record<string, { orders: number; revenue: number; tips: number }> }> = {};
+  filtered.forEach((o: any) => {
+    const eid = o.employeeId || "unknown";
+    const ename = o.employeeName || "Onbekend";
+    if (!byEmployee[eid]) byEmployee[eid] = { name: ename, orders: 0, revenue: 0, items: 0, tips: 0, byDay: {} };
+    byEmployee[eid].orders++;
+    byEmployee[eid].revenue += o.total;
+    byEmployee[eid].items += o.items.reduce((a: number, i: any) => a + i.qty, 0);
+    byEmployee[eid].tips += o.tip || 0;
+    const dayKey = o.date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    if (!byEmployee[eid].byDay[dayKey]) byEmployee[eid].byDay[dayKey] = { orders: 0, revenue: 0, tips: 0 };
+    byEmployee[eid].byDay[dayKey].orders++;
+    byEmployee[eid].byDay[dayKey].revenue += o.total;
+    byEmployee[eid].byDay[dayKey].tips += o.tip || 0;
+  });
+
+  // By hour — with best hours analysis
+  const byHour: Record<number, { orders: number; revenue: number }> = {};
+  for (let h = 6; h <= 23; h++) byHour[h] = { orders: 0, revenue: 0 };
+  filtered.forEach((o: any) => {
+    const h = o.date.getHours();
+    if (!byHour[h]) byHour[h] = { orders: 0, revenue: 0 };
+    byHour[h].orders++;
+    byHour[h].revenue += o.total;
+  });
+  const peakHourRevenue = Math.max(...Object.values(byHour).map((v) => v.revenue), 1);
+  const sortedHours = Object.entries(byHour).filter(([, v]) => v.revenue > 0).sort((a, b) => b[1].revenue - a[1].revenue);
+  const bestHours = sortedHours.slice(0, 3);
+  const slowestHours = sortedHours.length > 3 ? sortedHours.slice(-3).reverse() : [];
+
+  // By day
+  const byDay: Record<string, { orders: number; revenue: number; tips: number; date: string; rawDate: Date }> = {};
+  filtered.forEach((o: any) => {
+    const key = o.date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    if (!byDay[key]) byDay[key] = { orders: 0, revenue: 0, tips: 0, date: key, rawDate: new Date(o.date.getFullYear(), o.date.getMonth(), o.date.getDate()) };
+    byDay[key].orders++;
+    byDay[key].revenue += o.total;
+    byDay[key].tips += o.tip || 0;
+  });
+  const sortedDays = Object.values(byDay).sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime());
+  const bestDay = sortedDays.length > 0 ? sortedDays.reduce((a, b) => a.revenue > b.revenue ? a : b) : null;
+
+  // Top products
+  const topProducts: Record<string, { name: string; qty: number; revenue: number; cost: number }> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0, cost: 0 };
+    topProducts[item.productId].qty += item.qty;
+    topProducts[item.productId].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    topProducts[item.productId].cost += (item.costPrice || 0) * item.qty;
+  }));
+  const topList = Object.values(topProducts).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+  // Profit by section
+  const profitBySection: Record<string, { revenue: number; cost: number }> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    const product = products.find((p: any) => p.id === item.productId);
+    const sec = product?.section || "Other";
+    if (!profitBySection[sec]) profitBySection[sec] = { revenue: 0, cost: 0 };
+    profitBySection[sec].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    profitBySection[sec].cost += (item.costPrice || 0) * item.qty;
+  }));
+
+  // Payment methods
+  const byMethod: Record<string, number> = {};
+  filtered.forEach((o: any) => { byMethod[o.method] = (byMethod[o.method] || 0) + o.total; });
+
+  const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null);
+
+  const tabs = [
+    { key: "overview", label: "Overzicht", icon: TrendingUp },
+    { key: "employees", label: "Per medewerker", icon: Users },
+    { key: "hourly", label: "Piek uren", icon: Zap },
+    { key: "daily", label: "Per dag", icon: CalendarDays },
+    { key: "products", label: "Producten", icon: Package },
+    { key: "profit", label: "Winst & Verlies", icon: DollarSign },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Period selector with calendar */}
+      <Card className="rounded-2xl">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-1">
+              {([
+                { key: "today", label: "Vandaag" },
+                { key: "week", label: "7 dagen" },
+                { key: "month", label: "30 dagen" },
+                { key: "custom", label: "📅 Aangepast" },
+              ] as const).map((r) => (
+                <Button key={r.key} variant={rangeMode === r.key ? "default" : "outline"} size="sm" className="text-xs rounded-full" onClick={() => setRangeMode(r.key)}>
+                  {r.label}
+                </Button>
+              ))}
+            </div>
+            {rangeMode === "custom" && (
+              <div className="flex items-center gap-2 relative">
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowCalendar(showCalendar === "start" ? null : "start")}>
+                    {customStart ? customStart.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : "Startdatum"}
+                  </Button>
+                  {showCalendar === "start" && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border rounded-xl shadow-xl">
+                      <div className="p-3 pointer-events-auto">
+                        <DayPicker
+                          mode="single"
+                          selected={customStart}
+                          onSelect={(d) => { setCustomStart(d || undefined); setShowCalendar(null); }}
+                          className="pointer-events-auto"
+                          classNames={{
+                            months: "flex flex-col",
+                            month: "space-y-2",
+                            caption: "flex justify-center pt-1 relative items-center",
+                            caption_label: "text-sm font-medium",
+                            nav: "space-x-1 flex items-center",
+                            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-input",
+                            nav_button_previous: "absolute left-1",
+                            nav_button_next: "absolute right-1",
+                            table: "w-full border-collapse",
+                            head_row: "flex",
+                            head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+                            row: "flex w-full mt-1",
+                            cell: "h-8 w-8 text-center text-sm p-0 relative",
+                            day: "h-8 w-8 p-0 font-normal rounded-md hover:bg-accent cursor-pointer inline-flex items-center justify-center",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_outside: "text-muted-foreground opacity-50",
+                            day_disabled: "text-muted-foreground opacity-50",
+                          }}
+                          components={{
+                            IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+                            IconRight: () => <ChevronRight className="h-4 w-4" />,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">t/m</span>
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowCalendar(showCalendar === "end" ? null : "end")}>
+                    {customEnd ? customEnd.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : "Einddatum"}
+                  </Button>
+                  {showCalendar === "end" && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border rounded-xl shadow-xl">
+                      <div className="p-3 pointer-events-auto">
+                        <DayPicker
+                          mode="single"
+                          selected={customEnd}
+                          onSelect={(d) => { setCustomEnd(d || undefined); setShowCalendar(null); }}
+                          className="pointer-events-auto"
+                          classNames={{
+                            months: "flex flex-col",
+                            month: "space-y-2",
+                            caption: "flex justify-center pt-1 relative items-center",
+                            caption_label: "text-sm font-medium",
+                            nav: "space-x-1 flex items-center",
+                            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-input",
+                            nav_button_previous: "absolute left-1",
+                            nav_button_next: "absolute right-1",
+                            table: "w-full border-collapse",
+                            head_row: "flex",
+                            head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+                            row: "flex w-full mt-1",
+                            cell: "h-8 w-8 text-center text-sm p-0 relative",
+                            day: "h-8 w-8 p-0 font-normal rounded-md hover:bg-accent cursor-pointer inline-flex items-center justify-center",
+                            day_selected: "bg-primary text-primary-foreground hover:bg-primary",
+                            day_today: "bg-accent text-accent-foreground",
+                            day_outside: "text-muted-foreground opacity-50",
+                            day_disabled: "text-muted-foreground opacity-50",
+                          }}
+                          components={{
+                            IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+                            IconRight: () => <ChevronRight className="h-4 w-4" />,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <Badge variant="secondary" className="text-xs ml-auto">{range.label} · {filtered.length} orders</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tab navigation */}
+      <div className="flex gap-1">
+        {tabs.map((t) => (
+          <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" className="rounded-full text-xs gap-1.5" onClick={() => setTab(t.key)}>
+            <t.icon className="h-3.5 w-3.5" />
+            {t.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* KPI strip */}
+      <div className="grid grid-cols-7 gap-3">
+        {[
+          { label: "Omzet", value: euro(revenue), sub: `${filtered.length} orders`, highlight: true },
+          { label: "Inkoopkosten", value: euro(totalCost), sub: "totaal", className: "text-red-600" },
+          { label: "Brutowinst", value: euro(grossProfit), sub: `${profitMargin.toFixed(1)}% marge`, className: grossProfit >= 0 ? "text-green-600" : "text-red-600" },
+          { label: "Gem. ticket", value: euro(avgTicket), sub: "per order" },
+          { label: "Items", value: String(itemsSold), sub: "verkocht" },
+          { label: "Fooi", value: euro(totalTips), sub: "totaal" },
+          { label: "Korting", value: euro(totalDiscount), sub: "gegeven" },
+        ].map((kpi: any, i) => (
+          <Card key={i} className={clsx("rounded-2xl", kpi.highlight && "border-primary/30 bg-primary/5")}>
+            <CardContent className="p-3">
+              <div className="text-[11px] text-muted-foreground">{kpi.label}</div>
+              <div className={clsx("text-xl font-bold tabular-nums", kpi.highlight && "text-primary", kpi.className)}>{kpi.value}</div>
+              <div className="text-[10px] text-muted-foreground">{kpi.sub}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* TAB: Overview */}
+      {tab === "overview" && (
+        <div className="grid grid-cols-2 gap-4">
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Omzet per categorie</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(bySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-2.5">
+                  {Object.entries(bySection).sort((a, b) => b[1] - a[1]).map(([section, amount]) => (
+                    <div key={section} className="space-y-1">
+                      <div className="flex justify-between text-sm"><span>{section}</span><span className="font-medium tabular-nums">{euro(amount)}</span></div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: revenue > 0 ? `${(amount / revenue) * 100}%` : "0%" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Betaalmethode</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(byMethod).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-2.5">
+                  {Object.entries(byMethod).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([method, amount]) => (
+                    <div key={method} className="space-y-1">
+                      <div className="flex justify-between text-sm"><span className="capitalize">{method === "giftcard" ? "Cadeaubon" : method}</span><span className="font-medium tabular-nums">{euro(amount as number)}</span></div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          {/* Quick insights */}
+          <Card className="rounded-2xl col-span-2">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">📊 Snelle inzichten</CardTitle></CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                {bestHours.length > 0 && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">🔥 Beste uren</div>
+                    {bestHours.map(([h, data]) => (
+                      <div key={h} className="text-sm"><span className="font-mono font-medium">{String(h).padStart(2, "0")}:00</span> — {euro(data.revenue)} ({data.orders}x)</div>
+                    ))}
+                  </div>
+                )}
+                {bestDay && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">🏆 Beste dag</div>
+                    <div className="text-sm font-medium">{bestDay.date}</div>
+                    <div className="text-sm">{euro(bestDay.revenue)} · {bestDay.orders} orders</div>
+                  </div>
+                )}
+                {topList.length > 0 && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-1">⭐ Bestseller</div>
+                    <div className="text-sm font-medium">{topList[0].name}</div>
+                    <div className="text-sm">{topList[0].qty}x verkocht · {euro(topList[0].revenue)}</div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* TAB: By Employee — with daily breakdown */}
+      {tab === "employees" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per medewerker</CardTitle></CardHeader>
+          <CardContent>
+            {Object.keys(byEmployee).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+              <div className="space-y-1">
+                {Object.entries(byEmployee).sort((a, b) => b[1].revenue - a[1].revenue).map(([eid, data]) => (
+                  <div key={eid}>
+                    <div
+                      className="flex items-center gap-3 py-2.5 border-b last:border-0 cursor-pointer hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors"
+                      onClick={() => setExpandedEmployee(expandedEmployee === eid ? null : eid)}
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                        {data.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{data.name}</div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                          <div className="h-full bg-primary rounded-full transition-all" style={{ width: revenue > 0 ? `${(data.revenue / revenue) * 100}%` : "0%" }} />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-sm tabular-nums">{euro(data.revenue)}</div>
+                        <div className="text-[10px] text-muted-foreground">{data.orders} orders · {data.items} items</div>
+                      </div>
+                      {data.tips > 0 && <Badge variant="secondary" className="text-[10px] shrink-0">{euro(data.tips)} fooi</Badge>}
+                      <ChevronRight className={clsx("h-4 w-4 text-muted-foreground transition-transform shrink-0", expandedEmployee === eid && "rotate-90")} />
+                    </div>
+                    {/* Daily breakdown */}
+                    {expandedEmployee === eid && (
+                      <div className="ml-12 mb-3 mt-1 space-y-1">
+                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Dagelijks overzicht</div>
+                        {Object.entries(data.byDay).map(([day, dd]) => (
+                          <div key={day} className="flex items-center justify-between text-xs py-1 px-2 bg-muted/30 rounded">
+                            <span className="text-muted-foreground">{day}</span>
+                            <div className="flex gap-3">
+                              <span className="tabular-nums font-medium">{euro(dd.revenue)}</span>
+                              <span className="text-muted-foreground">{dd.orders} orders</span>
+                              {dd.tips > 0 && <span className="text-green-600">{euro(dd.tips)} fooi</span>}
+                            </div>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between text-xs py-1 px-2 bg-primary/10 rounded font-medium">
+                          <span>Totaal</span>
+                          <div className="flex gap-3">
+                            <span className="tabular-nums">{euro(data.revenue)}</span>
+                            <span>{data.orders} orders</span>
+                            {data.tips > 0 && <span className="text-green-600">{euro(data.tips)} fooi</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* TAB: Peak Hours */}
+      {tab === "hourly" && (
+        <div className="space-y-4">
+          {/* Best & slowest hours cards */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="rounded-2xl border-green-200 bg-green-50/30">
+              <CardHeader className="pb-2"><CardTitle className="text-sm text-green-700">🔥 Piekuren (top 3)</CardTitle></CardHeader>
+              <CardContent>
+                {bestHours.length === 0 ? <div className="text-sm text-muted-foreground">Geen data.</div> : (
+                  <div className="space-y-2">
+                    {bestHours.map(([h, data], i) => (
+                      <div key={h} className="flex items-center gap-3">
+                        <span className="text-lg font-bold text-green-700 w-6">{i + 1}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{String(h).padStart(2, "0")}:00 – {String(Number(h) + 1).padStart(2, "0")}:00</div>
+                          <div className="text-xs text-muted-foreground">{data.orders} bestellingen</div>
+                        </div>
+                        <span className="font-bold text-sm tabular-nums text-green-700">{euro(data.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl border-orange-200 bg-orange-50/30">
+              <CardHeader className="pb-2"><CardTitle className="text-sm text-orange-700">💤 Rustige uren</CardTitle></CardHeader>
+              <CardContent>
+                {slowestHours.length === 0 ? <div className="text-sm text-muted-foreground">Geen data.</div> : (
+                  <div className="space-y-2">
+                    {slowestHours.map(([h, data]) => (
+                      <div key={h} className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{String(h).padStart(2, "0")}:00 – {String(Number(h) + 1).padStart(2, "0")}:00</div>
+                          <div className="text-xs text-muted-foreground">{data.orders} bestellingen</div>
+                        </div>
+                        <span className="font-medium text-sm tabular-nums text-orange-700">{euro(data.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          {/* Full hourly breakdown */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per uur</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-1">
+                {Object.entries(byHour).map(([hour, data]) => (
+                  <div key={hour} className="flex items-center gap-3 py-1.5">
+                    <span className="text-xs text-muted-foreground w-12 tabular-nums shrink-0">{String(hour).padStart(2, "0")}:00</span>
+                    <div className="flex-1 h-6 bg-muted rounded overflow-hidden relative">
+                      <div className={clsx("h-full rounded transition-all", data.revenue > 0 ? (data.revenue === peakHourRevenue ? "bg-primary" : "bg-primary/60") : "")}
+                        style={{ width: `${(data.revenue / peakHourRevenue) * 100}%` }} />
+                      {data.revenue > 0 && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium tabular-nums text-muted-foreground">
+                          {euro(data.revenue)} · {data.orders}x
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* TAB: By Day */}
+      {tab === "daily" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Verkoop per dag</CardTitle></CardHeader>
+          <CardContent>
+            {sortedDays.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+              <div className="space-y-1">
+                {sortedDays.map((data) => {
+                  const maxDayRevenue = Math.max(...sortedDays.map((d) => d.revenue), 1);
+                  const isBest = bestDay && data.date === bestDay.date;
+                  return (
+                    <div key={data.date} className={clsx("flex items-center gap-3 py-2 border-b last:border-0 px-2 -mx-2 rounded", isBest && "bg-primary/5")}>
+                      <span className="text-xs w-28 shrink-0">{data.date} {isBest && "🏆"}</span>
+                      <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
+                        <div className={clsx("h-full rounded transition-all", isBest ? "bg-primary" : "bg-primary/60")} style={{ width: `${(data.revenue / maxDayRevenue) * 100}%` }} />
+                      </div>
+                      <div className="text-right shrink-0 flex items-center gap-2">
+                        <span className="text-sm font-bold tabular-nums">{euro(data.revenue)}</span>
+                        <span className="text-[10px] text-muted-foreground">{data.orders} orders</span>
+                        {data.tips > 0 && <span className="text-[10px] text-green-600">{euro(data.tips)} fooi</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Totals row */}
+                <div className="flex items-center gap-3 py-2 px-2 -mx-2 bg-muted/50 rounded-lg font-medium mt-2">
+                  <span className="text-xs w-28 shrink-0">Totaal</span>
+                  <div className="flex-1" />
+                  <div className="text-right shrink-0 flex items-center gap-2">
+                    <span className="text-sm font-bold tabular-nums">{euro(revenue)}</span>
+                    <span className="text-[10px] text-muted-foreground">{filtered.length} orders</span>
+                    {totalTips > 0 && <span className="text-[10px] text-green-600">{euro(totalTips)} fooi</span>}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* TAB: Top Products */}
+      {tab === "products" && (
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Top producten</CardTitle></CardHeader>
+          <CardContent>
+            {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+              <div className="space-y-1">
+                {topList.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
+                    <span className={clsx("w-6 text-center text-xs font-mono", i < 3 ? "font-bold text-primary" : "text-muted-foreground")}>{i + 1}</span>
+                    <span className="flex-1 text-sm font-medium truncate">{item.name}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{item.qty}x</span>
+                    <span className="text-sm font-bold tabular-nums w-20 text-right">{euro(item.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* TAB: Profit & Loss */}
+      {tab === "profit" && (
+        <div className="space-y-4">
+          {/* P&L Summary */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">💰 Winst & Verlies overzicht</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-w-lg">
+                {[
+                  { label: "Omzet (verkoop)", value: euro(revenue), className: "font-bold" },
+                  { label: "Inkoopkosten (COGS)", value: `-${euro(totalCost)}`, className: "text-red-600" },
+                  { label: "Brutowinst", value: euro(grossProfit), className: grossProfit >= 0 ? "font-bold text-green-600" : "font-bold text-red-600" },
+                  { label: "Brutomarge", value: `${profitMargin.toFixed(1)}%`, className: profitMargin >= 60 ? "text-green-600" : profitMargin >= 40 ? "text-orange-600" : "text-red-600" },
+                  { label: "Kortingen gegeven", value: `-${euro(totalDiscount)}`, className: "text-orange-600" },
+                  { label: "Fooi ontvangen", value: euro(totalTips), className: "text-green-600" },
+                ].map((row, i) => (
+                  <div key={i} className={clsx("flex justify-between py-1.5 border-b last:border-0", i === 2 && "border-t-2 border-b-2 py-2.5")}>
+                    <span className="text-sm">{row.label}</span>
+                    <span className={clsx("text-sm tabular-nums", row.className)}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Profit by category */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Winst per categorie</CardTitle></CardHeader>
+            <CardContent>
+              {Object.keys(profitBySection).length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-3">
+                  {Object.entries(profitBySection).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).map(([section, data]) => {
+                    const sectionProfit = data.revenue - data.cost;
+                    const sectionMargin = data.revenue > 0 ? (sectionProfit / data.revenue) * 100 : 0;
+                    return (
+                      <div key={section} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{section}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground">Omzet: {euro(data.revenue)}</span>
+                            <span className="text-xs text-muted-foreground">Inkoop: {euro(data.cost)}</span>
+                            <span className={clsx("font-bold tabular-nums", sectionProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(sectionProfit)}</span>
+                            <Badge variant="secondary" className="text-[10px]">{sectionMargin.toFixed(0)}%</Badge>
+                          </div>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div className={clsx("h-full rounded-full transition-all", sectionMargin >= 60 ? "bg-green-500" : sectionMargin >= 40 ? "bg-orange-400" : "bg-red-400")}
+                            style={{ width: `${Math.min(sectionMargin, 100)}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Profit per product */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Winst per product (top 10)</CardTitle></CardHeader>
+            <CardContent>
+              {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">Geen data.</div> : (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3 py-1.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    <span className="w-6">#</span>
+                    <span className="flex-1">Product</span>
+                    <span className="w-12 text-right">Qty</span>
+                    <span className="w-20 text-right">Omzet</span>
+                    <span className="w-20 text-right">Inkoop</span>
+                    <span className="w-20 text-right">Winst</span>
+                    <span className="w-16 text-right">Marge</span>
+                  </div>
+                  {topList.map((item, i) => {
+                    const itemProfit = item.revenue - item.cost;
+                    const itemMargin = item.revenue > 0 ? (itemProfit / item.revenue) * 100 : 0;
+                    return (
+                      <div key={i} className="flex items-center gap-3 py-2 border-b last:border-0">
+                        <span className={clsx("w-6 text-center text-xs font-mono", i < 3 ? "font-bold text-primary" : "text-muted-foreground")}>{i + 1}</span>
+                        <span className="flex-1 text-sm font-medium truncate">{item.name}</span>
+                        <span className="w-12 text-right text-xs text-muted-foreground tabular-nums">{item.qty}x</span>
+                        <span className="w-20 text-right text-sm tabular-nums">{euro(item.revenue)}</span>
+                        <span className="w-20 text-right text-sm tabular-nums text-red-600">{euro(item.cost)}</span>
+                        <span className={clsx("w-20 text-right text-sm font-bold tabular-nums", itemProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(itemProfit)}</span>
+                        <span className={clsx("w-16 text-right text-xs font-medium", itemMargin >= 60 ? "text-green-600" : itemMargin >= 40 ? "text-orange-600" : "text-red-600")}>{itemMargin.toFixed(0)}%</span>
+                      </div>
+                    );
+                  })}
+                  {/* Totals */}
+                  <div className="flex items-center gap-3 py-2 bg-muted/50 rounded-lg mt-2 font-medium">
+                    <span className="w-6" />
+                    <span className="flex-1 text-sm">Totaal</span>
+                    <span className="w-12 text-right text-xs tabular-nums">{topList.reduce((s, i) => s + i.qty, 0)}x</span>
+                    <span className="w-20 text-right text-sm tabular-nums">{euro(topList.reduce((s, i) => s + i.revenue, 0))}</span>
+                    <span className="w-20 text-right text-sm tabular-nums text-red-600">{euro(topList.reduce((s, i) => s + i.cost, 0))}</span>
+                    <span className={clsx("w-20 text-right text-sm font-bold tabular-nums", grossProfit >= 0 ? "text-green-600" : "text-red-600")}>{euro(topList.reduce((s, i) => s + i.revenue - i.cost, 0))}</span>
+                    <span className="w-16 text-right text-xs font-medium">{profitMargin.toFixed(0)}%</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ACCOUNTING ──────────────────────────────────────────────────────────────
+
+function AccountingView({ orders }: any) {
+  const today = new Date();
+  const todayOrders = orders.filter((o) => o.date.toDateString() === today.toDateString());
+  const grossRevenue = todayOrders.reduce((s, o) => s + o.subtotal, 0);
+  const totalDiscounts = todayOrders.reduce((s, o) => s + o.discount, 0);
+  const totalGiftCard = todayOrders.reduce((s, o) => s + (o.giftCardDeduction || 0), 0);
+  const netRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
+  const totalTips = todayOrders.reduce((s, o) => s + (o.tip || 0), 0);
+  const btw21 = netRevenue * 0.21 / 1.21;
+
+  const byMethod = { card: 0, cash: 0, qr: 0, giftcard: 0 };
+  todayOrders.forEach((o) => { byMethod[o.method] = (byMethod[o.method] || 0) + o.total; });
+
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">Daily summary</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-2 max-w-md">
+            {[
+              { label: "Gross revenue", value: euro(grossRevenue) },
+              { label: "Discounts given", value: `-${euro(totalDiscounts)}`, className: "text-red-600" },
+              { label: "Gift card redemptions", value: `-${euro(totalGiftCard)}`, className: "text-purple-600" },
+              { label: "Net revenue (incl. BTW)", value: euro(netRevenue), className: "font-bold" },
+              { label: "BTW 21% (estimated)", value: euro(btw21) },
+              { label: "Tips collected", value: euro(totalTips), className: "text-green-600" },
+              { label: "Total cash in", value: euro(netRevenue + totalTips), className: "font-bold text-lg" },
+            ].map((row, i) => (
+              <div key={i} className={clsx("flex justify-between py-1.5", row.className)}>
+                <span className="text-sm">{row.label}</span>
+                <span className="text-sm">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">By payment method</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-2 max-w-md">
+            {Object.entries(byMethod).filter(([, v]) => (v as number) > 0).map(([method, amount]: [string, number]) => (
+              <div key={method} className="flex justify-between py-1.5 text-sm">
+                <span className="capitalize">{method === "giftcard" ? "Gift card" : method}</span>
+                <span className="font-medium">{euro(amount)}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">Export</CardTitle></CardHeader>
+        <CardContent className="flex gap-3">
+          <Button variant="outline"><FileText className="h-4 w-4 mr-2" />Export CSV</Button>
+          <Button variant="outline"><FileText className="h-4 w-4 mr-2" />Export PDF</Button>
+          <Button variant="outline"><Zap className="h-4 w-4 mr-2" />Send to bookkeeper</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+
+function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }: any) {
+  return (
+    <div className="space-y-4 max-w-2xl">
+      {/* PassKit Configuration */}
+      {features.passkit && (
+        <Card className="rounded-2xl border-green-200 bg-green-50/30">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Wallet className="h-4 w-4" /> PassKit Loyalty Configuration</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div><Label>Program ID</Label><div className="text-xs text-muted-foreground">Your PassKit program identifier</div></div>
+              <Input value={passkitConfig.programId} onChange={(e) => setPasskitConfig((p: any) => ({ ...p, programId: e.target.value }))} placeholder="e.g. prog_abc123" className="max-w-[280px]" />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div><Label>Tier ID</Label><div className="text-xs text-muted-foreground">Default tier for new members</div></div>
+              <Input value={passkitConfig.tierId} onChange={(e) => setPasskitConfig((p: any) => ({ ...p, tierId: e.target.value }))} placeholder="e.g. tier_base" className="max-w-[280px]" />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div><Label>Points per €1</Label><div className="text-xs text-muted-foreground">How many points earned per euro spent</div></div>
+              <Input type="number" value={passkitConfig.pointsPerEuro} onChange={(e) => setPasskitConfig((p: any) => ({ ...p, pointsPerEuro: parseInt(e.target.value) || 1 }))} className="max-w-[100px]" />
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div><Label>Auto-enrol new customers</Label><div className="text-xs text-muted-foreground">Automatically create PassKit member on first purchase</div></div>
+              <Switch checked={passkitConfig.autoEnrol} onCheckedChange={(v) => setPasskitConfig((p: any) => ({ ...p, autoEnrol: v }))} />
+            </div>
+            <div className="rounded-lg bg-green-100 border border-green-300 p-3 text-xs text-green-800">
+              <div className="font-medium mb-1">✅ PassKit API connected</div>
+              <div>Your API key and secret are securely stored. Members will earn {passkitConfig.pointsPerEuro} point{passkitConfig.pointsPerEuro !== 1 ? "s" : ""} per €1 spent.</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">General</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between"><div><Label>Business name</Label><div className="text-xs text-muted-foreground">Shown on receipts</div></div><Input defaultValue="Saakouk" className="max-w-[200px]" /></div>
+          <Separator />
+          <div className="flex items-center justify-between"><div><Label>Currency</Label><div className="text-xs text-muted-foreground">All prices display in this currency</div></div><Input defaultValue="EUR" className="max-w-[100px]" disabled /></div>
+          <Separator />
+          <div className="flex items-center justify-between"><div><Label>BTW rate</Label><div className="text-xs text-muted-foreground">Dutch standard VAT</div></div><Input defaultValue="21%" className="max-w-[100px]" disabled /></div>
+        </CardContent>
+      </Card>
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">Features</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {[
+            { key: "tips", label: "Terminal tipping", desc: "Ask customers for tip on terminal" },
+            { key: "passkit", label: "PassKit loyalty", desc: "Apple/Google Wallet passes" },
+            { key: "piggy", label: "Piggy integration", desc: "CRM + loyalty + campaigns" },
+            { key: "leat", label: "Leat integration", desc: "Order sync + automations" },
+            { key: "qr", label: "QR ordering", desc: "Customers order from their phone" },
+            { key: "kitchen", label: "Kitchen display", desc: "Send orders to kitchen screen" },
+          ].map((feat) => (
+            <div key={feat.key} className="flex items-center justify-between py-1">
+              <div>
+                <Label>{feat.label}</Label>
+                <div className="text-xs text-muted-foreground">{feat.desc}</div>
+              </div>
+              <Switch checked={features[feat.key] ?? false} onCheckedChange={(v) => setFeatures((prev) => ({ ...prev, [feat.key]: v }))} />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">Roles</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            {["Owner", "Manager", "Cashier", "Barista"].map((role) => (
+              <div key={role} className="flex items-center justify-between py-1.5 border-b last:border-0">
+                <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-muted-foreground" />{role}</div>
+                <Button variant="ghost" size="sm">Configure</Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">Printers &amp; Hardware</CardTitle></CardHeader>
+        <CardContent className="flex gap-3">
+          <Button variant="outline"><Printer className="h-4 w-4 mr-2" />Receipt printer</Button>
+          <Button variant="outline"><ChefHat className="h-4 w-4 mr-2" />Kitchen printer</Button>
+          <Button variant="outline"><CreditCard className="h-4 w-4 mr-2" />Payment terminal</Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
+
+function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: any) => void }) {
+  return (
+    <div className="h-dvh bg-background flex items-center justify-center select-none">
+      <div className="w-full max-w-md space-y-8 px-6">
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl font-black tracking-tight">saakouk</h1>
+          <p className="text-sm text-muted-foreground">Tik op je naam om te beginnen</p>
+        </div>
+
+        {/* Employee grid — tap to login */}
+        <div className="grid grid-cols-2 gap-3">
+          {employees.map((emp) => (
+            <button key={emp.id} onClick={() => onLogin(emp)}
+              className="flex items-center gap-3 rounded-xl border bg-card px-4 py-4 text-left transition-all hover:bg-accent active:scale-[0.97] touch-manipulation">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground shrink-0">
+                {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">{emp.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">{emp.role}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
+
+function EmployeesView({ employees, setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
+
+  function openEdit(emp: any) {
+    setEditingId(emp.id);
+    setForm({ name: emp.name, email: emp.email, role: emp.role, pin: emp.pin });
+  }
+
+  function openAdd() {
+    setEditingId(null);
+    setForm({ name: "", email: "", role: "sales", pin: "" });
+    setShowAdd(true);
+  }
+
+  function save() {
+    if (!form.name || !form.pin || form.pin.length !== 6) return;
+    if (editingId) {
+      setEmployees((prev: any[]) => prev.map((e) => e.id === editingId ? { ...e, ...form } : e));
+    } else {
+      setEmployees((prev: any[]) => [...prev, { id: generateId(), ...form }]);
+    }
+    setShowAdd(false);
+    setEditingId(null);
+  }
+
+  function remove(id: string) {
+    setEmployees((prev: any[]) => prev.filter((e) => e.id !== id));
+  }
+
+  const roleColors: Record<string, string> = {
+    owner: "bg-green-100 text-green-800 border-green-200",
+    manager: "bg-blue-100 text-blue-800 border-blue-200",
+    sales: "bg-orange-100 text-orange-800 border-orange-200",
+  };
+
+  const roleLabels: Record<string, string> = {
+    owner: "Owner",
+    manager: "Manager",
+    sales: "Sales",
+  };
+
+  const isOwner = currentRole === "owner";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">{employees.length} medewerkers</span>
+        <Button onClick={openAdd} className="rounded-xl"><Plus className="h-4 w-4 mr-1" /> Medewerker Toevoegen</Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {employees.map((emp) => (
+          <Card key={emp.id} className="rounded-2xl">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
+                    {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">{emp.name}</div>
+                    <div className="text-xs text-muted-foreground">{emp.email}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEdit(emp)} className="p-2 rounded-lg hover:bg-accent transition"><Edit className="h-4 w-4 text-muted-foreground" /></button>
+                  <button onClick={() => remove(emp.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition"><Trash2 className="h-4 w-4 text-destructive" /></button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{roleLabels[emp.role] || emp.role}</Badge>
+                <span className="text-xs text-muted-foreground font-mono">PIN: ••••••</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Modal open={showAdd || !!editingId} onClose={() => { setShowAdd(false); setEditingId(null); }}>
+        <div className="p-6 space-y-4">
+          <h3 className="text-lg font-bold">{editingId ? "Medewerker bewerken" : "Nieuwe medewerker"}</h3>
+          <div className="space-y-3">
+            <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
+            <div>
+              <Label>Rol</Label>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner}>
+                <option value="owner">Owner</option>
+                <option value="manager">Manager</option>
+                <option value="sales">Sales</option>
+              </select>
+              {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
+            </div>
+            <div><Label>PIN (6 cijfers)</Label><Input type="password" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="••••••" className="mt-1 font-mono" /></div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
+            <Button onClick={save} disabled={!form.name || form.pin.length !== 6}>Opslaan</Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
+
+export default function SaakoukPOS() {
+  const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
+  const [active, setActive] = useState("pos");
+  const [products, setProducts] = useState(initialProducts);
+  const [tables] = useState(initialTables);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
+  const [customers, setCustomers] = useState(initialCustomers);
+  const [giftCards, setGiftCards] = useState(initialGiftCards);
+  const [reservations, setReservations] = useState(initialReservations);
+  const [employees, setEmployees] = useState(initialEmployees);
+  const [toast, setToast] = useState("");
+  const [features, setFeatures] = useState({
+    tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
+  });
+  const [passkitConfig, setPasskitConfig] = useState({
+    programId: "24RMbRfRp5Y9h9ptYWnwFe",
+    tierId: "",
+    pointsPerEuro: 1,
+    autoEnrol: true,
+  });
+
+  const [qrOrders, setQrOrders] = useState<any[]>([]);
+
+  // Load saved transactions from database
+  useEffect(() => {
+    async function loadTransactions() {
+      const { data } = await supabase.from("pos_transactions").select("*").order("created_at", { ascending: false }).limit(500);
+      if (data) {
+        const mapped = data.map((t: any) => ({
+          id: t.order_id,
+          date: new Date(t.created_at),
+          items: t.items || [],
+          subtotal: t.subtotal,
+          discount: t.discount,
+          discountName: t.discount_name,
+          total: t.total,
+          tip: t.tip,
+          method: t.payment_method,
+          customerId: t.customer_id,
+          customerName: t.customer_name,
+          table: t.table_id,
+          employeeId: t.employee_id,
+          employeeName: t.employee_name,
+          loyaltyProvider: t.loyalty_provider,
+          loyaltyId: t.loyalty_id,
+          giftCardDeduction: t.gift_card_deduction,
+          giftCardId: t.gift_card_id,
+          status: t.status,
+          source: t.source,
+        }));
+        setOrders(mapped);
+      }
+      setDbLoaded(true);
+    }
+    loadTransactions();
+  }, []);
+
+  // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
+  useEffect(() => {
+    async function fetchQrOrders() {
+      const { data } = await supabase.from("qr_orders").select("*").in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
+      if (data) setQrOrders(data);
+    }
+    fetchQrOrders();
+
+    const channel = supabase
+      .channel("qr-orders-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "qr_orders" }, () => {
+        fetchQrOrders();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  // Auto-accept: new "pending" orders get moved to "preparing" automatically
+  useEffect(() => {
+    const pendingOrders = qrOrders.filter((o) => o.status === "pending");
+    pendingOrders.forEach(async (qo) => {
+      await supabase.from("qr_orders").update({ status: "preparing" } as any).eq("id", qo.id);
+    });
+  }, [qrOrders]);
+
+  async function advanceQrOrder(qrOrder: any) {
+    const nextStatus = qrOrder.status === "preparing" ? "ready" : qrOrder.status === "ready" ? "served" : null;
+    if (!nextStatus) return;
+    await supabase.from("qr_orders").update({ status: nextStatus } as any).eq("id", qrOrder.id);
+    if (nextStatus === "served") {
+      setQrOrders((prev) => prev.filter((o) => o.id !== qrOrder.id));
+    }
+  }
 
 
   const [openTickets, setOpenTickets] = useState<Record<string, any>>({});
