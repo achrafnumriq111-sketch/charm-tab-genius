@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      cash_closings: {
+        Row: {
+          closing_date: string
+          counted_cash: number
+          created_at: string
+          difference: number
+          envelope_amount: number
+          envelope_code: string
+          expected_cash_revenue: number
+          expected_envelope: number
+          expense_note: string | null
+          expense_receipts: number
+          float_amount: number
+          id: string
+          primary_employee_id: string
+          primary_employee_name: string
+          second_checker_id: string
+          second_checker_name: string
+          status: string
+        }
+        Insert: {
+          closing_date?: string
+          counted_cash?: number
+          created_at?: string
+          difference?: number
+          envelope_amount?: number
+          envelope_code: string
+          expected_cash_revenue?: number
+          expected_envelope?: number
+          expense_note?: string | null
+          expense_receipts?: number
+          float_amount?: number
+          id?: string
+          primary_employee_id: string
+          primary_employee_name: string
+          second_checker_id: string
+          second_checker_name: string
+          status?: string
+        }
+        Update: {
+          closing_date?: string
+          counted_cash?: number
+          created_at?: string
+          difference?: number
+          envelope_amount?: number
+          envelope_code?: string
+          expected_cash_revenue?: number
+          expected_envelope?: number
+          expense_note?: string | null
+          expense_receipts?: number
+          float_amount?: number
+          id?: string
+          primary_employee_id?: string
+          primary_employee_name?: string
+          second_checker_id?: string
+          second_checker_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       pos_transactions: {
         Row: {
           created_at: string
