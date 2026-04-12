@@ -3591,7 +3591,7 @@ export default function SaakoukPOS() {
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} />}
+            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={products} reservations={reservations} customers={customers} />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-xl">
