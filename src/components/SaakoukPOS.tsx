@@ -3138,7 +3138,7 @@ export default function SaakoukPOS() {
 
   return (
     <div className="h-dvh bg-background text-foreground flex overflow-hidden select-none">
-      <Sidebar active={active} setActive={setActive} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
+      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         <div className="shrink-0 border-b bg-card px-4 py-2 flex items-center justify-between">
           <div>
