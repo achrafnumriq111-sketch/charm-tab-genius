@@ -1079,24 +1079,273 @@ function TableView({ tables, openTickets, reservations, onSelectTable, onCloseTa
 
 // ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
-function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder }: any) {
-  const todayOrders = orders.filter((o) => isToday(o.date));
-  const revenue = todayOrders.reduce((s, o) => s + o.total, 0);
-  const tips = todayOrders.reduce((s, o) => s + (o.tip || 0), 0);
-  const avgTicket = todayOrders.length > 0 ? revenue / todayOrders.length : 0;
-  const occupiedTables = tables.filter((t) => !!openTickets[t.id]).length;
+// KPI card IDs for favoriting
+const ALL_INSIGHTS = [
+  { id: "revenue", label: "Bruto-omzet", tab: "verkopen", color: "text-blue-600" },
+  { id: "order_revenue", label: "Omzet van alle bestellingen", tab: "verkopen", color: "text-blue-600" },
+  { id: "avg_ticket", label: "Gemiddelde verkoopprijs", tab: "verkopen", color: "text-blue-600" },
+  { id: "avg_order", label: "Gemiddelde bestelwaarde", tab: "verkopen", color: "text-blue-600" },
+  { id: "order_count", label: "Verkoop aantallen", tab: "verkopen", color: "text-blue-600" },
+  { id: "avg_table_time", label: "Gemiddelde tafelbezettingstijd", tab: "service", color: "text-purple-600" },
+  { id: "total_tips", label: "Totale fooien", tab: "service", color: "text-purple-600" },
+  { id: "tip_pct", label: "Fooi percentage", tab: "service", color: "text-purple-600" },
+  { id: "avg_table_revenue", label: "Gemiddelde tafelomzet", tab: "service", color: "text-purple-600" },
+  { id: "total_discounts", label: "Totale kortingen", tab: "service", color: "text-purple-600" },
+  { id: "returning_customers", label: "Terugkerende klanten", tab: "service", color: "text-purple-600" },
+  { id: "prep_count", label: "Totaal aantal verwerkte bonnen", tab: "prepstation", color: "text-amber-700" },
+  { id: "res_count", label: "Aantal reserveringen", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "walk_ins", label: "Walk-ins", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "avg_group_size", label: "Gemiddelde groepsgrootte", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "cancellations", label: "Annuleringen", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "no_shows", label: "No-shows", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "waitlist", label: "Aantal op de wachtlijst", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "couverts", label: "Aantal couverts", tab: "reserveringen", color: "text-cyan-600" },
+  { id: "products_sold", label: "Totale producten verkocht", tab: "producten", color: "text-orange-600" },
+  { id: "avg_products_per_order", label: "Gemiddeld aantal producten per bestelling", tab: "producten", color: "text-orange-600" },
+  { id: "cost_pct", label: "Kosten percentage ingrediënt", tab: "producten", color: "text-orange-600" },
+  { id: "top_categories", label: "Top productcategorieën", tab: "producten", color: "text-orange-600" },
+  { id: "top_products", label: "Top producten", tab: "producten", color: "text-orange-600" },
+] as const;
 
+function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, products, reservations, customers }: any) {
+  const [dashTab, setDashTab] = useState("favorieten");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [periodMode, setPeriodMode] = useState<"day" | "month" | "quarter">("day");
+  const [compareMode, setCompareMode] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("saakouk_fav_insights") || "[]"); } catch { return []; }
+  });
+  const [showFavPicker, setShowFavPicker] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("saakouk_fav_insights", JSON.stringify(favorites));
+  }, [favorites]);
+
+  function toggleFavorite(id: string) {
+    setFavorites((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }
+
+  // Date helpers
+  function navigateDate(dir: number) {
+    const d = new Date(selectedDate);
+    if (periodMode === "day") d.setDate(d.getDate() + dir);
+    else if (periodMode === "month") d.setMonth(d.getMonth() + dir);
+    else d.setMonth(d.getMonth() + dir * 3);
+    setSelectedDate(d);
+  }
+
+  function getDateRange(date: Date): { start: Date; end: Date } {
+    if (periodMode === "day") {
+      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+      return { start, end };
+    }
+    if (periodMode === "month") {
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { start, end };
+    }
+    // quarter
+    const q = Math.floor(date.getMonth() / 3);
+    const start = new Date(date.getFullYear(), q * 3, 1);
+    const end = new Date(date.getFullYear(), q * 3 + 3, 0, 23, 59, 59, 999);
+    return { start, end };
+  }
+
+  function getCompareRange(date: Date): { start: Date; end: Date } {
+    const d = new Date(date);
+    if (periodMode === "day") d.setDate(d.getDate() - 1);
+    else if (periodMode === "month") d.setMonth(d.getMonth() - 1);
+    else d.setMonth(d.getMonth() - 3);
+    return getDateRange(d);
+  }
+
+  function dateLabel(date: Date): string {
+    if (periodMode === "day") return date.toLocaleDateString("nl-NL", { day: "numeric", month: "short" });
+    if (periodMode === "month") return date.toLocaleDateString("nl-NL", { month: "long", year: "numeric" });
+    const q = Math.floor(date.getMonth() / 3) + 1;
+    return `Q${q} ${date.getFullYear()}`;
+  }
+
+  const range = getDateRange(selectedDate);
+  const compareRange = getCompareRange(selectedDate);
+  const filtered = orders.filter((o: any) => o.date >= range.start && o.date <= range.end);
+  const compareFiltered = compareMode ? orders.filter((o: any) => o.date >= compareRange.start && o.date <= compareRange.end) : [];
+
+  // ─── Calculations ───
+  const revenue = filtered.reduce((s: number, o: any) => s + o.total, 0);
+  const orderRevenue = filtered.reduce((s: number, o: any) => s + o.subtotal, 0);
+  const tips = filtered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
+  const avgTicket = filtered.length > 0 ? revenue / filtered.length : 0;
+  const avgOrder = filtered.length > 0 ? orderRevenue / filtered.length : 0;
+  const totalDiscount = filtered.reduce((s: number, o: any) => s + (o.discount || 0), 0);
+  const tipPct = revenue > 0 ? (tips / revenue) * 100 : 0;
+  const itemsSold = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + i.qty, 0), 0);
+  const avgProductsPerOrder = filtered.length > 0 ? itemsSold / filtered.length : 0;
+  const totalCost = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + (i.costPrice || 0) * i.qty, 0), 0);
+  const costPct = revenue > 0 ? (totalCost / revenue) * 100 : 0;
+
+  // Compare
+  const cRevenue = compareFiltered.reduce((s: number, o: any) => s + o.total, 0);
+  const cTips = compareFiltered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
+  const cAvgTicket = compareFiltered.length > 0 ? cRevenue / compareFiltered.length : 0;
+
+  // By hour for chart
+  const byHour: Record<number, number> = {};
+  for (let h = 0; h <= 23; h++) byHour[h] = 0;
+  filtered.forEach((o: any) => { byHour[o.date.getHours()] += o.total; });
+  const peakHour = Math.max(...Object.values(byHour), 1);
+
+  // Top products and categories
+  const topProducts: Record<string, { name: string; qty: number; revenue: number }> = {};
+  const bySection: Record<string, number> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    if (!topProducts[item.productId]) topProducts[item.productId] = { name: item.name, qty: 0, revenue: 0 };
+    topProducts[item.productId].qty += item.qty;
+    topProducts[item.productId].revenue += (item.price + (item.modifiers?.reduce((s: number, m: any) => s + m.price, 0) ?? 0)) * item.qty;
+    const product = products?.find((p: any) => p.id === item.productId);
+    const sec = product?.section || "Other";
+    bySection[sec] = (bySection[sec] || 0) + (item.price + (item.modifiers?.reduce((s: number, m: any) => s + m.price, 0) ?? 0)) * item.qty;
+  }));
+  const topProductList = Object.values(topProducts).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+  const topCategoryList = Object.entries(bySection).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  // Reserveringen stats
+  const filteredReservations = (reservations || []).filter((r: any) => {
+    const rDate = new Date(r.date);
+    return rDate >= range.start && rDate <= range.end;
+  });
+  const confirmedRes = filteredReservations.filter((r: any) => r.status === "confirmed" || r.status === "seated").length;
+  const walkIns = filtered.filter((o: any) => !o.table).length;
+  const avgGroupSize = filteredReservations.length > 0
+    ? filteredReservations.reduce((s: number, r: any) => s + (r.guests || 0), 0) / filteredReservations.length : 0;
+  const cancelledRes = filteredReservations.filter((r: any) => r.status === "cancelled").length;
+  const noShows = filteredReservations.filter((r: any) => r.status === "no-show").length;
+  const totalCouverts = filteredReservations.reduce((s: number, r: any) => s + (r.guests || 0), 0);
+
+  // Returning customers
+  const customerCounts: Record<string, number> = {};
+  filtered.forEach((o: any) => { if (o.customerId) customerCounts[o.customerId] = (customerCounts[o.customerId] || 0) + 1; });
+  const returningCount = Object.values(customerCounts).filter((c) => c > 1).length;
+
+  // Prep count
+  const prepCount = filtered.reduce((s: number, o: any) => s + o.items.length, 0);
+
+  // Avg table revenue
+  const tableOrders = filtered.filter((o: any) => o.table);
+  const avgTableRevenue = tableOrders.length > 0 ? tableOrders.reduce((s: number, o: any) => s + o.total, 0) / tableOrders.length : 0;
+
+  // KPI value resolver
+  function getInsightValue(id: string): string {
+    switch (id) {
+      case "revenue": return euro(revenue);
+      case "order_revenue": return euro(orderRevenue);
+      case "avg_ticket": return euro(avgTicket);
+      case "avg_order": return euro(avgOrder);
+      case "order_count": return String(filtered.length);
+      case "avg_table_time": return "22 sec";
+      case "total_tips": return euro(tips);
+      case "tip_pct": return `${tipPct.toFixed(1)}%`;
+      case "avg_table_revenue": return `${avgTableRevenue.toFixed(1)}x`;
+      case "total_discounts": return euro(totalDiscount);
+      case "returning_customers": return String(returningCount);
+      case "prep_count": return String(prepCount);
+      case "res_count": return String(confirmedRes);
+      case "walk_ins": return String(walkIns);
+      case "avg_group_size": return String(Math.round(avgGroupSize));
+      case "cancellations": return String(cancelledRes);
+      case "no_shows": return String(noShows);
+      case "waitlist": return "0";
+      case "couverts": return String(totalCouverts);
+      case "products_sold": return String(itemsSold);
+      case "avg_products_per_order": return avgProductsPerOrder.toFixed(1);
+      case "cost_pct": return `${costPct.toFixed(0)}%`;
+      default: return "—";
+    }
+  }
+
+  function InsightCard({ insight, showFavStar = true }: { insight: typeof ALL_INSIGHTS[number]; showFavStar?: boolean }) {
+    const isFav = favorites.includes(insight.id);
+    const isChart = insight.id === "top_categories" || insight.id === "top_products" || insight.id === "returning_customers" || insight.id === "total_discounts";
+
+    return (
+      <Card className="rounded-2xl">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className={clsx("text-sm font-medium underline underline-offset-2 decoration-dotted", insight.color)}>{insight.label} →</span>
+            <div className="flex items-center gap-1">
+              <button className="p-1 rounded-full hover:bg-muted" title="Info"><span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span></button>
+              {showFavStar && (
+                <button className="p-1 rounded-full hover:bg-muted" onClick={() => toggleFavorite(insight.id)} title={isFav ? "Verwijder uit favorieten" : "Toevoegen aan favorieten"}>
+                  <Star className={clsx("h-4 w-4", isFav ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                </button>
+              )}
+            </div>
+          </div>
+          {isChart && insight.id === "top_categories" ? (
+            <div className="space-y-1.5 mt-2">
+              {topCategoryList.length === 0 ? <div className="text-sm text-muted-foreground">Geen data</div> : topCategoryList.map(([name, rev]) => (
+                <div key={name}>
+                  <div className="text-xs mb-0.5">{name}</div>
+                  <div className="h-4 bg-muted rounded overflow-hidden">
+                    <div className="h-full bg-orange-400 rounded" style={{ width: `${(rev / (topCategoryList[0]?.[1] || 1)) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : isChart && insight.id === "top_products" ? (
+            <div className="space-y-1.5 mt-2">
+              {topProductList.length === 0 ? <div className="text-sm text-muted-foreground">Geen data</div> : topProductList.map((p) => (
+                <div key={p.name}>
+                  <div className="text-xs mb-0.5">{p.name}</div>
+                  <div className="h-4 bg-muted rounded overflow-hidden">
+                    <div className="h-full bg-orange-500 rounded" style={{ width: `${(p.revenue / (topProductList[0]?.revenue || 1)) * 100}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-3xl font-black mt-1">{getInsightValue(insight.id)}</div>
+          )}
+          {compareMode && !isChart && (
+            <div className="text-xs text-muted-foreground mt-1">Vorige periode: vergelijking actief</div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Hourly chart component
+  function HourlyChart() {
+    const activeHours = Object.entries(byHour).filter(([, v]) => v > 0);
+    if (activeHours.length === 0) return <div className="text-sm text-muted-foreground py-4">Geen data</div>;
+    return (
+      <div className="flex items-end gap-1 h-32">
+        {Object.entries(byHour).filter(([h]) => Number(h) >= 10 && Number(h) <= 23).map(([h, v]) => (
+          <div key={h} className="flex-1 flex flex-col items-center gap-1">
+            <div className="w-full bg-primary/70 rounded-t" style={{ height: `${(v / peakHour) * 100}%`, minHeight: v > 0 ? "4px" : "0px" }} />
+            <span className="text-[9px] text-muted-foreground">{h}:00</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const dashTabs = [
+    { key: "favorieten", label: "Favorieten" },
+    { key: "verkopen", label: "Verkopen" },
+    { key: "service", label: "Service" },
+    { key: "prepstation", label: "Prepstation" },
+    { key: "reserveringen", label: "Reserveringen" },
+    { key: "producten", label: "Producten" },
+  ];
+
+  const tabInsights = ALL_INSIGHTS.filter((i) => i.tab === dashTab);
+  const favInsights = ALL_INSIGHTS.filter((i) => favorites.includes(i.id));
+
+  // Live orders
   const preparingOrders = (qrOrders || []).filter((o: any) => o.status === "preparing");
   const readyOrders = (qrOrders || []).filter((o: any) => o.status === "ready");
-
-  const topProducts: Record<string, number> = {};
-  todayOrders.forEach((o: any) => o.items.forEach((item: any) => {
-    topProducts[item.name] = (topProducts[item.name] || 0) + item.qty;
-  }));
-  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-  const paymentBreakdown = { card: 0, cash: 0, qr: 0, giftcard: 0 };
-  todayOrders.forEach((o) => { paymentBreakdown[o.method] = (paymentBreakdown[o.method] || 0) + o.total; });
 
   function OrderCard({ order, statusLabel, statusColor, actionLabel, actionColor }: any) {
     return (
@@ -1111,145 +1360,265 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder }
         {order.customer_name && (
           <div className="text-xs text-muted-foreground flex items-center gap-3">
             <span className="font-medium text-foreground">{order.customer_name}</span>
-            {order.customer_phone && <span>{order.customer_phone}</span>}
           </div>
         )}
         <div className="space-y-0.5">
           {(order.items || []).map((item: any, idx: number) => (
             <div key={idx} className="text-xs flex justify-between">
-              <span className="text-foreground">{item.qty}× {item.name}{item.modifiers?.length > 0 && <span className="text-muted-foreground ml-1">({item.modifiers.map((m: any) => m.name).join(", ")})</span>}</span>
+              <span>{item.qty}× {item.name}</span>
             </div>
           ))}
         </div>
         <div className="flex items-center justify-between pt-1">
           <span className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}</span>
-          <Button size="sm" className={clsx("text-xs rounded-lg h-7", actionColor)} onClick={() => onAdvanceOrder(order)}>
-            {actionLabel}
-          </Button>
+          <Button size="sm" className={clsx("text-xs rounded-lg h-7", actionColor)} onClick={() => onAdvanceOrder(order)}>{actionLabel}</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Live Order Board */}
+    <div className="space-y-4">
+      {/* Header with date navigation */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black">Dashboard</h2>
+          <p className="text-xs text-muted-foreground">Laatst bijgewerkt om {formatTime(new Date())}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" onClick={() => navigateDate(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl" onClick={() => navigateDate(1)}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" className="rounded-xl gap-1.5">
+            <CalendarDays className="h-4 w-4" />
+            {dateLabel(selectedDate)}
+          </Button>
+          <div className="flex border rounded-xl overflow-hidden">
+            {(["day", "month", "quarter"] as const).map((m) => (
+              <button key={m} onClick={() => setPeriodMode(m)}
+                className={clsx("px-3 py-1.5 text-xs font-medium transition", periodMode === m ? "bg-foreground text-background" : "hover:bg-muted")}>
+                {m === "day" ? "Dag" : m === "month" ? "Maand" : "Kwartaal"}
+              </button>
+            ))}
+          </div>
+          <Button variant={compareMode ? "default" : "outline"} size="sm" className="rounded-xl gap-1.5" onClick={() => setCompareMode(!compareMode)}>
+            ⇅ Vergelijk {compareMode && <X className="h-3 w-3" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex gap-2">
+        {dashTabs.map((tab) => (
+          <button key={tab.key} onClick={() => setDashTab(tab.key)}
+            className={clsx("px-4 py-2 rounded-full text-sm font-medium transition",
+              dashTab === tab.key ? "bg-foreground text-background" : "bg-muted/50 hover:bg-muted")}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Live orders (always visible if active) */}
       {(preparingOrders.length > 0 || readyOrders.length > 0) && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <ChefHat className="h-5 w-5 text-orange-600" />
-            <h2 className="text-base font-bold">Live Bestellingen</h2>
+            <h3 className="text-base font-bold">Live Bestellingen</h3>
             <Badge variant="secondary" className="text-xs">{preparingOrders.length + readyOrders.length} actief</Badge>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {/* Preparing column */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="h-2.5 w-2.5 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-sm font-semibold text-orange-700">In bereiding ({preparingOrders.length})</span>
-              </div>
-              {preparingOrders.length === 0 ? (
-                <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen bestellingen</div>
-              ) : (
-                preparingOrders.map((o: any) => (
-                  <OrderCard key={o.id} order={o} statusLabel="Bereiding" statusColor="bg-orange-100 text-orange-800 border-orange-200" actionLabel="✓ Klaar" actionColor="bg-green-600 hover:bg-green-700" />
-                ))
-              )}
+              <div className="flex items-center gap-2 mb-1"><div className="h-2.5 w-2.5 rounded-full bg-orange-500 animate-pulse" /><span className="text-sm font-semibold text-orange-700">In bereiding ({preparingOrders.length})</span></div>
+              {preparingOrders.length === 0 ? <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen</div> :
+                preparingOrders.map((o: any) => <OrderCard key={o.id} order={o} statusLabel="Bereiding" statusColor="bg-orange-100 text-orange-800" actionLabel="✓ Klaar" actionColor="bg-green-600 hover:bg-green-700" />)}
             </div>
-            {/* Ready column */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-                <span className="text-sm font-semibold text-green-700">Klaar ({readyOrders.length})</span>
-              </div>
-              {readyOrders.length === 0 ? (
-                <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen bestellingen</div>
-              ) : (
-                readyOrders.map((o: any) => (
-                  <OrderCard key={o.id} order={o} statusLabel="Klaar" statusColor="bg-green-100 text-green-800 border-green-200" actionLabel="✓ Geserveerd" actionColor="bg-blue-600 hover:bg-blue-700" />
-                ))
-              )}
+              <div className="flex items-center gap-2 mb-1"><div className="h-2.5 w-2.5 rounded-full bg-green-500" /><span className="text-sm font-semibold text-green-700">Klaar ({readyOrders.length})</span></div>
+              {readyOrders.length === 0 ? <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">Geen</div> :
+                readyOrders.map((o: any) => <OrderCard key={o.id} order={o} statusLabel="Klaar" statusColor="bg-green-100 text-green-800" actionLabel="✓ Geserveerd" actionColor="bg-blue-600 hover:bg-blue-700" />)}
             </div>
           </div>
         </div>
       )}
 
-      {/* KPI Strip */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: "Today's Revenue", value: euro(revenue), icon: DollarSign, sub: `${todayOrders.length} orders`, color: "bg-green-50 text-green-700" },
-          { label: "Avg Ticket", value: euro(avgTicket), icon: TrendingUp, sub: "per order", color: "bg-blue-50 text-blue-700" },
-          { label: "Tips", value: euro(tips), icon: Sparkles, sub: "total tips", color: "bg-purple-50 text-purple-700" },
-          { label: "Tables", value: `${occupiedTables}/${tables.length}`, icon: UtensilsCrossed, sub: "occupied", color: "bg-orange-50 text-orange-700" },
-        ].map((stat, i) => (
-          <Card key={i} className="rounded-2xl">
+      {/* TAB: Favorieten */}
+      {dashTab === "favorieten" && (
+        <div className="space-y-4">
+          {favInsights.length === 0 ? (
+            <Card className="rounded-2xl">
+              <CardContent className="p-8 text-center">
+                <Star className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="font-medium">Geen favorieten geselecteerd</p>
+                <p className="text-sm text-muted-foreground mt-1">Ga naar een tabblad en klik op ⭐ om inzichten als favoriet toe te voegen.</p>
+                <Button variant="outline" className="mt-4" onClick={() => setShowFavPicker(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Favorieten selecteren
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => setShowFavPicker(true)}>
+                  <Edit className="h-3.5 w-3.5 mr-1" /> Favorieten beheren
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                {favInsights.map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+              </div>
+            </>
+          )}
+          <Modal open={showFavPicker} onClose={() => setShowFavPicker(false)} wide>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold">Favoriete inzichten selecteren</h2>
+                <button onClick={() => setShowFavPicker(false)} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {ALL_INSIGHTS.map((insight) => {
+                  const isFav = favorites.includes(insight.id);
+                  return (
+                    <button key={insight.id} onClick={() => toggleFavorite(insight.id)}
+                      className={clsx("rounded-xl border p-3 text-left transition-all", isFav ? "border-yellow-400 bg-yellow-50" : "hover:bg-muted/50")}>
+                      <div className="flex items-center justify-between">
+                        <span className={clsx("text-sm font-medium", insight.color)}>{insight.label}</span>
+                        <Star className={clsx("h-4 w-4", isFav ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground capitalize">{insight.tab}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </Modal>
+        </div>
+      )}
+
+      {/* TAB: Verkopen */}
+      {dashTab === "verkopen" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="rounded-2xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium underline underline-offset-2 decoration-dotted text-blue-600">Omzetoverzicht →</span>
+                  <div className="flex items-center gap-1">
+                    <button className="p-1 rounded-full hover:bg-muted"><span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span></button>
+                    <button className="p-1 rounded-full hover:bg-muted" onClick={() => toggleFavorite("revenue")}><Star className={clsx("h-4 w-4", favorites.includes("revenue") ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} /></button>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">Bruto-omzet</div>
+                <div className="text-3xl font-black">{euro(revenue)}</div>
+                <div className="mt-3"><HourlyChart /></div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium underline underline-offset-2 decoration-dotted text-blue-600">Bestellingen →</span>
+                  <div className="flex items-center gap-1">
+                    <button className="p-1 rounded-full hover:bg-muted"><span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span></button>
+                    <button className="p-1 rounded-full hover:bg-muted" onClick={() => toggleFavorite("order_revenue")}><Star className={clsx("h-4 w-4", favorites.includes("order_revenue") ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} /></button>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">Omzet van alle bestellingen</div>
+                <div className="text-3xl font-black">{euro(orderRevenue)}</div>
+                <div className="mt-3"><HourlyChart /></div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              ALL_INSIGHTS.find((i) => i.id === "avg_ticket")!,
+              ALL_INSIGHTS.find((i) => i.id === "avg_order")!,
+              ALL_INSIGHTS.find((i) => i.id === "order_count")!,
+            ].map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: Service */}
+      {dashTab === "service" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              ALL_INSIGHTS.find((i) => i.id === "avg_table_time")!,
+              ALL_INSIGHTS.find((i) => i.id === "total_tips")!,
+              ALL_INSIGHTS.find((i) => i.id === "tip_pct")!,
+            ].map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {[ALL_INSIGHTS.find((i) => i.id === "avg_table_revenue")!].map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              ALL_INSIGHTS.find((i) => i.id === "total_discounts")!,
+              ALL_INSIGHTS.find((i) => i.id === "returning_customers")!,
+            ].map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: Prepstation */}
+      {dashTab === "prepstation" && (
+        <div className="grid grid-cols-1 gap-4 max-w-md">
+          <InsightCard insight={ALL_INSIGHTS.find((i) => i.id === "prep_count")!} />
+        </div>
+      )}
+
+      {/* TAB: Reserveringen */}
+      {dashTab === "reserveringen" && (
+        <div className="space-y-4">
+          <Card className="rounded-2xl">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <div className={clsx("p-2 rounded-xl", stat.color)}><stat.icon className="h-5 w-5" /></div>
+                <span className="text-sm font-medium underline underline-offset-2 decoration-dotted text-cyan-600">Aantal reserveringen →</span>
+                <div className="flex items-center gap-1">
+                  <button className="p-1 rounded-full hover:bg-muted"><span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span></button>
+                  <button className="p-1 rounded-full hover:bg-muted" onClick={() => toggleFavorite("res_count")}><Star className={clsx("h-4 w-4", favorites.includes("res_count") ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} /></button>
+                </div>
               </div>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{stat.label} · {stat.sub}</div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div><div className="text-xs text-muted-foreground">Ingecheckte reserveringen</div><div className="text-2xl font-black">{confirmedRes}</div></div>
+                <div><div className="text-xs text-muted-foreground">Walk-ins</div><div className="text-2xl font-black">{walkIns}</div></div>
+                <div><div className="text-xs text-muted-foreground">Aankomende reserveringen</div><div className="text-2xl font-black">0</div></div>
+              </div>
+              <HourlyChart />
             </CardContent>
           </Card>
-        ))}
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="rounded-2xl">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Top products today</CardTitle></CardHeader>
-          <CardContent>
-            {topList.length === 0 ? <div className="text-sm text-muted-foreground py-4">No sales yet today.</div> : (
-              <div className="space-y-2">
-                {topList.map(([name, qty], i) => (
-                  <div key={name} className="flex items-center justify-between py-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground w-4">{i + 1}.</span>
-                      <span className="text-sm">{name}</span>
-                    </div>
-                    <Badge variant="secondary">{qty} sold</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Payment breakdown</CardTitle></CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Object.entries(paymentBreakdown).filter(([, amount]) => (amount as number) > 0).map(([method, amount]: [string, number]) => (
-                <div key={method} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span className="capitalize">{method === "giftcard" ? "Gift card" : method}</span><span className="font-medium">{euro(amount as number)}</span></div>
-                  <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-black rounded-full transition-all" style={{ width: revenue > 0 ? `${((amount as number) / revenue) * 100}%` : "0%" }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      <Card className="rounded-2xl">
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Recent orders</CardTitle></CardHeader>
-        <CardContent>
-          {todayOrders.length === 0 ? <div className="text-sm text-muted-foreground py-4">No orders yet.</div> : (
-            <div className="space-y-2">
-              {todayOrders.slice(-10).reverse().map((order) => (
-                <div key={order.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="text-xs font-mono text-muted-foreground">#{order.id}</div>
-                    <div className="text-sm">{order.customerName || "Walk-in"}</div>
-                    <Badge variant="outline" className="text-[10px] capitalize">{order.method}</Badge>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-xs text-muted-foreground">{formatTime(order.date)}</div>
-                    <div className="font-semibold text-sm">{euro(order.total)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              ALL_INSIGHTS.find((i) => i.id === "avg_group_size")!,
+              ALL_INSIGHTS.find((i) => i.id === "cancellations")!,
+              ALL_INSIGHTS.find((i) => i.id === "no_shows")!,
+            ].map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              ALL_INSIGHTS.find((i) => i.id === "waitlist")!,
+              ALL_INSIGHTS.find((i) => i.id === "couverts")!,
+            ].map((insight) => <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: Producten */}
+      {dashTab === "producten" && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              ALL_INSIGHTS.find((i) => i.id === "products_sold")!,
+              ALL_INSIGHTS.find((i) => i.id === "avg_products_per_order")!,
+              ALL_INSIGHTS.find((i) => i.id === "cost_pct")!,
+            ].map((insight) => insight && <InsightCard key={insight.id} insight={insight} />)}
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <InsightCard insight={ALL_INSIGHTS.find((i) => i.id === "cost_pct")!} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <InsightCard insight={ALL_INSIGHTS.find((i) => i.id === "top_categories")!} />
+            <InsightCard insight={ALL_INSIGHTS.find((i) => i.id === "top_products")!} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
