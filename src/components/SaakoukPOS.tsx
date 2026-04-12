@@ -2850,6 +2850,7 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     reservation_deleted: "Reservering verwijderd",
     customer_created: "Klant aangemaakt",
     customer_viewed: "Klant bekeken",
+    customer_deleted: "Klant verwijderd",
     giftcard_issued: "Cadeaukaart uitgegeven",
     view_changed: "Pagina bekeken",
     login: "Ingelogd",
