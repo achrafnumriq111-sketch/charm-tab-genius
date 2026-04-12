@@ -3110,7 +3110,10 @@ export default function SaakoukPOS() {
 
   // Show login if not logged in
   if (!loggedInEmployee) {
-    return <LoginScreen employees={employees} onLogin={(emp) => setLoggedInEmployee(emp)} />;
+    return <LoginScreen employees={employees} onLogin={(emp) => {
+      setLoggedInEmployee(emp);
+      setActivityLogs((prev) => [{ id: generateId(), action: "login", details: `${emp.name} ingelogd (${emp.role})`, employeeId: emp.id, employeeName: emp.name, employeeRole: emp.role, timestamp: new Date() }, ...prev]);
+    }} />;
   }
 
   const todayOrders = orders.filter((o: any) => isToday(o.date));
