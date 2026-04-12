@@ -3101,9 +3101,11 @@ export default function SaakoukPOS() {
       setOpenTickets((prev) => { const next = { ...prev }; delete next["walk-in"]; return next; });
     }
     setToast(`Order #${order.id} completed — ${euro(order.total)}`);
+    addLog("order_completed", `Bestelling #${order.id} afgerond — ${euro(order.total)} (${order.method})`);
   }
 
   function handleLogout() {
+    addLog("logout", `${loggedInEmployee?.name} uitgelogd`);
     setLoggedInEmployee(null);
     setActive("pos");
   }
