@@ -783,6 +783,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     if (cart.length === 0) return;
     setPaymentMethod(method);
     setPaymentOpen(true);
+    addLog?.("payment_started", `Betaling gestart: ${method} — ${cart.length} items, ${euro(subtotal)}`);
   }
 
   function handlePaymentComplete({ method, total: paidTotal, tip, giftCardDeduction, giftCardId }) {
@@ -805,6 +806,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       giftCardId: giftCardId || null,
       status: "completed",
     };
+    addLog?.("payment_completed", `Betaling afgerond: #${order.id} — ${euro(paidTotal)} via ${method}${tip ? ` + ${euro(tip)} fooi` : ""}`);
     onOrderComplete(order);
     clearCart();
   }
