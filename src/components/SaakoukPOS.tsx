@@ -166,18 +166,18 @@ const initialReservations = [
 // ─── EMPLOYEES ───────────────────────────────────────────────────────────────
 
 const initialEmployees = [
-  { id: "e1", name: "Solaiman Aakouk", email: "saakoukstore@gmail.com", role: "owner", pin: "1234" },
-  { id: "e2", name: "Badr El Messaoudi", email: "BadrElMessaoudi3@gmail.com", role: "sales", pin: "2345" },
-  { id: "e3", name: "Kaan Ikiz", email: "kaan-ikiz@hotmail.com", role: "sales", pin: "3456" },
-  { id: "e4", name: "Inez Ikiz", email: "inez-ikiz@hotmail.com", role: "sales", pin: "4567" },
-  { id: "e5", name: "Daniel Jie Sam Foek", email: "danielantoinesu@gmail.com", role: "sales", pin: "5678" },
-  { id: "e6", name: "Djemaro Dalloesingh", email: "djemaro@gmail.com", role: "sales", pin: "6789" },
-  { id: "e7", name: "Achraf Idrissi", email: "Acidrissi@icloud.com", role: "owner", pin: "7890" },
-  { id: "e8", name: "Anouar Azif", email: "anouar_azif@outlook.com", role: "sales", pin: "8901" },
-  { id: "e9", name: "Rayan Azzimachi", email: "rayanazzimachi@gmail.com", role: "sales", pin: "9012" },
-  { id: "e10", name: "Othman Ami", email: "othmanami16@hotmail.com", role: "sales", pin: "0123" },
-  { id: "e11", name: "Ezra Belkacem", email: "ezrabelkacem@hotmail.com", role: "sales", pin: "1357" },
-  { id: "e12", name: "Ibrahim Aakouk", email: "ibrahimaakouk@gmail.com", role: "manager", pin: "2468" },
+  { id: "e1", name: "Solaiman Aakouk", email: "saakoukstore@gmail.com", role: "owner", pin: "123456" },
+  { id: "e2", name: "Badr El Messaoudi", email: "BadrElMessaoudi3@gmail.com", role: "sales", pin: "234567" },
+  { id: "e3", name: "Kaan Ikiz", email: "kaan-ikiz@hotmail.com", role: "sales", pin: "345678" },
+  { id: "e4", name: "Inez Ikiz", email: "inez-ikiz@hotmail.com", role: "sales", pin: "456789" },
+  { id: "e5", name: "Daniel Jie Sam Foek", email: "danielantoinesu@gmail.com", role: "sales", pin: "567890" },
+  { id: "e6", name: "Djemaro Dalloesingh", email: "djemaro@gmail.com", role: "sales", pin: "678901" },
+  { id: "e7", name: "Achraf Idrissi", email: "Acidrissi@icloud.com", role: "owner", pin: "789012" },
+  { id: "e8", name: "Anouar Azif", email: "anouar_azif@outlook.com", role: "sales", pin: "890123" },
+  { id: "e9", name: "Rayan Azzimachi", email: "rayanazzimachi@gmail.com", role: "sales", pin: "901234" },
+  { id: "e10", name: "Othman Ami", email: "othmanami16@hotmail.com", role: "sales", pin: "012345" },
+  { id: "e11", name: "Ezra Belkacem", email: "ezrabelkacem@hotmail.com", role: "sales", pin: "135724" },
+  { id: "e12", name: "Ibrahim Aakouk", email: "ibrahimaakouk@gmail.com", role: "manager", pin: "246813" },
 ];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -252,21 +252,26 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string }) {
   const isAdmin = role === "owner" || role === "manager";
+  const isOwner = role === "owner";
   const allSections = [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false },
-    { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false },
-    { key: "activity", label: "Activity", icon: Activity, adminOnly: false },
-    { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false },
-    { key: "products", label: "Products", icon: Package, adminOnly: true },
-    { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true },
-    { key: "customers", label: "Customers", icon: Users, adminOnly: false },
-    { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false },
-    { key: "sales", label: "Sales", icon: Receipt, adminOnly: true },
-    { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true },
-    { key: "employees", label: "Team", icon: UserCog, adminOnly: true },
-    { key: "settings", label: "Settings", icon: Settings, adminOnly: true },
+    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
+    { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
+    { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: false },
+    { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
+    { key: "products", label: "Products", icon: Package, adminOnly: true, ownerOnly: false },
+    { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
+    { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
+    { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
+    { key: "sales", label: "Sales", icon: Receipt, adminOnly: true, ownerOnly: true },
+    { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true, ownerOnly: true },
+    { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
+    { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
   ];
-  const sections = allSections.filter((s) => !s.adminOnly || isAdmin);
+  const sections = allSections.filter((s) => {
+    if (s.ownerOnly && !isOwner) return false;
+    if (s.adminOnly && !isAdmin) return false;
+    return true;
+  });
   return (
     <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
       <div className="py-3 px-2 border-b flex flex-col items-center gap-0.5">
@@ -2646,7 +2651,7 @@ function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: 
 
 // ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
 
-function EmployeesView({ employees, setEmployees }: { employees: any[]; setEmployees: any }) {
+function EmployeesView({ employees, setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
@@ -2663,7 +2668,7 @@ function EmployeesView({ employees, setEmployees }: { employees: any[]; setEmplo
   }
 
   function save() {
-    if (!form.name || !form.pin || form.pin.length !== 4) return;
+    if (!form.name || !form.pin || form.pin.length !== 6) return;
     if (editingId) {
       setEmployees((prev: any[]) => prev.map((e) => e.id === editingId ? { ...e, ...form } : e));
     } else {
@@ -2679,8 +2684,17 @@ function EmployeesView({ employees, setEmployees }: { employees: any[]; setEmplo
 
   const roleColors: Record<string, string> = {
     owner: "bg-green-100 text-green-800 border-green-200",
+    manager: "bg-blue-100 text-blue-800 border-blue-200",
     sales: "bg-orange-100 text-orange-800 border-orange-200",
   };
+
+  const roleLabels: Record<string, string> = {
+    owner: "Owner",
+    manager: "Manager",
+    sales: "Sales",
+  };
+
+  const isOwner = currentRole === "owner";
 
   return (
     <div className="space-y-4">
@@ -2708,8 +2722,8 @@ function EmployeesView({ employees, setEmployees }: { employees: any[]; setEmplo
                 </div>
               </div>
               <div className="flex items-center justify-between mt-3">
-                <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{emp.role === "owner" ? "Owner" : "Sales"}</Badge>
-                <span className="text-xs text-muted-foreground font-mono">PIN: ••••</span>
+                <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{roleLabels[emp.role] || emp.role}</Badge>
+                <span className="text-xs text-muted-foreground font-mono">PIN: ••••••</span>
               </div>
             </CardContent>
           </Card>
@@ -2724,16 +2738,18 @@ function EmployeesView({ employees, setEmployees }: { employees: any[]; setEmplo
             <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
             <div>
               <Label>Rol</Label>
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner}>
                 <option value="owner">Owner</option>
+                <option value="manager">Manager</option>
                 <option value="sales">Sales</option>
               </select>
+              {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
             </div>
-            <div><Label>PIN (4 cijfers)</Label><Input type="password" maxLength={4} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 4) })} placeholder="••••" className="mt-1 font-mono" /></div>
+            <div><Label>PIN (6 cijfers)</Label><Input type="password" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="••••••" className="mt-1 font-mono" /></div>
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
-            <Button onClick={save} disabled={!form.name || form.pin.length !== 4}>Opslaan</Button>
+            <Button onClick={save} disabled={!form.name || form.pin.length !== 6}>Opslaan</Button>
           </div>
         </div>
       </Modal>
@@ -3032,7 +3048,7 @@ export default function SaakoukPOS() {
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} />}
             {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
-            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} />}
+            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
           </div>
         </div>
