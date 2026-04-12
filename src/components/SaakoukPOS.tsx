@@ -3157,6 +3157,15 @@ export default function SaakoukPOS() {
                 {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
               </button>
             )}
+            {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
+              <button
+                onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-semibold"
+              >
+                <Bell className="h-4 w-4" />
+                {notifications.filter((n) => !n.read).length} melding{notifications.filter((n) => !n.read).length !== 1 ? "en" : ""}
+              </button>
+            )}
             <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
             <Badge variant="secondary" className="text-[11px]">{euro(todayRevenue)}</Badge>
           </div>
