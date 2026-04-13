@@ -323,7 +323,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
                   whileHover={{ scale: 1.06, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   className={clsx(
-                    "w-12 h-12 flex flex-col items-center justify-center rounded-2xl text-[10px] leading-tight transition-all gap-0.5",
+                    "w-12 h-12 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center rounded-2xl text-[10px] leading-tight transition-all gap-0.5",
                     isActive
                       ? "bg-[linear-gradient(135deg,rgba(196,181,253,0.6),rgba(255,192,230,0.5),rgba(191,219,254,0.5))] text-slate-800 font-medium shadow-[0_8px_30px_rgba(172,155,255,0.22)] border border-white/70"
                       : "hover:bg-white/50 text-slate-500"
@@ -342,7 +342,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
             onClick={onLogout}
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.92 }}
-            className="w-12 h-12 flex items-center justify-center rounded-2xl text-red-400 hover:bg-red-50/60 transition"
+            className="w-12 h-12 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl text-red-400 hover:bg-red-50/60 transition"
           >
             <LogOut className="h-5 w-5" />
           </motion.button>
@@ -5449,7 +5449,7 @@ export default function SaakoukPOS() {
   };
 
   return (
-    <div className="h-dvh relative overflow-hidden flex select-none text-slate-900">
+    <div className="h-dvh relative overflow-hidden flex select-none text-slate-900 touch-manipulation" style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Ambient pastel background */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbfcff_0%,#f3f6ff_48%,#eef2ff_100%)]" />
