@@ -4173,7 +4173,9 @@ function EmployeesView({ employees, setEmployees, currentRole }: { employees: an
               </div>
               <div className="flex items-center justify-between mt-3">
                 <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{roleLabels[emp.role] || emp.role}</Badge>
-                <span className="text-xs text-muted-foreground font-mono">PIN: ••••••</span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {isOwner ? (emp.pin ? `PIN: ${emp.pin}` : "⚠️ Geen PIN") : "PIN: ••••••"}
+                </span>
               </div>
             </CardContent>
           </Card>
