@@ -67,10 +67,45 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   const [loading, setLoading] = useState(false);
   const [forecast, setForecast] = useState<any>(null);
   const [error, setError] = useState("");
-  const [weather] = useState(getWeatherForecast);
+  const [weather, setWeather] = useState(getFallbackWeather);
+  const [weatherSource, setWeatherSource] = useState<"live" | "fallback">("fallback");
+  const [currentWeather, setCurrentWeather] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const rangeDays = useMemo(() => RANGES.find(r => r.key === range)?.days || 7, [range]);
+
+  // Fetch real weather on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error: fnErr } = await supabase.functions.invoke("weather-forecast", {
+          body: { city: "Amsterdam" },
+        });
+        if (fnErr || data?.error) throw new Error(data?.error || "Weather fetch failed");
+        if (data?.daily?.length) {
+          setWeather(data.daily.map((d: any) => ({
+            day: d.day,
+            temp: d.temp,
+            sunny: d.sunny,
+            icon: d.icon,
+            impact: d.impact,
+            label: d.label,
+            rain: d.rain || 0,
+            wind: d.wind || 0,
+            date: d.date,
+            temp_max: d.temp_max,
+            temp_min: d.temp_min,
+            weekend: d.weekend,
+            isReal: true,
+          })));
+          setWeatherSource("live");
+          if (data.current) setCurrentWeather(data.current);
+        }
+      } catch (e) {
+        console.warn("Weather API fallback:", e);
+      }
+    })();
+  }, []);
 
   const runForecast = useCallback(async () => {
     setLoading(true);
