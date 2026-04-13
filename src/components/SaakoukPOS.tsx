@@ -4594,6 +4594,9 @@ export default function SaakoukPOS() {
     } catch (err) {
       console.error("Failed to save transaction:", err);
     }
+
+    // Auto-deduct stock based on product recipes
+    deductStockForOrder(stamped.items, stamped.employeeName, stamped.id);
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
