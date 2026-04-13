@@ -267,6 +267,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
+    { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
     { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
