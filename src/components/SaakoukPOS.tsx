@@ -1693,6 +1693,9 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
       case "products_sold": return String(itemsSold);
       case "avg_products_per_order": return avgProductsPerOrder.toFixed(1);
       case "cost_pct": return `${costPct.toFixed(0)}%`;
+      case "prep_avg_time": return "—";
+      case "prep_waiting": return "0";
+      case "prep_completed_today": return "0";
       default: return "—";
     }
   }
