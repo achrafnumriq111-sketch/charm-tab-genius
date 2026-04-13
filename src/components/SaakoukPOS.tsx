@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
+import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, AIForecastView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ import {
   Shield, Zap, Bell, LogOut, Star,
   ChevronRight, ChevronLeft, Banknote,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
+  ClipboardCheck,
 } from "lucide-react";
 
 /**
@@ -272,6 +274,11 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
+    { key: "inventory", label: "Voorraad", icon: Package, adminOnly: true, ownerOnly: false },
+    { key: "intake", label: "Intake", icon: Zap, adminOnly: true, ownerOnly: false },
+    { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
+    { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
+    { key: "aiforecast", label: "AI", icon: Sparkles, adminOnly: false, ownerOnly: true },
     { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
     { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
     { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
@@ -4587,6 +4594,9 @@ export default function SaakoukPOS() {
     } catch (err) {
       console.error("Failed to save transaction:", err);
     }
+
+    // Auto-deduct stock based on product recipes
+    deductStockForOrder(stamped.items, stamped.employeeName, stamped.id);
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
@@ -4679,6 +4689,11 @@ export default function SaakoukPOS() {
     activity: "Order History",
     reservations: "Reservations",
     products: "Products",
+    inventory: "Voorraad Management",
+    intake: "Stock Intake",
+    stockcount: "Maandelijkse Telling",
+    costing: "Costing & Marges",
+    aiforecast: "AI Forecast",
     qr: "QR Ordering",
     customers: "Customers",
     giftcards: "Gift Cards",
@@ -4763,6 +4778,11 @@ export default function SaakoukPOS() {
             {active === "activity" && <ActivityView orders={orders} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "inventory" && <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />}
+            {active === "intake" && <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
+            {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
+            {active === "costing" && <CostingView products={products} orders={orders} onToast={setToast} />}
+            {active === "aiforecast" && <AIForecastView onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
