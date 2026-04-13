@@ -41,7 +41,7 @@ type RangeKey = typeof RANGES[number]["key"];
 
 // Fallback weather data in case API call fails
 function getFallbackWeather() {
-  const days = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+  const days = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
   const today = new Date().getDay();
   return Array.from({ length: 7 }, (_, i) => {
     const rand = Math.random();
