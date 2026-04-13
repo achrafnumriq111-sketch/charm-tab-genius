@@ -4384,6 +4384,7 @@ export default function SaakoukPOS() {
   const [qrOrders, setQrOrders] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [prepTickets, setPrepTickets] = useState<PrepTicket[]>([]);
   const [showCashClosing, setShowCashClosing] = useState(false);
 
   const addLog = useCallback((action: string, details: string) => {
