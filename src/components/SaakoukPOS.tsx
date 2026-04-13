@@ -1208,7 +1208,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
             )}
             <Separator className="my-2 bg-white/20" />
             <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{euro(total)}</span></div>
-            <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="grid grid-cols-4 gap-2 mt-3">
               <Button className="bg-white text-black hover:bg-white/90 text-xs h-9" onClick={() => openPayment("card")} disabled={cart.length === 0}>
                 <CreditCard className="h-3.5 w-3.5 mr-1" /> Card
               </Button>
@@ -1217,6 +1217,25 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
               </Button>
               <Button className="bg-white text-black hover:bg-white/90 text-xs h-9" onClick={() => openPayment("qr")} disabled={cart.length === 0}>
                 <Smartphone className="h-3.5 w-3.5 mr-1" /> QR
+              </Button>
+              <Button className="bg-amber-500 text-white hover:bg-amber-600 text-xs h-9" onClick={() => {
+                // Epson ESC/POS cash drawer kick command: ESC p 0 25 250
+                // This sends the pulse to kick pin 2 of the cash drawer via the receipt printer
+                const escposCmd = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
+                try {
+                  const nav = navigator as any;
+                  if (nav.usb) {
+                    nav.usb.requestDevice({ filters: [{ vendorId: 0x04B8 }] }).then((device: any) => {
+                      device.open().then(() => device.selectConfiguration(1)).then(() => device.claimInterface(0)).then(() => {
+                        device.transferOut(1, escposCmd).then(() => { device.close(); });
+                      });
+                    }).catch(() => {});
+                  }
+                } catch (e) {}
+                addLog?.("cash_drawer_opened", "Kassalade geopend via knop");
+                onToast?.("Kassalade openen...");
+              }}>
+                <Lock className="h-3.5 w-3.5 mr-1" /> Lade
               </Button>
             </div>
           </div>
