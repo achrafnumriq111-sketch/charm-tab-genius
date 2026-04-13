@@ -1676,3 +1676,372 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
     </div>
   );
 }
+
+// ─── WASTE & SPOILAGE LOGGING VIEW ──────────────────────────────────────────
+
+const WASTE_REASONS = [
+  { value: "expired", label: "Over datum / Expired" },
+  { value: "damaged", label: "Beschadigd / Damaged" },
+  { value: "complaint_remake", label: "Klacht / Remake" },
+  { value: "dropped_spilled", label: "Gevallen / Gemorst" },
+  { value: "prep_mistake", label: "Bereidingsfout" },
+  { value: "end_of_day", label: "Einde dag weggooi" },
+  { value: "unknown_shrinkage", label: "Onbekend verlies" },
+  { value: "staff_meal", label: "Personeelsmaaltijd" },
+  { value: "manual_correction", label: "Handmatige correctie" },
+  { value: "other", label: "Anders" },
+];
+
+export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }: any) {
+  const [items, setItems] = useState<any[]>([]);
+  const [movements, setMovements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    inventory_item_id: "", quantity: "", waste_reason: "expired", notes: "",
+  });
+  const [search, setSearch] = useState("");
+  const [periodFilter, setPeriodFilter] = useState<"today" | "week" | "month">("today");
+  const isOwner = currentRole === "owner";
+
+  const loadData = useCallback(async () => {
+    const [itemsRes, movesRes] = await Promise.all([
+      supabase.from("inventory_items").select("*").order("item_name"),
+      supabase.from("stock_movements").select("*").eq("movement_type", "waste").order("created_at", { ascending: false }).limit(500),
+    ]);
+    if (itemsRes.data) setItems(itemsRes.data);
+    if (movesRes.data) setMovements(movesRes.data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // Period filtering
+  const now = new Date();
+  const periodStart = useMemo(() => {
+    const d = new Date();
+    if (periodFilter === "today") { d.setHours(0, 0, 0, 0); }
+    else if (periodFilter === "week") { d.setDate(d.getDate() - 7); }
+    else { d.setDate(d.getDate() - 30); }
+    return d;
+  }, [periodFilter]);
+
+  const filteredMovements = useMemo(() =>
+    movements.filter(m => new Date(m.created_at) >= periodStart), [movements, periodStart]);
+
+  const todayMovements = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    return movements.filter(m => new Date(m.created_at) >= start);
+  }, [movements]);
+
+  // Analytics
+  const totalWasteQty = filteredMovements.reduce((s, m) => s + Number(m.quantity), 0);
+  const wasteByItem = useMemo(() => {
+    const map: Record<string, { qty: number; cost: number; name: string }> = {};
+    filteredMovements.forEach(m => {
+      const item = items.find(i => i.id === m.inventory_item_id);
+      const name = item?.item_name || "Onbekend";
+      if (!map[m.inventory_item_id]) map[m.inventory_item_id] = { qty: 0, cost: 0, name };
+      map[m.inventory_item_id].qty += Number(m.quantity);
+      map[m.inventory_item_id].cost += Number(m.quantity) * (item?.cost_per_unit || 0);
+    });
+    return Object.values(map).sort((a, b) => b.cost - a.cost);
+  }, [filteredMovements, items]);
+
+  const totalWasteCost = wasteByItem.reduce((s, w) => s + w.cost, 0);
+
+  const wasteByReason = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredMovements.forEach(m => {
+      const reason = (m as any).waste_reason || "unknown";
+      map[reason] = (map[reason] || 0) + Number(m.quantity);
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [filteredMovements]);
+
+  // Smart alerts
+  const alerts = useMemo(() => {
+    const result: string[] = [];
+    const threeDaysAgo = new Date(); threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const recentByItem: Record<string, number> = {};
+    movements.filter(m => new Date(m.created_at) >= threeDaysAgo).forEach(m => {
+      const dates = new Set<string>();
+      movements.filter(m2 => m2.inventory_item_id === m.inventory_item_id && new Date(m2.created_at) >= threeDaysAgo)
+        .forEach(m2 => dates.add(new Date(m2.created_at).toDateString()));
+      recentByItem[m.inventory_item_id] = dates.size;
+    });
+    Object.entries(recentByItem).forEach(([id, days]) => {
+      if (days >= 3) {
+        const item = items.find(i => i.id === id);
+        if (item) result.push(`${item.item_name}: ${days} dagen op rij verspilling geregistreerd`);
+      }
+    });
+    return result;
+  }, [movements, items]);
+
+  async function submitWaste() {
+    if (!form.inventory_item_id || !form.quantity || parseFloat(form.quantity) <= 0) {
+      onToast?.("Vul alle velden in"); return;
+    }
+    const qty = parseFloat(form.quantity);
+    const item = items.find(i => i.id === form.inventory_item_id);
+    if (!item) return;
+
+    // Insert waste movement
+    await supabase.from("stock_movements").insert({
+      inventory_item_id: form.inventory_item_id,
+      movement_type: "waste" as any,
+      quantity: qty,
+      waste_reason: form.waste_reason,
+      notes: form.notes || null,
+      employee_name: employeeName,
+      source: "waste_log",
+    });
+
+    // Deduct from stock
+    await supabase.from("inventory_items").update({
+      current_stock: Math.max(0, item.current_stock - qty),
+    }).eq("id", item.id);
+
+    addLog?.("waste_logged", `Verspilling: ${qty} ${item.unit_type} ${item.item_name} (${form.waste_reason})`);
+    onToast?.(`${qty} ${item.unit_type} ${item.item_name} als verspilling geregistreerd`);
+    setForm({ inventory_item_id: "", quantity: "", waste_reason: "expired", notes: "" });
+    setShowModal(false);
+    loadData();
+  }
+
+  const selectedItem = items.find(i => i.id === form.inventory_item_id);
+
+  if (loading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-4">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">Verspilling vandaag</div>
+            <div className="text-2xl font-bold text-destructive">{todayMovements.reduce((s, m) => s + Number(m.quantity), 0)}</div>
+            <div className="text-xs text-muted-foreground">items</div>
+          </CardContent>
+        </Card>
+        {isOwner && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Kosten ({periodFilter})</div>
+              <div className="text-2xl font-bold text-destructive">{euro(totalWasteCost)}</div>
+            </CardContent>
+          </Card>
+        )}
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">Items ({periodFilter})</div>
+            <div className="text-2xl font-bold">{totalWasteQty}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">Registraties ({periodFilter})</div>
+            <div className="text-2xl font-bold">{filteredMovements.length}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Smart Alerts */}
+      {alerts.length > 0 && (
+        <Card className="border-orange-300 bg-orange-50 dark:bg-orange-950/20">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-400">
+              <AlertTriangle className="h-4 w-4" /> Slimme waarschuwingen
+            </div>
+            {alerts.map((a, i) => (
+              <div key={i} className="text-xs text-orange-600 dark:text-orange-300 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" /> {a}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Action Bar */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {(["today", "week", "month"] as const).map(p => (
+            <Button key={p} variant={periodFilter === p ? "default" : "outline"} size="sm" className="rounded-xl text-xs"
+              onClick={() => setPeriodFilter(p)}>
+              {p === "today" ? "Vandaag" : p === "week" ? "Week" : "Maand"}
+            </Button>
+          ))}
+        </div>
+        <Button className="rounded-xl gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={() => setShowModal(true)}>
+          <Plus className="h-4 w-4" /> Waste registreren
+        </Button>
+      </div>
+
+      {/* Waste Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowModal(false)}>
+          <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2"><Trash2 className="h-5 w-5 text-destructive" /> Waste registreren</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Item selector */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Voorraad item *</Label>
+                <Input placeholder="Zoek item..." value={search} onChange={e => setSearch(e.target.value)} className="rounded-xl" />
+                {search && !form.inventory_item_id && (
+                  <ScrollArea className="max-h-40 border rounded-xl">
+                    {items.filter(i => i.item_name.toLowerCase().includes(search.toLowerCase())).slice(0, 8).map(i => (
+                      <button key={i.id} className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-center justify-between"
+                        onClick={() => { setForm(f => ({ ...f, inventory_item_id: i.id })); setSearch(i.item_name); }}>
+                        <span>{i.item_name}</span>
+                        <span className="text-xs text-muted-foreground">{i.current_stock} {i.unit_type}</span>
+                      </button>
+                    ))}
+                  </ScrollArea>
+                )}
+                {selectedItem && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Package className="h-3 w-3" /> Huidige voorraad: {selectedItem.current_stock} {selectedItem.unit_type}
+                    <button className="ml-auto text-destructive" onClick={() => { setForm(f => ({ ...f, inventory_item_id: "" })); setSearch(""); }}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Quantity */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Hoeveelheid * {selectedItem && `(${selectedItem.unit_type})`}</Label>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 5, 10].map(n => (
+                    <Button key={n} variant="outline" size="sm" className="rounded-xl flex-1 h-10 text-base font-bold"
+                      onClick={() => setForm(f => ({ ...f, quantity: String(n) }))}>
+                      {n}
+                    </Button>
+                  ))}
+                </div>
+                <Input type="number" placeholder="Of voer handmatig in..." value={form.quantity}
+                  onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} className="rounded-xl text-center text-lg font-bold" />
+              </div>
+
+              {/* Reason */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Reden *</Label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {WASTE_REASONS.map(r => (
+                    <button key={r.value}
+                      className={clsx(
+                        "px-3 py-2 rounded-xl text-xs text-left border transition-colors",
+                        form.waste_reason === r.value
+                          ? "border-destructive bg-destructive/10 text-destructive font-medium"
+                          : "border-border hover:bg-muted"
+                      )}
+                      onClick={() => setForm(f => ({ ...f, waste_reason: r.value }))}>
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Note */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Notitie (optioneel)</Label>
+                <Input placeholder="Bijv. gevallen in keuken..." value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="rounded-xl" />
+              </div>
+
+              {/* Employee */}
+              <div className="text-xs text-muted-foreground">Medewerker: <span className="font-medium text-foreground">{employeeName}</span></div>
+
+              {/* Submit */}
+              <Button className="w-full rounded-xl h-12 text-base gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={submitWaste}
+                disabled={!form.inventory_item_id || !form.quantity}>
+                <Trash2 className="h-4 w-4" /> Registreer verspilling
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Top Wasted Items */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Top verspilde items</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {wasteByItem.length === 0 && <div className="text-xs text-muted-foreground py-4 text-center">Nog geen data</div>}
+            {wasteByItem.slice(0, 8).map((w, i) => (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span className="truncate">{w.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground text-xs">{w.qty} stuks</span>
+                  {isOwner && <span className="font-mono text-destructive font-medium text-xs">{euro(w.cost)}</span>}
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Waste by Reason */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Verspilling per reden</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {wasteByReason.length === 0 && <div className="text-xs text-muted-foreground py-4 text-center">Nog geen data</div>}
+            {wasteByReason.map(([reason, qty], i) => {
+              const label = WASTE_REASONS.find(r => r.value === reason)?.label || reason;
+              return (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="truncate">{label}</span>
+                  <Badge variant="secondary" className="text-xs">{qty}</Badge>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Waste Log */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><RefreshCw className="h-4 w-4" /> Recente registraties</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="max-h-[300px]">
+            <div className="space-y-2">
+              {filteredMovements.length === 0 && <div className="text-xs text-muted-foreground py-4 text-center">Geen verspilling geregistreerd in deze periode</div>}
+              {filteredMovements.slice(0, 30).map(m => {
+                const item = items.find(i => i.id === m.inventory_item_id);
+                const reasonLabel = WASTE_REASONS.find(r => r.value === (m as any).waste_reason)?.label || (m as any).waste_reason || "-";
+                const time = new Date(m.created_at);
+                return (
+                  <div key={m.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{item?.item_name || "Onbekend"}</div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span>{reasonLabel}</span>
+                        {m.notes && <span>• {m.notes}</span>}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <div className="text-sm font-bold text-destructive">-{m.quantity} {item?.unit_type || ""}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {time.toLocaleDateString("nl-NL")} {time.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
+                        {m.employee_name && ` • ${m.employee_name}`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

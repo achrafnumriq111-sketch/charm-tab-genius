@@ -1,0 +1,1 @@
+ALTER TABLE public.stock_movements ADD COLUMN waste_reason text DEFAULT NULL;
