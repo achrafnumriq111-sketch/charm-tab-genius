@@ -1696,14 +1696,17 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
   function InsightCard({ insight, showFavStar = true }: { insight: typeof ALL_INSIGHTS[number]; showFavStar?: boolean }) {
     const isFav = favorites.includes(insight.id);
     const isChart = insight.id === "top_categories" || insight.id === "top_products" || insight.id === "returning_customers" || insight.id === "total_discounts";
+    const [showInfo, setShowInfo] = useState(false);
 
     return (
       <Card className="rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className={clsx("text-sm font-medium underline underline-offset-2 decoration-dotted", insight.color)}>{insight.label} →</span>
+            <span className={clsx("text-sm font-medium", insight.color)}>{insight.label}</span>
             <div className="flex items-center gap-1">
-              <button className="p-1 rounded-full hover:bg-muted" title="Info"><span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span></button>
+              <button className="p-1 rounded-full hover:bg-muted relative" onClick={() => setShowInfo(!showInfo)} title="Info">
+                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span>
+              </button>
               {showFavStar && (
                 <button className="p-1 rounded-full hover:bg-muted" onClick={() => toggleFavorite(insight.id)} title={isFav ? "Verwijder uit favorieten" : "Toevoegen aan favorieten"}>
                   <Star className={clsx("h-4 w-4", isFav ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
@@ -1711,6 +1714,11 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
               )}
             </div>
           </div>
+          {showInfo && (
+            <div className="mb-3 p-3 rounded-xl bg-muted/60 border text-xs text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-top-2">
+              {insight.info}
+            </div>
+          )}
           {isChart && insight.id === "top_categories" ? (
             <div className="space-y-1.5 mt-2">
               {topCategoryList.length === 0 ? <div className="text-sm text-muted-foreground">Geen data</div> : topCategoryList.map(([name, rev]) => (
