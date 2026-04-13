@@ -99,29 +99,29 @@ const extraGroup = {
 const ALL_MODIFIER_GROUPS = [milkGroup, syrupGroup, lemonadeFlavorGroup, sizeGroup, extraGroup];
 
 const initialProducts = [
-  { id: "sig-1", name: "Tropical Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635" },
-  { id: "sig-2", name: "Tropical Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635" },
-  { id: "sig-3", name: "Berry Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc" },
-  { id: "sig-4", name: "Berry Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc" },
-  { id: "special-1", name: "Papa Smurf", section: "Specials", price: 8.5, costPrice: 2.80, tags: ["Special"], modifierGroups: [milkGroup, extraGroup], color: "#60a5fa" },
-  { id: "special-2", name: "HOT Crème Brûlée", section: "Specials", price: 6.5, costPrice: 2.00, tags: ["Special", "Hot"], modifierGroups: [milkGroup, extraGroup], color: "#fbbf24" },
-  { id: "cold-1", name: "Iced Matcha Medium", section: "Cold Drinks", price: 6.5, costPrice: 1.80, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399" },
-  { id: "cold-2", name: "Iced Matcha Large", section: "Cold Drinks", price: 7.5, costPrice: 2.20, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399" },
-  { id: "cold-3", name: "Iced Latte Medium", section: "Cold Drinks", price: 4.5, costPrice: 1.20, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa" },
-  { id: "cold-4", name: "Iced Latte Large", section: "Cold Drinks", price: 5.25, costPrice: 1.50, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa" },
-  { id: "cold-5", name: "Matcha Lemonade Medium", section: "Cold Drinks", price: 5.5, costPrice: 1.60, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
-  { id: "cold-6", name: "Matcha Lemonade Large", section: "Cold Drinks", price: 6.25, costPrice: 1.90, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
-  { id: "cold-7", name: "Lemonade", section: "Cold Drinks", price: 4.75, costPrice: 1.00, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047" },
-  { id: "hot-1", name: "Espresso", section: "Hot Drinks", price: 2.8, costPrice: 0.60, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#92400e" },
-  { id: "hot-2", name: "Flat White", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, extraGroup], color: "#d4a574" },
-  { id: "hot-3", name: "Cappuccino Medium", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574" },
-  { id: "hot-4", name: "Cappuccino Large", section: "Hot Drinks", price: 5.2, costPrice: 1.40, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574" },
-  { id: "hot-5", name: "Americano Medium", section: "Hot Drinks", price: 3.5, costPrice: 0.70, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f" },
-  { id: "hot-6", name: "Americano Large", section: "Hot Drinks", price: 4.5, costPrice: 0.90, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f" },
-  { id: "hot-7", name: "Tea", section: "Hot Drinks", price: 3.2, costPrice: 0.50, tags: ["Hot"], modifierGroups: [], color: "#fbbf24" },
-  { id: "sweet-1", name: "Sticky Date Toffee Cake", section: "Sweets", price: 4.5, costPrice: 1.80, tags: ["Sweets"], modifierGroups: [], color: "#b45309" },
-  { id: "sweet-2", name: "Pistachio Baklava", section: "Sweets", price: 3.5, costPrice: 1.50, tags: ["Sweets"], modifierGroups: [], color: "#65a30d" },
-  { id: "sweet-3", name: "Cookie", section: "Sweets", price: 2.5, costPrice: 0.80, tags: ["Sweets"], modifierGroups: [], color: "#d97706" },
+  { id: "sig-1", name: "Tropical Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635", prep_station: "drinks" },
+  { id: "sig-2", name: "Tropical Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635", prep_station: "drinks" },
+  { id: "sig-3", name: "Berry Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc", prep_station: "drinks" },
+  { id: "sig-4", name: "Berry Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc", prep_station: "drinks" },
+  { id: "special-1", name: "Papa Smurf", section: "Specials", price: 8.5, costPrice: 2.80, tags: ["Special"], modifierGroups: [milkGroup, extraGroup], color: "#60a5fa", prep_station: "drinks" },
+  { id: "special-2", name: "HOT Crème Brûlée", section: "Specials", price: 6.5, costPrice: 2.00, tags: ["Special", "Hot"], modifierGroups: [milkGroup, extraGroup], color: "#fbbf24", prep_station: "drinks" },
+  { id: "cold-1", name: "Iced Matcha Medium", section: "Cold Drinks", price: 6.5, costPrice: 1.80, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399", prep_station: "drinks" },
+  { id: "cold-2", name: "Iced Matcha Large", section: "Cold Drinks", price: 7.5, costPrice: 2.20, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399", prep_station: "drinks" },
+  { id: "cold-3", name: "Iced Latte Medium", section: "Cold Drinks", price: 4.5, costPrice: 1.20, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa", prep_station: "drinks" },
+  { id: "cold-4", name: "Iced Latte Large", section: "Cold Drinks", price: 5.25, costPrice: 1.50, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa", prep_station: "drinks" },
+  { id: "cold-5", name: "Matcha Lemonade Medium", section: "Cold Drinks", price: 5.5, costPrice: 1.60, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047", prep_station: "drinks" },
+  { id: "cold-6", name: "Matcha Lemonade Large", section: "Cold Drinks", price: 6.25, costPrice: 1.90, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047", prep_station: "drinks" },
+  { id: "cold-7", name: "Lemonade", section: "Cold Drinks", price: 4.75, costPrice: 1.00, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047", prep_station: "drinks" },
+  { id: "hot-1", name: "Espresso", section: "Hot Drinks", price: 2.8, costPrice: 0.60, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#92400e", prep_station: "drinks" },
+  { id: "hot-2", name: "Flat White", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, extraGroup], color: "#d4a574", prep_station: "drinks" },
+  { id: "hot-3", name: "Cappuccino Medium", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574", prep_station: "drinks" },
+  { id: "hot-4", name: "Cappuccino Large", section: "Hot Drinks", price: 5.2, costPrice: 1.40, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574", prep_station: "drinks" },
+  { id: "hot-5", name: "Americano Medium", section: "Hot Drinks", price: 3.5, costPrice: 0.70, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f", prep_station: "drinks" },
+  { id: "hot-6", name: "Americano Large", section: "Hot Drinks", price: 4.5, costPrice: 0.90, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f", prep_station: "drinks" },
+  { id: "hot-7", name: "Tea", section: "Hot Drinks", price: 3.2, costPrice: 0.50, tags: ["Hot"], modifierGroups: [], color: "#fbbf24", prep_station: "drinks" },
+  { id: "sweet-1", name: "Sticky Date Toffee Cake", section: "Sweets", price: 4.5, costPrice: 1.80, tags: ["Sweets"], modifierGroups: [], color: "#b45309", prep_station: "food" },
+  { id: "sweet-2", name: "Pistachio Baklava", section: "Sweets", price: 3.5, costPrice: 1.50, tags: ["Sweets"], modifierGroups: [], color: "#65a30d", prep_station: "food" },
+  { id: "sweet-3", name: "Cookie", section: "Sweets", price: 2.5, costPrice: 0.80, tags: ["Sweets"], modifierGroups: [], color: "#d97706", prep_station: "food" },
 ];
 
 const discounts = [
@@ -267,6 +267,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
+    { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
     { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
@@ -1522,6 +1523,9 @@ const ALL_INSIGHTS = [
   { id: "total_discounts", label: "Totale kortingen", tab: "service", color: "text-purple-600", info: "Het totale kortingsbedrag dat is weggegeven. Houd dit in de gaten om te zorgen dat kortingen winstgevend blijven." },
   { id: "returning_customers", label: "Terugkerende klanten", tab: "service", color: "text-purple-600", info: "Klanten die meerdere keren hebben besteld in deze periode. Hoge retentie = tevreden klanten en een sterk merk." },
   { id: "prep_count", label: "Totaal aantal verwerkte bonnen", tab: "prepstation", color: "text-amber-700", info: "Het totale aantal individuele items dat is verwerkt door het prepstation. Gebruik dit voor capaciteitsplanning." },
+  { id: "prep_avg_time", label: "Gem. bereidingstijd", tab: "prepstation", color: "text-amber-700", info: "De gemiddelde tijd van bestelling tot voltooiing. Lager = snellere service en hogere klanttevredenheid." },
+  { id: "prep_waiting", label: "Wachtende tickets", tab: "prepstation", color: "text-amber-700", info: "Aantal tickets die nog wachten op bereiding of in bereiding zijn. Hoog = mogelijke bottleneck." },
+  { id: "prep_completed_today", label: "Voltooid vandaag", tab: "prepstation", color: "text-amber-700", info: "Aantal tickets die vandaag zijn voltooid. Vergelijk met het totale aantal bestellingen." },
   { id: "res_count", label: "Aantal reserveringen", tab: "reserveringen", color: "text-cyan-600", info: "Het totale aantal bevestigde reserveringen in deze periode. Vergelijk met walk-ins voor de verhouding." },
   { id: "walk_ins", label: "Walk-ins", tab: "reserveringen", color: "text-cyan-600", info: "Bestellingen zonder reservering. Een hoog aantal walk-ins kan wijzen op een goede locatie of spontaan bezoek." },
   { id: "avg_group_size", label: "Gemiddelde groepsgrootte", tab: "reserveringen", color: "text-cyan-600", info: "Het gemiddelde aantal gasten per reservering. Handig voor het plannen van tafelindeling en personeel." },
@@ -1689,6 +1693,9 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
       case "products_sold": return String(itemsSold);
       case "avg_products_per_order": return avgProductsPerOrder.toFixed(1);
       case "cost_pct": return `${costPct.toFixed(0)}%`;
+      case "prep_avg_time": return "—";
+      case "prep_waiting": return "0";
+      case "prep_completed_today": return "0";
       default: return "—";
     }
   }
@@ -1996,8 +2003,10 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
 
       {/* TAB: Prepstation */}
       {dashTab === "prepstation" && (
-        <div className="grid grid-cols-1 gap-4 max-w-md">
-          <InsightCard insight={ALL_INSIGHTS.find((i) => i.id === "prep_count")!} />
+        <div className="grid grid-cols-2 gap-4">
+          {ALL_INSIGHTS.filter((i) => i.tab === "prepstation").map((insight) => (
+            <InsightCard key={insight.id} insight={insight} />
+          ))}
         </div>
       )}
 
@@ -4014,6 +4023,242 @@ function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, 
   );
 }
 
+// ─── PREP STATION VIEW ───────────────────────────────────────────────────────
+
+type PrepTicket = {
+  id: string;
+  orderId: string;
+  station: "drinks" | "food" | "pickup";
+  items: { name: string; qty: number; modifiers: { optionName: string; price: number }[]; notes?: string }[];
+  status: "ordered" | "preparing" | "ready" | "completed";
+  createdAt: Date;
+  startedAt?: Date;
+  readyAt?: Date;
+  completedAt?: Date;
+  orderType: string;
+  paymentStatus: string;
+};
+
+function PrepTicketTimer({ createdAt }: { createdAt: Date }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const diffSec = Math.floor((now - createdAt.getTime()) / 1000);
+  const mins = Math.floor(diffSec / 60);
+  const secs = diffSec % 60;
+  const isLate = mins >= 5;
+  return (
+    <span className={clsx("font-mono text-xs font-bold", isLate ? "text-red-600 animate-pulse" : "text-muted-foreground")}>
+      {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+    </span>
+  );
+}
+
+function PrepStationView({ prepTickets, onUpdateStatus }: { prepTickets: PrepTicket[]; onUpdateStatus: (id: string, status: PrepTicket["status"]) => void }) {
+  const [activeStation, setActiveStation] = useState<"all" | "drinks" | "food" | "pickup">("all");
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(i);
+  }, []);
+
+  const stations = [
+    { key: "all" as const, label: "Alle", icon: "📋" },
+    { key: "drinks" as const, label: "Drinks", icon: "🥤" },
+    { key: "food" as const, label: "Food", icon: "🍰" },
+    { key: "pickup" as const, label: "Pickup", icon: "📦" },
+  ];
+
+  const filtered = activeStation === "all" ? prepTickets : prepTickets.filter((t) => t.station === activeStation);
+  const activeTickets = filtered.filter((t) => t.status !== "completed");
+  const completedTickets = filtered.filter((t) => t.status === "completed");
+
+  // Analytics
+  const todayTickets = prepTickets.filter((t) => isToday(t.createdAt));
+  const completedToday = todayTickets.filter((t) => t.status === "completed");
+  const waitingCount = prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length;
+  const avgPrepTime = completedToday.length > 0
+    ? completedToday.reduce((s, t) => s + ((t.completedAt?.getTime() || 0) - t.createdAt.getTime()), 0) / completedToday.length / 1000 / 60
+    : 0;
+  const longestWaiting = prepTickets
+    .filter((t) => t.status === "ordered" || t.status === "preparing")
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
+
+  const statusColors: Record<string, string> = {
+    ordered: "bg-muted border-muted-foreground/20",
+    preparing: "bg-orange-50 border-orange-300",
+    ready: "bg-green-50 border-green-300",
+    completed: "bg-blue-50 border-blue-300 opacity-60",
+  };
+
+  const statusLabels: Record<string, string> = {
+    ordered: "Besteld",
+    preparing: "Bereiding",
+    ready: "Klaar",
+    completed: "Voltooid",
+  };
+
+  const statusBadgeColors: Record<string, string> = {
+    ordered: "bg-muted-foreground/20 text-muted-foreground",
+    preparing: "bg-orange-200 text-orange-800",
+    ready: "bg-green-200 text-green-800",
+    completed: "bg-blue-200 text-blue-800",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header + station tabs */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 className="text-xl font-black flex items-center gap-2">
+            <ChefHat className="h-6 w-6" /> Prepstation
+          </h2>
+          <p className="text-xs text-muted-foreground">Live keuken- en barweergave</p>
+        </div>
+        <div className="flex gap-1.5">
+          {stations.map((s) => (
+            <button key={s.key} onClick={() => setActiveStation(s.key)}
+              className={clsx("px-4 py-2 rounded-full text-sm font-medium transition",
+                activeStation === s.key ? "bg-foreground text-background" : "bg-muted/50 hover:bg-muted")}>
+              {s.icon} {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick analytics */}
+      <div className="grid grid-cols-4 gap-3">
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Wachtend</div>
+            <div className="text-2xl font-black">{waitingCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Voltooid vandaag</div>
+            <div className="text-2xl font-black">{completedToday.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Gem. preptijd</div>
+            <div className="text-2xl font-black">{avgPrepTime > 0 ? `${avgPrepTime.toFixed(1)}m` : "—"}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Langst wachtend</div>
+            <div className="text-2xl font-black">
+              {longestWaiting ? <PrepTicketTimer createdAt={longestWaiting.createdAt} /> : "—"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active tickets grid */}
+      {activeTickets.length === 0 ? (
+        <Card className="rounded-2xl">
+          <CardContent className="p-12 text-center">
+            <ChefHat className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+            <p className="font-medium">Geen actieve tickets</p>
+            <p className="text-sm text-muted-foreground mt-1">Nieuwe tickets verschijnen automatisch na betaling.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {activeTickets.map((ticket) => (
+            <Card key={ticket.id} className={clsx("rounded-2xl border-2 transition-all", statusColors[ticket.status])}>
+              <CardContent className="p-4 space-y-3">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-lg">#{ticket.orderId}</span>
+                  <Badge className={clsx("text-[10px]", statusBadgeColors[ticket.status])}>{statusLabels[ticket.status]}</Badge>
+                </div>
+
+                {/* Timer */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <PrepTicketTimer createdAt={ticket.createdAt} />
+                  </div>
+                  <Badge variant="outline" className="text-[9px] capitalize">{ticket.station}</Badge>
+                </div>
+
+                {/* Order type */}
+                <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                  <span className="capitalize">{ticket.orderType}</span>
+                  <span>· {ticket.paymentStatus}</span>
+                </div>
+
+                {/* Items */}
+                <div className="space-y-1.5">
+                  {ticket.items.map((item, idx) => (
+                    <div key={idx} className="text-sm">
+                      <div className="font-medium">{item.qty}× {item.name}</div>
+                      {item.modifiers?.length > 0 && (
+                        <div className="text-[11px] text-muted-foreground ml-3">
+                          {item.modifiers.map((m) => m.optionName).join(", ")}
+                        </div>
+                      )}
+                      {item.notes && <div className="text-[11px] italic text-orange-600 ml-3">📝 {item.notes}</div>}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 pt-1">
+                  {ticket.status === "ordered" && (
+                    <Button size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs"
+                      onClick={() => onUpdateStatus(ticket.id, "preparing")}>
+                      <Play className="h-3.5 w-3.5 mr-1" /> Start
+                    </Button>
+                  )}
+                  {ticket.status === "preparing" && (
+                    <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs"
+                      onClick={() => onUpdateStatus(ticket.id, "ready")}>
+                      <Check className="h-3.5 w-3.5 mr-1" /> Klaar
+                    </Button>
+                  )}
+                  {ticket.status === "ready" && (
+                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs"
+                      onClick={() => onUpdateStatus(ticket.id, "completed")}>
+                      <Check className="h-3.5 w-3.5 mr-1" /> Voltooid
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Completed section */}
+      {completedTickets.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground">Voltooid ({completedTickets.length})</h3>
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+            {completedTickets.slice(0, 12).map((ticket) => (
+              <div key={ticket.id} className="rounded-xl border bg-muted/30 p-3 opacity-60">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm">#{ticket.orderId}</span>
+                  <Badge className="bg-blue-100 text-blue-700 text-[9px]">Voltooid</Badge>
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-1">
+                  {ticket.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── CASH CLOSING VIEW (trigger for all staff) ──────────────────────────────
 
 function CashCloseView({ onOpen }: { onOpen: () => void }) {
@@ -4147,6 +4392,7 @@ export default function SaakoukPOS() {
   const [qrOrders, setQrOrders] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [prepTickets, setPrepTickets] = useState<PrepTicket[]>([]);
   const [showCashClosing, setShowCashClosing] = useState(false);
 
   const addLog = useCallback((action: string, details: string) => {
@@ -4335,6 +4581,30 @@ export default function SaakoukPOS() {
       }
     }
 
+    // ─── Route items to prep stations ───
+    const stationGroups: Record<string, { name: string; qty: number; modifiers: any[]; notes?: string }[]> = {};
+    stamped.items.forEach((item: any) => {
+      const product = products.find((p: any) => p.id === item.productId);
+      const station = product?.prep_station;
+      if (!station) return;
+      if (!stationGroups[station]) stationGroups[station] = [];
+      stationGroups[station].push({ name: item.name, qty: item.qty, modifiers: item.modifiers || [], notes: item.notes });
+    });
+    const orderType = stamped.table ? `Tafel ${stamped.table}` : "Afhaal";
+    Object.entries(stationGroups).forEach(([station, items]) => {
+      const ticket: PrepTicket = {
+        id: `prep-${generateId()}`,
+        orderId: stamped.id,
+        station: station as PrepTicket["station"],
+        items,
+        status: "ordered",
+        createdAt: new Date(),
+        orderType,
+        paymentStatus: "Betaald",
+      };
+      setPrepTickets((prev) => [ticket, ...prev]);
+    });
+
     if (order.table) {
       setOpenTickets((prev) => { const next = { ...prev }; delete next[order.table]; return next; });
     } else {
@@ -4342,6 +4612,15 @@ export default function SaakoukPOS() {
     }
     setToast(`Order #${order.id} completed — ${euro(order.total)}`);
     addLog("order_completed", `Bestelling #${order.id} afgerond — ${euro(order.total)} (${order.method})`);
+  }
+
+  function updatePrepStatus(ticketId: string, status: PrepTicket["status"]) {
+    setPrepTickets((prev) => prev.map((t) =>
+      t.id === ticketId
+        ? { ...t, status, startedAt: status === "preparing" ? new Date() : t.startedAt, readyAt: status === "ready" ? new Date() : t.readyAt, completedAt: status === "completed" ? new Date() : t.completedAt }
+        : t
+    ));
+    addLog("prep_status_changed", `Prep ticket ${ticketId} → ${status}`);
   }
 
   function handleLogout() {
@@ -4364,6 +4643,7 @@ export default function SaakoukPOS() {
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     pos: "Point of Sale",
+    prepstation: "Prepstation",
     cashclose: "Kassa Afsluiting",
     activity: "Order History",
     reservations: "Reservations",
@@ -4399,6 +4679,17 @@ export default function SaakoukPOS() {
                 {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
               </button>
             )}
+            {/* Prep tickets indicator */}
+            {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length > 0 && (
+              <button
+                onClick={() => setActive("prepstation")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-700 text-xs font-semibold"
+              >
+                <ChefHat className="h-4 w-4" />
+                {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length} prep
+              </button>
+            )}
+
             {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
               <button
                 onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
@@ -4437,6 +4728,7 @@ export default function SaakoukPOS() {
                 </TabsContent>
               </Tabs>
             )}
+            {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
             {active === "activity" && <ActivityView orders={orders} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
