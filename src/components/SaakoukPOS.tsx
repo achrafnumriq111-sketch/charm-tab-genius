@@ -4706,7 +4706,7 @@ export default function SaakoukPOS() {
     reservations: "Reservations",
     products: "Products",
     inventory: "Voorraad Management",
-    intake: "Stock Intake",
+    intake: "Voorraad Management",
     stockcount: "Maandelijkse Telling",
     costing: "Costing & Marges",
     aiforecast: "AI Forecast",
