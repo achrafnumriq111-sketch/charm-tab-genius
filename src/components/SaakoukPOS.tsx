@@ -4752,6 +4752,42 @@ export default function SaakoukPOS() {
               </button>
             )}
 
+            {/* Low stock alert */}
+            {lowStockItems.length > 0 && (loggedInEmployee.role === "owner" || loggedInEmployee.role === "manager") && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowLowStockPanel(!showLowStockPanel)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-100 text-red-700 text-xs font-semibold animate-pulse"
+                >
+                  <Package className="h-4 w-4" />
+                  {lowStockItems.length} lage voorraad
+                </button>
+                {showLowStockPanel && (
+                  <div className="absolute right-0 top-10 z-50 w-80 bg-card border rounded-xl shadow-xl p-3 space-y-2 max-h-80 overflow-auto">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-bold">⚠️ Lage voorraad</span>
+                      <button onClick={() => setShowLowStockPanel(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+                    </div>
+                    {lowStockItems.map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between bg-red-50 rounded-lg px-3 py-2 text-xs">
+                        <div>
+                          <div className="font-semibold text-foreground">{item.item_name}</div>
+                          <div className="text-muted-foreground">{item.category}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-red-600">{item.current_stock} {item.unit_type}</div>
+                          <div className="text-muted-foreground">min: {item.minimum_stock}</div>
+                        </div>
+                      </div>
+                    ))}
+                    <button onClick={() => { setShowLowStockPanel(false); setActive("inventory"); }} className="w-full text-center text-xs font-semibold text-primary hover:underline pt-1">
+                      Ga naar Voorraad →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
               <button
                 onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
