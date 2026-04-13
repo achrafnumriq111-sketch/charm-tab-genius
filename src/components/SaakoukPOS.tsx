@@ -2387,6 +2387,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
               </div>
             </div>
             <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Hot, Coffee, Signature" className="mt-1" /></div>
+            <div><Label>BTW % (leeg = categorie)</Label><Input type="number" step="0.5" min="0" max="100" value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: e.target.value })} placeholder="bijv. 9" className="mt-1" /></div>
           </div>
           <div>
             <Label>Modifier groups</Label>
