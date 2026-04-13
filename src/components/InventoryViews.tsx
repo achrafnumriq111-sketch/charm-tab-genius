@@ -216,7 +216,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Geen items gevonden</td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={currentRole === "owner" ? 8 : 6} className="p-8 text-center text-muted-foreground">Geen items gevonden</td></tr>}
                 {filtered.map(item => {
                   const isLow = item.current_stock <= item.minimum_stock && item.minimum_stock > 0;
                   return (
