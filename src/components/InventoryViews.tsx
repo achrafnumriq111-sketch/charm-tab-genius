@@ -116,12 +116,14 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
             <div className="text-2xl font-bold text-red-600">{lowStockItems.length}</div>
           </CardContent>
         </Card>
-        <Card className="rounded-2xl">
-          <CardContent className="p-4">
-            <div className="text-xs text-muted-foreground">Voorraadwaarde</div>
-            <div className="text-2xl font-bold">{euro(totalValue)}</div>
-          </CardContent>
-        </Card>
+        {currentRole === "owner" && (
+          <Card className="rounded-2xl">
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Voorraadwaarde</div>
+              <div className="text-2xl font-bold">{euro(totalValue)}</div>
+            </CardContent>
+          </Card>
+        )}
         <Card className="rounded-2xl">
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground">Categorieën</div>
@@ -184,7 +186,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
               <div><Label className="text-xs">Huidige voorraad</Label><Input type="number" value={form.current_stock} onChange={e => setForm(p => ({ ...p, current_stock: e.target.value }))} /></div>
               <div><Label className="text-xs">Minimum</Label><Input type="number" value={form.minimum_stock} onChange={e => setForm(p => ({ ...p, minimum_stock: e.target.value }))} /></div>
               <div><Label className="text-xs">Herbestel niveau</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(p => ({ ...p, reorder_level: e.target.value }))} /></div>
-              <div><Label className="text-xs">Kostprijs / eenheid (€)</Label><Input type="number" step="0.001" value={form.cost_per_unit} onChange={e => setForm(p => ({ ...p, cost_per_unit: e.target.value }))} /></div>
+              {currentRole === "owner" && <div><Label className="text-xs">Kostprijs / eenheid (€)</Label><Input type="number" step="0.001" value={form.cost_per_unit} onChange={e => setForm(p => ({ ...p, cost_per_unit: e.target.value }))} /></div>}
               <div><Label className="text-xs">Leverancier</Label><Input value={form.supplier} onChange={e => setForm(p => ({ ...p, supplier: e.target.value }))} /></div>
               <div><Label className="text-xs">Locatie</Label><Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} /></div>
             </div>
@@ -207,8 +209,8 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
                   <th className="px-3 py-2 text-left font-medium">Categorie</th>
                   <th className="px-3 py-2 text-right font-medium">Voorraad</th>
                   <th className="px-3 py-2 text-right font-medium">Min.</th>
-                  <th className="px-3 py-2 text-right font-medium">Kostprijs</th>
-                  <th className="px-3 py-2 text-right font-medium">Waarde</th>
+                  {currentRole === "owner" && <th className="px-3 py-2 text-right font-medium">Kostprijs</th>}
+                  {currentRole === "owner" && <th className="px-3 py-2 text-right font-medium">Waarde</th>}
                   <th className="px-3 py-2 text-left font-medium">Leverancier</th>
                   <th className="px-3 py-2 text-center font-medium">Acties</th>
                 </tr>
@@ -226,8 +228,8 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
                       <td className="px-3 py-2"><Badge variant="outline" className="text-[10px] capitalize">{item.category}</Badge></td>
                       <td className={clsx("px-3 py-2 text-right font-medium", isLow && "text-red-600")}>{item.current_stock} {item.unit_type}</td>
                       <td className="px-3 py-2 text-right text-muted-foreground">{item.minimum_stock}</td>
-                      <td className="px-3 py-2 text-right">{euro(item.cost_per_unit)}/{item.unit_type}</td>
-                      <td className="px-3 py-2 text-right font-medium">{euro(item.current_stock * item.cost_per_unit)}</td>
+                      {currentRole === "owner" && <td className="px-3 py-2 text-right">{euro(item.cost_per_unit)}/{item.unit_type}</td>}
+                      {currentRole === "owner" && <td className="px-3 py-2 text-right font-medium">{euro(item.current_stock * item.cost_per_unit)}</td>}
                       <td className="px-3 py-2 text-muted-foreground">{item.supplier || "—"}</td>
                       <td className="px-3 py-2 text-center">
                         <div className="flex items-center justify-center gap-1">
