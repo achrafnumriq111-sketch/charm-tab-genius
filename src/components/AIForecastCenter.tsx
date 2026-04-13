@@ -39,8 +39,8 @@ const RANGES = [
 type SegmentKey = typeof SEGMENTS[number]["key"];
 type RangeKey = typeof RANGES[number]["key"];
 
-// Mock weather data (in production would come from weather API)
-function getWeatherForecast() {
+// Fallback weather data in case API call fails
+function getFallbackWeather() {
   const days = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
   const today = new Date().getDay();
   return Array.from({ length: 7 }, (_, i) => {
@@ -54,6 +54,9 @@ function getWeatherForecast() {
       icon: sunny ? "☀️" : rand > 0.2 ? "⛅" : "🌧️",
       impact: sunny ? Math.round(8 + temp * 0.5) : Math.round(-5 - (1 - rand) * 10),
       label: sunny ? "Zonnig" : rand > 0.2 ? "Bewolkt" : "Regen",
+      rain: 0,
+      wind: 0,
+      isReal: false,
     };
   });
 }
@@ -64,17 +67,53 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   const [loading, setLoading] = useState(false);
   const [forecast, setForecast] = useState<any>(null);
   const [error, setError] = useState("");
-  const [weather] = useState(getWeatherForecast);
+  const [weather, setWeather] = useState(getFallbackWeather);
+  const [weatherSource, setWeatherSource] = useState<"live" | "fallback">("fallback");
+  const [currentWeather, setCurrentWeather] = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const rangeDays = useMemo(() => RANGES.find(r => r.key === range)?.days || 7, [range]);
+
+  // Fetch real weather on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data, error: fnErr } = await supabase.functions.invoke("weather-forecast", {
+          body: { city: "Amsterdam" },
+        });
+        if (fnErr || data?.error) throw new Error(data?.error || "Weather fetch failed");
+        if (data?.daily?.length) {
+          setWeather(data.daily.map((d: any) => ({
+            day: d.day,
+            temp: d.temp,
+            sunny: d.sunny,
+            icon: d.icon,
+            impact: d.impact,
+            label: d.label,
+            rain: d.rain || 0,
+            wind: d.wind || 0,
+            date: d.date,
+            temp_max: d.temp_max,
+            temp_min: d.temp_min,
+            weekend: d.weekend,
+            isReal: true,
+          })));
+          setWeatherSource("live");
+          if (data.current) setCurrentWeather(data.current);
+        }
+      } catch (e) {
+        console.warn("Weather API fallback:", e);
+      }
+    })();
+  }, []);
 
   const runForecast = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
+      const weatherContext = weather.map(w => `${w.day}: ${w.temp}°C ${w.label} impact:${w.impact}%`).join(", ");
       const { data, error: fnError } = await supabase.functions.invoke("inventory-forecast", {
-        body: { type: segment, range: rangeDays },
+        body: { type: segment, range: rangeDays, weatherContext },
       });
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
@@ -86,7 +125,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     } finally {
       setLoading(false);
     }
-  }, [segment, rangeDays, onToast]);
+  }, [segment, rangeDays, onToast, weather]);
 
   // Auto-run on segment/range change
   useEffect(() => { runForecast(); }, [segment, range]);
@@ -219,9 +258,17 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
           <div className="flex items-center gap-2 mb-2">
             <Cloud className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Weer & Impact</span>
+            <Badge variant={weatherSource === "live" ? "default" : "outline"} className="text-[10px] h-4">
+              {weatherSource === "live" ? "🟢 Live" : "Mock data"}
+            </Badge>
+            {currentWeather && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                Nu: {currentWeather.temp}° {currentWeather.description} — {currentWeather.city}
+              </span>
+            )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {weather.map((w, i) => (
+            {weather.map((w: any, i: number) => (
               <div key={i} className={cn(
                 "flex flex-col items-center min-w-[52px] rounded-xl px-2 py-1.5 border text-center",
                 w.sunny ? "bg-amber-50/50 border-amber-200/50" : "bg-slate-50/50 border-slate-200/50"
