@@ -1816,8 +1816,8 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
       avgTicket: v.orders > 0 ? v.revenue / v.orders : 0,
     }));
 
-  const peakHourEntry = hourlyData.reduce((best, h) => h.revenue > best.revenue ? h : best, hourlyData[0] || { label: "-", revenue: 0, orders: 0, avgTicket: 0 });
-  const slowHourEntry = hourlyData.filter(h => h.orders > 0).reduce((worst, h) => h.revenue < worst.revenue ? h : worst, hourlyData.find(h => h.orders > 0) || { label: "-", revenue: 0, orders: 0, avgTicket: 0 });
+  const peakHourEntry = hourlyData.reduce((best, h) => h.revenue > best.revenue ? h : best, hourlyData[0] || { hour: 0, label: "-", revenue: 0, orders: 0, avgTicket: 0 });
+  const slowHourEntry = hourlyData.filter(h => h.orders > 0).reduce((worst, h) => h.revenue < worst.revenue ? h : worst, hourlyData.find(h => h.orders > 0) || { hour: 0, label: "-", revenue: 0, orders: 0, avgTicket: 0 });
   const avgOrdersPerHour = hourlyData.length > 0 ? hourlyData.reduce((s, h) => s + h.orders, 0) / hourlyData.filter(h => h.orders > 0).length || 0 : 0;
 
   // Daypart analysis
