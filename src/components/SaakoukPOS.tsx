@@ -4775,6 +4775,11 @@ export default function SaakoukPOS() {
             {active === "activity" && <ActivityView orders={orders} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "inventory" && <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />}
+            {active === "intake" && <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
+            {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
+            {active === "costing" && <CostingView products={products} orders={orders} onToast={setToast} />}
+            {active === "aiforecast" && <AIForecastView onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
