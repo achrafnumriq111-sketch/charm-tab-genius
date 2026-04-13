@@ -356,19 +356,23 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
 
 function ProductButton({ product, onClick }: { product: any; onClick: () => void }) {
   return (
-    <button onClick={onClick}
-      className="rounded-2xl border bg-white p-2.5 text-left shadow-sm active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation">
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      className="rounded-[22px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,249,255,0.88))] p-2.5 text-left shadow-[0_14px_40px_rgba(163,177,219,0.12)] backdrop-blur-xl active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation group"
+    >
       <div>
         <div className="flex items-start justify-between gap-1.5">
-          <div className="font-semibold text-[13px] leading-tight">{product.name}</div>
-          <Badge variant="secondary" className="shrink-0 text-[11px]">{euro(product.price)}</Badge>
+          <div className="font-semibold text-[13px] leading-tight text-slate-900">{product.name}</div>
+          <span className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/70 border border-white/80 text-slate-600 shadow-[0_4px_12px_rgba(162,178,226,0.10)]">{euro(product.price)}</span>
         </div>
         {product.modifierGroups?.length > 0 && (
-          <div className="text-[10px] text-muted-foreground mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
         )}
       </div>
-      {product.color && <div className="w-full h-1 rounded-full mt-1.5" style={{ backgroundColor: product.color }} />}
-    </button>
+      {product.color && <div className="w-full h-1 rounded-full mt-1.5 opacity-70 group-hover:opacity-100 transition" style={{ backgroundColor: product.color }} />}
+    </motion.button>
   );
 }
 
