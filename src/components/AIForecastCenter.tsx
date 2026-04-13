@@ -111,8 +111,9 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     setLoading(true);
     setError("");
     try {
+      const weatherContext = weather.map(w => `${w.day}: ${w.temp}°C ${w.label} impact:${w.impact}%`).join(", ");
       const { data, error: fnError } = await supabase.functions.invoke("inventory-forecast", {
-        body: { type: segment, range: rangeDays },
+        body: { type: segment, range: rangeDays, weatherContext },
       });
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
@@ -124,7 +125,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     } finally {
       setLoading(false);
     }
-  }, [segment, rangeDays, onToast]);
+  }, [segment, rangeDays, onToast, weather]);
 
   // Auto-run on segment/range change
   useEffect(() => { runForecast(); }, [segment, range]);
