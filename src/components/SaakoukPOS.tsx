@@ -5249,7 +5249,7 @@ function CashAuditView() {
 
 export default function SaakoukPOS() {
   const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
-  const [active, setActive] = useState("pos");
+  const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
   const [tables, setTables] = useState(() => {
     const saved = localStorage.getItem("saakouk_tables");
@@ -5536,6 +5536,7 @@ export default function SaakoukPOS() {
     addLog("logout", `${loggedInEmployee?.name} uitgelogd`);
     setLoggedInEmployee(null);
     setActive("pos");
+    setSectionPicked(false);
   }
 
   // Show login if not logged in
@@ -5544,6 +5545,11 @@ export default function SaakoukPOS() {
       setLoggedInEmployee(emp);
       setActivityLogs((prev) => [{ id: generateId(), action: "login", details: `${emp.name} ingelogd (${emp.role})`, employeeId: emp.id, employeeName: emp.name, employeeRole: emp.role, timestamp: new Date() }, ...prev]);
     }} />;
+  }
+
+  // Show section picker after login
+  if (!sectionPicked) {
+    return <SectionPickerScreen employee={loggedInEmployee} onSelect={(key) => { setActive(key); setSectionPicked(true); addLog("view_changed", `Sectie gekozen: ${key}`); }} onLogout={handleLogout} />;
   }
 
   const todayOrders = orders.filter((o: any) => isToday(o.date));
