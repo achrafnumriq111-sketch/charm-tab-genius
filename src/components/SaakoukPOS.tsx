@@ -4680,7 +4680,8 @@ export default function SaakoukPOS() {
                 <ChefHat className="h-4 w-4" />
                 {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length} prep
               </button>
-            
+            )}
+
             {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
               <button
                 onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
