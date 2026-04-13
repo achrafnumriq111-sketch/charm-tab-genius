@@ -274,7 +274,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
-    { key: "inventory", label: "Voorraad", icon: Package, adminOnly: true, ownerOnly: false },
+    { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "intake", label: "Intake", icon: Zap, adminOnly: true, ownerOnly: false },
     { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
