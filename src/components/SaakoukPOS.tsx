@@ -3561,60 +3561,383 @@ function SalesView({ orders, products, employees }: any) {
 // ─── ACCOUNTING ──────────────────────────────────────────────────────────────
 
 function AccountingView({ orders }: any) {
-  const today = new Date();
-  const todayOrders = orders.filter((o) => o.date.toDateString() === today.toDateString());
-  const grossRevenue = todayOrders.reduce((s, o) => s + o.subtotal, 0);
-  const totalDiscounts = todayOrders.reduce((s, o) => s + o.discount, 0);
-  const totalGiftCard = todayOrders.reduce((s, o) => s + (o.giftCardDeduction || 0), 0);
-  const netRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
-  const totalTips = todayOrders.reduce((s, o) => s + (o.tip || 0), 0);
-  const btw21 = netRevenue * 0.21 / 1.21;
+  const [rangeMode, setRangeMode] = useState<"today" | "week" | "month" | "quarter" | "custom">("today");
+  const [customStart, setCustomStart] = useState<Date | undefined>(undefined);
+  const [customEnd, setCustomEnd] = useState<Date | undefined>(undefined);
+  const [showCalendar, setShowCalendar] = useState<"start" | "end" | null>(null);
+  const [tab, setTab] = useState("summary");
 
-  const byMethod = { card: 0, cash: 0, qr: 0, giftcard: 0 };
-  todayOrders.forEach((o) => { byMethod[o.method] = (byMethod[o.method] || 0) + o.total; });
+  function getDateRange(): { start: Date; end: Date; label: string } {
+    const now = new Date();
+    const sod = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eod = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    if (rangeMode === "today") return { start: sod, end: eod, label: "Vandaag" };
+    if (rangeMode === "week") {
+      const w = new Date(sod); w.setDate(w.getDate() - 6);
+      return { start: w, end: eod, label: "Afgelopen 7 dagen" };
+    }
+    if (rangeMode === "month") {
+      const m = new Date(sod); m.setMonth(m.getMonth() - 1);
+      return { start: m, end: eod, label: "Afgelopen 30 dagen" };
+    }
+    if (rangeMode === "quarter") {
+      const q = new Date(sod); q.setMonth(q.getMonth() - 3);
+      return { start: q, end: eod, label: "Afgelopen kwartaal" };
+    }
+    const cs = customStart || sod;
+    const ce = customEnd ? new Date(customEnd.getFullYear(), customEnd.getMonth(), customEnd.getDate(), 23, 59, 59, 999) : eod;
+    return { start: cs, end: ce, label: `${cs.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })} – ${new Date(ce).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}` };
+  }
+
+  const range = getDateRange();
+  const filtered = orders.filter((o: any) => o.date >= range.start && o.date <= range.end);
+
+  // Core calculations
+  const grossRevenue = filtered.reduce((s: number, o: any) => s + o.subtotal, 0);
+  const totalDiscounts = filtered.reduce((s: number, o: any) => s + (o.discount || 0), 0);
+  const totalGiftCard = filtered.reduce((s: number, o: any) => s + (o.giftCardDeduction || 0), 0);
+  const netRevenue = filtered.reduce((s: number, o: any) => s + o.total, 0);
+  const totalTips = filtered.reduce((s: number, o: any) => s + (o.tip || 0), 0);
+  const totalCost = filtered.reduce((s: number, o: any) => s + o.items.reduce((a: number, i: any) => a + (i.costPrice || 0) * i.qty, 0), 0);
+  const grossProfit = netRevenue - totalCost;
+  const profitMargin = netRevenue > 0 ? (grossProfit / netRevenue) * 100 : 0;
+  const btw21 = netRevenue * 0.21 / 1.21;
+  const btw9 = netRevenue * 0.09 / 1.09;
+
+  // By payment method
+  const byMethod: Record<string, number> = {};
+  filtered.forEach((o: any) => { byMethod[o.method] = (byMethod[o.method] || 0) + o.total; });
+
+  // By day for daily breakdown
+  const byDay: Record<string, { date: string; revenue: number; orders: number; cost: number; tips: number; rawDate: Date }> = {};
+  filtered.forEach((o: any) => {
+    const key = o.date.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    if (!byDay[key]) byDay[key] = { date: key, revenue: 0, orders: 0, cost: 0, tips: 0, rawDate: new Date(o.date.getFullYear(), o.date.getMonth(), o.date.getDate()) };
+    byDay[key].revenue += o.total;
+    byDay[key].orders++;
+    byDay[key].cost += o.items.reduce((a: number, i: any) => a + (i.costPrice || 0) * i.qty, 0);
+    byDay[key].tips += o.tip || 0;
+  });
+  const sortedDays = Object.values(byDay).sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime());
+  const maxDayRevenue = Math.max(...sortedDays.map((d) => d.revenue), 1);
+
+  // By section for category breakdown
+  const bySection: Record<string, { revenue: number; cost: number; qty: number }> = {};
+  filtered.forEach((o: any) => o.items.forEach((item: any) => {
+    const sec = item.section || "Overig";
+    if (!bySection[sec]) bySection[sec] = { revenue: 0, cost: 0, qty: 0 };
+    bySection[sec].revenue += (item.price + item.modifiers.reduce((s: number, m: any) => s + m.price, 0)) * item.qty;
+    bySection[sec].cost += (item.costPrice || 0) * item.qty;
+    bySection[sec].qty += item.qty;
+  }));
+
+  const calendarClassNames = {
+    months: "flex flex-col", month: "space-y-2",
+    caption: "flex justify-center pt-1 relative items-center", caption_label: "text-sm font-medium",
+    nav: "space-x-1 flex items-center",
+    nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-md border border-input",
+    nav_button_previous: "absolute left-1", nav_button_next: "absolute right-1",
+    table: "w-full border-collapse", head_row: "flex",
+    head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem]",
+    row: "flex w-full mt-1", cell: "h-8 w-8 text-center text-sm p-0 relative",
+    day: "h-8 w-8 p-0 font-normal rounded-md hover:bg-accent cursor-pointer inline-flex items-center justify-center",
+    day_selected: "bg-primary text-primary-foreground hover:bg-primary",
+    day_today: "bg-accent text-accent-foreground",
+    day_outside: "text-muted-foreground opacity-50", day_disabled: "text-muted-foreground opacity-50",
+  };
+
+  const tabs = [
+    { key: "summary", label: "Overzicht", icon: BarChart3 },
+    { key: "btw", label: "BTW", icon: Percent },
+    { key: "daily", label: "Per dag", icon: CalendarDays },
+    { key: "categories", label: "Categorieën", icon: Package },
+    { key: "profit", label: "Winst & Verlies", icon: DollarSign },
+  ];
 
   return (
     <div className="space-y-4">
+      {/* Period selector */}
       <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-sm">Daily summary</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-w-md">
-            {[
-              { label: "Gross revenue", value: euro(grossRevenue) },
-              { label: "Discounts given", value: `-${euro(totalDiscounts)}`, className: "text-red-600" },
-              { label: "Gift card redemptions", value: `-${euro(totalGiftCard)}`, className: "text-purple-600" },
-              { label: "Net revenue (incl. BTW)", value: euro(netRevenue), className: "font-bold" },
-              { label: "BTW 21% (estimated)", value: euro(btw21) },
-              { label: "Tips collected", value: euro(totalTips), className: "text-green-600" },
-              { label: "Total cash in", value: euro(netRevenue + totalTips), className: "font-bold text-lg" },
-            ].map((row, i) => (
-              <div key={i} className={clsx("flex justify-between py-1.5", row.className)}>
-                <span className="text-sm">{row.label}</span>
-                <span className="text-sm">{row.value}</span>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex gap-1">
+              {([
+                { key: "today", label: "Dag" },
+                { key: "week", label: "Week" },
+                { key: "month", label: "Maand" },
+                { key: "quarter", label: "Kwartaal" },
+                { key: "custom", label: "📅 Aangepast" },
+              ] as const).map((r) => (
+                <Button key={r.key} variant={rangeMode === r.key ? "default" : "outline"} size="sm" className="text-xs rounded-full" onClick={() => setRangeMode(r.key)}>
+                  {r.label}
+                </Button>
+              ))}
+            </div>
+            {rangeMode === "custom" && (
+              <div className="flex items-center gap-2 relative">
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowCalendar(showCalendar === "start" ? null : "start")}>
+                    {customStart ? customStart.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : "Startdatum"}
+                  </Button>
+                  {showCalendar === "start" && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border rounded-xl shadow-xl">
+                      <div className="p-3 pointer-events-auto">
+                        <DayPicker mode="single" selected={customStart} onSelect={(d) => { setCustomStart(d || undefined); setShowCalendar(null); }}
+                          className="pointer-events-auto" classNames={calendarClassNames}
+                          components={{ IconLeft: () => <ChevronLeft className="h-4 w-4" />, IconRight: () => <ChevronRight className="h-4 w-4" /> }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">t/m</span>
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowCalendar(showCalendar === "end" ? null : "end")}>
+                    {customEnd ? customEnd.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" }) : "Einddatum"}
+                  </Button>
+                  {showCalendar === "end" && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border rounded-xl shadow-xl">
+                      <div className="p-3 pointer-events-auto">
+                        <DayPicker mode="single" selected={customEnd} onSelect={(d) => { setCustomEnd(d || undefined); setShowCalendar(null); }}
+                          className="pointer-events-auto" classNames={calendarClassNames}
+                          components={{ IconLeft: () => <ChevronLeft className="h-4 w-4" />, IconRight: () => <ChevronRight className="h-4 w-4" /> }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
+            )}
+            <Badge variant="secondary" className="text-xs ml-auto">{range.label} · {filtered.length} orders</Badge>
           </div>
         </CardContent>
       </Card>
-      <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-sm">By payment method</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-w-md">
-            {Object.entries(byMethod).filter(([, v]) => (v as number) > 0).map(([method, amount]: [string, number]) => (
-              <div key={method} className="flex justify-between py-1.5 text-sm">
-                <span className="capitalize">{method === "giftcard" ? "Gift card" : method}</span>
-                <span className="font-medium">{euro(amount)}</span>
+
+      {/* KPI strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        {[
+          { label: "Bruto omzet", value: euro(grossRevenue), icon: TrendingUp, color: "text-foreground" },
+          { label: "Netto omzet", value: euro(netRevenue), icon: DollarSign, color: "text-foreground font-bold" },
+          { label: "Kosten", value: euro(totalCost), icon: Receipt, color: "text-red-600" },
+          { label: "Bruto winst", value: euro(grossProfit), icon: TrendingUp, color: grossProfit >= 0 ? "text-green-600" : "text-red-600" },
+          { label: "Marge", value: `${profitMargin.toFixed(1)}%`, icon: Percent, color: profitMargin >= 60 ? "text-green-600" : "text-amber-600" },
+        ].map((kpi, i) => {
+          const Icon = kpi.icon;
+          return (
+            <Card key={i} className="rounded-2xl">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">{kpi.label}</span>
+                </div>
+                <div className={clsx("text-lg font-semibold", kpi.color)}>{kpi.value}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Tab selector */}
+      <div className="flex gap-1 flex-wrap">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          return (
+            <Button key={t.key} variant={tab === t.key ? "default" : "outline"} size="sm" className="text-xs rounded-full gap-1.5" onClick={() => setTab(t.key)}>
+              <Icon className="h-3.5 w-3.5" />{t.label}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* Summary tab */}
+      {tab === "summary" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="rounded-2xl">
+            <CardHeader><CardTitle className="text-sm">Financieel overzicht</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {[
+                  { label: "Bruto omzet", value: euro(grossRevenue) },
+                  { label: "Kortingen", value: `-${euro(totalDiscounts)}`, cls: "text-red-600" },
+                  { label: "Cadeaukaart inwisselingen", value: `-${euro(totalGiftCard)}`, cls: "text-purple-600" },
+                  { label: "Netto omzet (incl. BTW)", value: euro(netRevenue), cls: "font-bold" },
+                  { label: "BTW 21% (geschat)", value: euro(btw21) },
+                  { label: "Fooien", value: euro(totalTips), cls: "text-green-600" },
+                  { label: "Totaal ontvangen", value: euro(netRevenue + totalTips), cls: "font-bold text-lg" },
+                ].map((row, i) => (
+                  <div key={i} className={clsx("flex justify-between py-1.5 text-sm", row.cls)}>
+                    <span>{row.label}</span><span>{row.value}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl">
+            <CardHeader><CardTitle className="text-sm">Per betaalmethode</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(byMethod).filter(([, v]) => (v as number) > 0).map(([method, amount]) => {
+                  const pct = netRevenue > 0 ? ((amount as number) / netRevenue * 100) : 0;
+                  return (
+                    <div key={method} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="capitalize">{method === "giftcard" ? "Cadeaukaart" : method === "card" ? "Pin" : method === "cash" ? "Contant" : method}</span>
+                        <span className="font-medium">{euro(amount as number)} <span className="text-xs text-muted-foreground">({pct.toFixed(0)}%)</span></span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+                {Object.keys(byMethod).length === 0 && <p className="text-sm text-muted-foreground">Geen data</p>}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* BTW tab */}
+      {tab === "btw" && (
+        <Card className="rounded-2xl">
+          <CardHeader><CardTitle className="text-sm">BTW-berekening</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-w-lg">
+              {[
+                { label: "Netto omzet (incl. BTW)", value: euro(netRevenue), cls: "font-bold" },
+                { label: "Geschatte BTW 21% (horeca)", value: euro(btw21), cls: "text-amber-600" },
+                { label: "Geschatte BTW 9% (food)", value: euro(btw9), cls: "text-amber-600" },
+                { label: "Netto omzet excl. BTW 21%", value: euro(netRevenue - btw21) },
+                { label: "Netto omzet excl. BTW 9%", value: euro(netRevenue - btw9) },
+              ].map((row, i) => (
+                <div key={i} className={clsx("flex justify-between py-2 text-sm border-b last:border-0", row.cls)}>
+                  <span>{row.label}</span><span>{row.value}</span>
+                </div>
+              ))}
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 mt-4">
+                <div className="font-medium mb-1">⚠️ Indicatief</div>
+                <div>Deze BTW-berekeningen zijn schattingen. Raadpleeg je boekhouder voor de exacte BTW-afdracht op basis van je productcategorieën.</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Daily breakdown tab */}
+      {tab === "daily" && (
+        <Card className="rounded-2xl">
+          <CardHeader><CardTitle className="text-sm">Dagelijks overzicht</CardTitle></CardHeader>
+          <CardContent>
+            {sortedDays.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Geen data in deze periode</p>
+            ) : (
+              <div className="space-y-2">
+                {sortedDays.map((day, i) => {
+                  const dayProfit = day.revenue - day.cost;
+                  const dayMargin = day.revenue > 0 ? (dayProfit / day.revenue) * 100 : 0;
+                  return (
+                    <div key={i} className="border rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium capitalize">{day.date}</span>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="text-xs">{day.orders} orders</Badge>
+                          <span className="text-sm font-semibold">{euro(day.revenue)}</span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(day.revenue / maxDayRevenue) * 100}%` }} />
+                      </div>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>Kosten: {euro(day.cost)}</span>
+                        <span className={dayProfit >= 0 ? "text-green-600" : "text-red-600"}>Winst: {euro(dayProfit)}</span>
+                        <span>Marge: {dayMargin.toFixed(1)}%</span>
+                        {day.tips > 0 && <span className="text-green-600">Fooien: {euro(day.tips)}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                <Separator className="my-3" />
+                <div className="flex justify-between text-sm font-medium px-3">
+                  <span>Totaal</span>
+                  <span>{euro(netRevenue)}</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Categories tab */}
+      {tab === "categories" && (
+        <Card className="rounded-2xl">
+          <CardHeader><CardTitle className="text-sm">Omzet per categorie</CardTitle></CardHeader>
+          <CardContent>
+            {Object.keys(bySection).length === 0 ? (
+              <p className="text-sm text-muted-foreground">Geen data in deze periode</p>
+            ) : (
+              <div className="space-y-3">
+                {Object.entries(bySection).sort((a, b) => b[1].revenue - a[1].revenue).map(([sec, data]) => {
+                  const secMargin = data.revenue > 0 ? ((data.revenue - data.cost) / data.revenue * 100) : 0;
+                  const pct = grossRevenue > 0 ? (data.revenue / grossRevenue * 100) : 0;
+                  return (
+                    <div key={sec} className="border rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{sec}</span>
+                        <span className="text-sm font-semibold">{euro(data.revenue)}</span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary/70 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>{data.qty} items</span>
+                        <span>{pct.toFixed(1)}% van totaal</span>
+                        <span>Kosten: {euro(data.cost)}</span>
+                        <span className={secMargin >= 60 ? "text-green-600" : "text-amber-600"}>Marge: {secMargin.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Profit & Loss tab */}
+      {tab === "profit" && (
+        <Card className="rounded-2xl">
+          <CardHeader><CardTitle className="text-sm">Winst & Verlies</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-w-lg">
+              {[
+                { label: "Omzet", value: euro(netRevenue), cls: "font-bold text-base" },
+                { label: "Inkoopkosten (COGS)", value: `-${euro(totalCost)}`, cls: "text-red-600" },
+                { label: "Bruto winst", value: euro(grossProfit), cls: grossProfit >= 0 ? "font-bold text-green-600" : "font-bold text-red-600" },
+                { label: "Bruto marge", value: `${profitMargin.toFixed(1)}%`, cls: profitMargin >= 60 ? "text-green-600" : "text-amber-600" },
+                { label: "", value: "", cls: "border-t" },
+                { label: "Kortingen gegeven", value: `-${euro(totalDiscounts)}`, cls: "text-red-600" },
+                { label: "Cadeaukaart inwisselingen", value: `-${euro(totalGiftCard)}`, cls: "text-purple-600" },
+                { label: "Fooien ontvangen", value: `+${euro(totalTips)}`, cls: "text-green-600" },
+                { label: "", value: "", cls: "border-t" },
+                { label: "Geschatte BTW-afdracht (21%)", value: `-${euro(btw21)}`, cls: "text-amber-600" },
+                { label: "Netto na BTW (geschat)", value: euro(netRevenue - btw21 - totalCost), cls: "font-bold text-lg" },
+              ].filter((r) => r.label || r.cls === "border-t").map((row, i) =>
+                row.cls === "border-t" ? <Separator key={i} className="my-2" /> : (
+                  <div key={i} className={clsx("flex justify-between py-1.5 text-sm", row.cls)}>
+                    <span>{row.label}</span><span>{row.value}</span>
+                  </div>
+                )
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Export */}
       <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-sm">Export</CardTitle></CardHeader>
-        <CardContent className="flex gap-3">
-          <Button variant="outline"><FileText className="h-4 w-4 mr-2" />Export CSV</Button>
-          <Button variant="outline"><FileText className="h-4 w-4 mr-2" />Export PDF</Button>
-          <Button variant="outline"><Zap className="h-4 w-4 mr-2" />Send to bookkeeper</Button>
+        <CardHeader><CardTitle className="text-sm">Exporteer</CardTitle></CardHeader>
+        <CardContent className="flex gap-3 flex-wrap">
+          <Button variant="outline" size="sm"><FileText className="h-4 w-4 mr-2" />Export CSV</Button>
+          <Button variant="outline" size="sm"><FileText className="h-4 w-4 mr-2" />Export PDF</Button>
+          <Button variant="outline" size="sm"><Zap className="h-4 w-4 mr-2" />Stuur naar boekhouder</Button>
         </CardContent>
       </Card>
     </div>
