@@ -2003,8 +2003,10 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
 
       {/* TAB: Prepstation */}
       {dashTab === "prepstation" && (
-        <div className="grid grid-cols-1 gap-4 max-w-md">
-          <InsightCard insight={ALL_INSIGHTS.find((i) => i.id === "prep_count")!} />
+        <div className="grid grid-cols-2 gap-4">
+          {ALL_INSIGHTS.filter((i) => i.tab === "prepstation").map((insight) => (
+            <InsightCard key={insight.id} insight={insight} />
+          ))}
         </div>
       )}
 
