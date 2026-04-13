@@ -4606,6 +4606,15 @@ export default function SaakoukPOS() {
     addLog("order_completed", `Bestelling #${order.id} afgerond — ${euro(order.total)} (${order.method})`);
   }
 
+  function updatePrepStatus(ticketId: string, status: PrepTicket["status"]) {
+    setPrepTickets((prev) => prev.map((t) =>
+      t.id === ticketId
+        ? { ...t, status, startedAt: status === "preparing" ? new Date() : t.startedAt, readyAt: status === "ready" ? new Date() : t.readyAt, completedAt: status === "completed" ? new Date() : t.completedAt }
+        : t
+    ));
+    addLog("prep_status_changed", `Prep ticket ${ticketId} → ${status}`);
+  }
+
   function handleLogout() {
     addLog("logout", `${loggedInEmployee?.name} uitgelogd`);
     setLoggedInEmployee(null);
