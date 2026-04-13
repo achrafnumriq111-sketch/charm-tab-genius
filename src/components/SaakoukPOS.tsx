@@ -22,7 +22,7 @@ import {
   Shield, Zap, Bell, LogOut, Star,
   ChevronRight, ChevronLeft, Banknote,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
-  ClipboardCheck,
+  ClipboardCheck, BarChart3,
 } from "lucide-react";
 
 /**
