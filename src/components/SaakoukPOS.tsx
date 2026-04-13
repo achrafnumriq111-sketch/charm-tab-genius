@@ -2289,6 +2289,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
     const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
+    const vatRate = form.vatRate !== "" ? parseFloat(form.vatRate) : undefined;
     if (editing === "new") {
       const newProduct = {
         id: generateId(),
@@ -2299,6 +2300,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         tags,
         modifierGroups,
         color: form.color,
+        vatRate,
         createdBy: currentEmployee?.name || "Onbekend",
         createdById: currentEmployee?.id || null,
         createdAt: new Date().toISOString(),
@@ -2312,7 +2314,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         ]);
       }
     } else {
-      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
+      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, vatRate, tags, modifierGroups, color: form.color } : p));
       addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
