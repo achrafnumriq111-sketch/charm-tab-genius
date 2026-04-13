@@ -2048,7 +2048,154 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
         </div>
       )}
 
-      {/* TAB: Service */}
+      {/* TAB: Omzet per uur / Heatmap */}
+      {dashTab === "uuranalyse" && (
+        <div className="space-y-4">
+          {/* KPI mini cards */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Card className="rounded-2xl border-orange-200 dark:border-orange-800/30">
+              <CardContent className="p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Piekuur</div>
+                <div className="text-xl font-black">{peakHourEntry?.label || "-"}</div>
+                <div className="text-xs text-muted-foreground">{peakHourEntry ? `${peakHourEntry.orders} orders · ${euro(peakHourEntry.revenue)}` : ""}</div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl">
+              <CardContent className="p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Rustigste uur</div>
+                <div className="text-xl font-black">{slowHourEntry?.label || "-"}</div>
+                <div className="text-xs text-muted-foreground">{slowHourEntry ? `${slowHourEntry.orders} orders · ${euro(slowHourEntry.revenue)}` : ""}</div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl">
+              <CardContent className="p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Gem. orders/uur</div>
+                <div className="text-xl font-black">{avgOrdersPerHour.toFixed(1)}</div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl">
+              <CardContent className="p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Hoogste omzet</div>
+                <div className="text-xl font-black">{euro(peakHourEntry?.revenue || 0)}</div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-2xl bg-primary/5">
+              <CardContent className="p-3">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Beste dagdeel</div>
+                <div className="text-xl font-black">{bestDaypart?.name || "-"}</div>
+                <div className="text-xs text-muted-foreground">{bestDaypart ? euro(bestDaypart.revenue) : ""}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Peak hour summary */}
+          {peakHourEntry && peakHourEntry.orders > 0 && (
+            <Card className="rounded-2xl border-orange-300 dark:border-orange-700/40 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Piekuur: {peakHourEntry.label} – {String(peakHourEntry.hour + 1).padStart(2, "0")}:00</div>
+                  <div className="text-xs text-muted-foreground">{peakHourEntry.orders} bestellingen · {euro(peakHourEntry.revenue)} omzet · gem. bon {euro(peakHourEntry.avgTicket)}</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Heatmap Table */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" /> Omzet per uur — Heatmap
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {hourlyData.every(h => h.orders === 0) ? (
+                <div className="text-sm text-muted-foreground py-8 text-center">Geen data voor deze periode</div>
+              ) : (
+                <div className="space-y-1">
+                  {/* Header */}
+                  <div className="grid grid-cols-4 gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 pb-1">
+                    <span>Tijd</span><span className="text-right">Orders</span><span className="text-right">Omzet</span><span className="text-right">Gem. bon</span>
+                  </div>
+                  {hourlyData.map((h) => (
+                    <div key={h.hour} className={clsx("grid grid-cols-4 gap-2 items-center px-3 py-2 rounded-xl transition-all", getHeatColor(h.revenue))}>
+                      <span className="text-sm font-bold">{h.label}</span>
+                      <span className="text-sm text-right font-mono">{h.orders}</span>
+                      <span className="text-sm text-right font-mono font-bold">{euro(h.revenue)}</span>
+                      <span className="text-sm text-right font-mono text-muted-foreground">{h.orders > 0 ? euro(h.avgTicket) : "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Visual Heatmap Bar */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Visuele intensiteit</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-1 items-end h-28">
+                {hourlyData.map((h) => (
+                  <div key={h.hour} className="flex-1 flex flex-col items-center gap-1">
+                    <div className={clsx("w-full rounded-t transition-all", getHeatColor(h.revenue))}
+                      style={{ height: `${h.revenue > 0 ? Math.max((h.revenue / peakHour) * 100, 8) : 4}%` }} />
+                    <span className="text-[8px] text-muted-foreground">{h.label.slice(0, 2)}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-3 justify-center">
+                <span className="text-[9px] text-muted-foreground">Laag</span>
+                <div className="flex gap-0.5">{["bg-muted", "bg-orange-100", "bg-orange-200", "bg-orange-300", "bg-red-400"].map((c, i) => <div key={i} className={clsx("h-3 w-6 rounded", c)} />)}</div>
+                <span className="text-[9px] text-muted-foreground">Piek</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Daypart breakdown */}
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Dagdeel analyse</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-3">
+                {daypartData.map((dp) => (
+                  <div key={dp.name} className={clsx("rounded-xl p-3 text-center border transition", dp.name === bestDaypart?.name ? "border-primary bg-primary/5" : "")}>
+                    <div className="text-xs font-medium text-muted-foreground">{dp.name}</div>
+                    <div className="text-lg font-black mt-1">{euro(dp.revenue)}</div>
+                    <div className="text-xs text-muted-foreground">{dp.orders} orders</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Staffing insights */}
+          {peakHourEntry && peakHourEntry.orders >= 5 && (
+            <Card className="rounded-2xl border-blue-200 dark:border-blue-800/30 bg-blue-50/50 dark:bg-blue-950/10">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-blue-600" /> Operationele inzichten
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-xs flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Extra personeel overwegen tussen {peakHourEntry.label} en {String(peakHourEntry.hour + 2).padStart(2, "0")}:00</div>
+                {slowHourEntry && slowHourEntry.orders > 0 && (
+                  <div className="text-xs flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Rustigste periode: {slowHourEntry.label} — mogelijk personeel reduceren</div>
+                )}
+                {bestDaypart && (
+                  <div className="text-xs flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> {bestDaypart.name} is het sterkste dagdeel met {euro(bestDaypart.revenue)} omzet</div>
+                )}
+                <div className="text-xs flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Prepstation capaciteit afstemmen op piektijden voor snellere doorlooptijd</div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {dashTab === "service" && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
