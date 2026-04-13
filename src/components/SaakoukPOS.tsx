@@ -3,6 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
+import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, AIForecastView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
