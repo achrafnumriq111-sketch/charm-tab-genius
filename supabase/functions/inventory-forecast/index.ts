@@ -84,6 +84,28 @@ Geef JSON terug:
   "overall_health": "good|warning|critical",
   "avg_margin": number
 }`;
+    } else if (type === "dynamic_item") {
+      const { itemName, movements: itemMovements, intakes: itemIntakes, currentStock, unitType } = await req.json().catch(() => ({}));
+      userPrompt = `Analyseer dit dynamic stock item en geef een forecast:
+
+ITEM: ${itemName || "Onbekend"}
+HUIDIGE VOORRAAD: ${currentStock} ${unitType}
+
+BEWEGINGEN (laatste ${(itemMovements || []).length}):
+${(itemMovements || []).slice(0, 50).map((m: any) => `- ${m.movement_type}: ${m.quantity} ${unitType} (${m.product_sold || "n/a"}) op ${m.created_at}`).join("\n")}
+
+LEVERINGEN (laatste ${(itemIntakes || []).length}):
+${(itemIntakes || []).slice(0, 20).map((i: any) => `- +${i.quantity} ${i.unit} op ${i.delivery_date}`).join("\n")}
+
+Geef JSON terug:
+{
+  "recommendation": "korte aanbeveling",
+  "predicted_usage": number,
+  "suggested_stock": number,
+  "trend": "beschrijving van trend",
+  "weekday_pattern": "patroon per weekdag",
+  "confidence": "high|medium|low"
+}`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
