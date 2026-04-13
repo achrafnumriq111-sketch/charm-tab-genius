@@ -5249,6 +5249,7 @@ function CashAuditView() {
 
 export default function SaakoukPOS() {
   const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
+  const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
   const [tables, setTables] = useState(() => {
