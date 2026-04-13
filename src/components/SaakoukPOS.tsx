@@ -2247,7 +2247,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [], vatRate: "" });
 
   const isOwner = currentRole === "owner";
 
@@ -2267,11 +2267,12 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         color: product.color || "#94a3b8",
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
+        vatRate: product.vatRate != null ? String(product.vatRate) : "",
       });
       addLog?.("product_edit_open", `Product bewerken geopend: ${product.name}`);
     } else {
       setEditing("new");
-      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [], vatRate: "" });
       addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
