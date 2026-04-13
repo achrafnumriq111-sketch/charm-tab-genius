@@ -4229,6 +4229,18 @@ function PrepStationView({ prepTickets, onUpdateStatus }: { prepTickets: PrepTic
                       <Check className="h-3.5 w-3.5 mr-1" /> Voltooid
                     </Button>
                   )}
+                  <Button size="sm" variant="outline" className="rounded-xl text-xs"
+                    onClick={() => {
+                      const printContent = ticket.items.map((i) => `${i.qty}× ${i.name}${i.modifiers?.length ? ` (${i.modifiers.map((m) => m.optionName).join(", ")})` : ""}${i.notes ? ` [${i.notes}]` : ""}`).join("\n");
+                      const printWindow = window.open("", "_blank", "width=300,height=500");
+                      if (printWindow) {
+                        printWindow.document.write(`<html><head><title>Prep Bon</title><style>body{font-family:monospace;font-size:14px;padding:20px}h2{margin:0 0 8px}hr{border:none;border-top:1px dashed #000;margin:10px 0}.item{margin:4px 0}.meta{font-size:11px;color:#666}</style></head><body><h2>PREP BON</h2><div class="meta">#${ticket.orderId} · ${ticket.station.toUpperCase()}</div><div class="meta">${ticket.orderType} · ${new Date(ticket.createdAt).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}</div><hr/>${ticket.items.map((i) => `<div class="item"><strong>${i.qty}× ${i.name}</strong>${i.modifiers?.length ? `<br/>&nbsp;&nbsp;${i.modifiers.map((m) => m.optionName).join(", ")}` : ""}${i.notes ? `<br/>&nbsp;&nbsp;<em>📝 ${i.notes}</em>` : ""}</div>`).join("")}<hr/><div class="meta">Herprint · ${new Date().toLocaleTimeString("nl-NL")}</div></body></html>`);
+                        printWindow.document.close();
+                        printWindow.print();
+                      }
+                    }}>
+                    <Printer className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
