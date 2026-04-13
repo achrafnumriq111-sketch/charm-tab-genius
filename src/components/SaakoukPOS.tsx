@@ -4671,6 +4671,16 @@ export default function SaakoukPOS() {
                 {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
               </button>
             )}
+            {/* Prep tickets indicator */}
+            {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length > 0 && (
+              <button
+                onClick={() => setActive("prepstation")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-700 text-xs font-semibold"
+              >
+                <ChefHat className="h-4 w-4" />
+                {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length} prep
+              </button>
+            
             {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
               <button
                 onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
