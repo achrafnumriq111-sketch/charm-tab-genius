@@ -1095,24 +1095,24 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   }
 
   return (
-    <div className="grid grid-cols-12 gap-3 h-[calc(100dvh-120px)]">
+    <div className="grid grid-cols-12 gap-3 h-[calc(100dvh-120px)] touch-manipulation">
       {/* LEFT: Product grid */}
       <div className="col-span-7 flex flex-col gap-3 overflow-hidden">
         <div className="flex flex-col gap-2">
           <div className="relative min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="pl-9 h-10" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="pl-9 h-11" />
           </div>
           <div className="flex flex-wrap gap-1">
             {SECTIONS.map((s) => (
-              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-[11px] px-3 h-8" onClick={() => setSection(s)}>
+              <Button key={s} variant={section === s ? "default" : "outline"} size="sm" className="rounded-full text-xs px-4 h-10 min-w-[44px]" onClick={() => setSection(s)}>
                 {s}
               </Button>
             ))}
           </div>
         </div>
         <ScrollArea className="flex-1">
-          <div className="grid grid-cols-3 gap-2 pb-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 pb-4">
             {filtered.map((product) => (
               <ProductButton key={product.id} product={product} onClick={() => quickAdd(product)} />
             ))}
@@ -1209,11 +1209,11 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-2">
-                        <button onClick={() => removeLine(item.lineId)} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="h-3 w-3" /></button>
-                        <div className="flex items-center gap-1.5">
-                          <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.lineId, -1)}><Minus className="h-2.5 w-2.5" /></Button>
-                          <span className="w-5 text-center text-sm font-medium">{item.qty}</span>
-                          <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQty(item.lineId, 1)}><Plus className="h-2.5 w-2.5" /></Button>
+                        <button onClick={() => removeLine(item.lineId)} className="text-red-500 hover:text-red-700 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"><Trash2 className="h-4 w-4" /></button>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="icon" className="h-9 w-9 min-w-[44px] min-h-[44px]" onClick={() => updateQty(item.lineId, -1)}><Minus className="h-3.5 w-3.5" /></Button>
+                          <span className="w-6 text-center text-sm font-semibold">{item.qty}</span>
+                          <Button variant="outline" size="icon" className="h-9 w-9 min-w-[44px] min-h-[44px]" onClick={() => updateQty(item.lineId, 1)}><Plus className="h-3.5 w-3.5" /></Button>
                         </div>
                       </div>
                     </div>
@@ -1227,7 +1227,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                 <div className="font-medium text-xs flex items-center gap-1.5 mb-2"><Percent className="h-3.5 w-3.5" /> Discount</div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {discounts.map((disc) => (
-                    <Button key={disc.id} variant={selectedDiscount?.id === disc.id ? "default" : "outline"} size="sm" className="text-[11px] h-7 justify-start"
+                    <Button key={disc.id} variant={selectedDiscount?.id === disc.id ? "default" : "outline"} size="sm" className="text-xs h-10 min-h-[44px] justify-start"
                       onClick={() => updateTicket({ selectedDiscount: selectedDiscount?.id === disc.id ? null : disc })}>
                       {disc.name} ({disc.value}%)
                     </Button>
@@ -1245,18 +1245,16 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
             <Separator className="my-2 bg-white/20" />
             <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{euro(total)}</span></div>
             <div className="grid grid-cols-4 gap-2 mt-3">
-              <Button className="bg-white text-black hover:bg-white/90 text-xs h-9" onClick={() => openPayment("card")} disabled={cart.length === 0}>
-                <CreditCard className="h-3.5 w-3.5 mr-1" /> Card
+              <Button className="bg-white text-black hover:bg-white/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("card")} disabled={cart.length === 0}>
+                <CreditCard className="h-4 w-4 mr-1" /> Card
               </Button>
-              <Button className="bg-white text-black hover:bg-white/90 text-xs h-9" onClick={() => openPayment("cash")} disabled={cart.length === 0}>
-                <Banknote className="h-3.5 w-3.5 mr-1" /> Cash
+              <Button className="bg-white text-black hover:bg-white/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("cash")} disabled={cart.length === 0}>
+                <Banknote className="h-4 w-4 mr-1" /> Cash
               </Button>
-              <Button className="bg-white text-black hover:bg-white/90 text-xs h-9" onClick={() => openPayment("qr")} disabled={cart.length === 0}>
-                <Smartphone className="h-3.5 w-3.5 mr-1" /> QR
+              <Button className="bg-white text-black hover:bg-white/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("qr")} disabled={cart.length === 0}>
+                <Smartphone className="h-4 w-4 mr-1" /> QR
               </Button>
-              <Button className="bg-amber-500 text-white hover:bg-amber-600 text-xs h-9" onClick={() => {
-                // Epson ESC/POS cash drawer kick command: ESC p 0 25 250
-                // This sends the pulse to kick pin 2 of the cash drawer via the receipt printer
+              <Button className="bg-amber-500 text-white hover:bg-amber-600 text-xs h-11 min-h-[44px]" onClick={() => {
                 const escposCmd = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
                 try {
                   const nav = navigator as any;
@@ -1271,7 +1269,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                 addLog?.("cash_drawer_opened", "Kassalade geopend via knop");
                 onToast?.("Kassalade openen...");
               }}>
-                <Lock className="h-3.5 w-3.5 mr-1" /> Lade
+                <Lock className="h-4 w-4 mr-1" /> Lade
               </Button>
             </div>
           </div>
