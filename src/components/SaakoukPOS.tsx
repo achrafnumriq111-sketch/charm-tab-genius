@@ -297,33 +297,56 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     return true;
   });
   return (
-    <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
-      <div className="py-3 px-2 border-b flex flex-col items-center gap-0.5">
-        <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-          {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+    <div className="w-[72px] flex flex-col shrink-0 relative z-20">
+      {/* Glass sidebar background */}
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border-r border-white/70 shadow-[4px_0_40px_rgba(162,178,226,0.10)]" />
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="py-3 px-2 border-b border-white/50 flex flex-col items-center gap-0.5">
+          <motion.div
+            whileHover={{ scale: 1.08, rotate: -4 }}
+            className="w-9 h-9 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffffff,#f1ecff_45%,#ddd6fe_72%,#fbcfe8_100%)] border border-white/80 flex items-center justify-center text-xs font-bold text-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_8px_24px_rgba(172,155,255,0.18)]"
+          >
+            {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+          </motion.div>
+          <span className="text-[8px] text-slate-500 truncate w-full text-center">{employeeName.split(" ")[0]}</span>
         </div>
-        <span className="text-[8px] text-muted-foreground truncate w-full text-center">{employeeName.split(" ")[0]}</span>
-      </div>
-      <ScrollArea className="flex-1 py-2 px-1.5">
-        <div className="space-y-1 flex flex-col items-center">
-          {sections.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button key={item.key} onClick={() => setActive(item.key)}
-                title={item.label}
-                className={clsx("w-12 h-12 flex flex-col items-center justify-center rounded-xl text-[10px] leading-tight transition-all gap-0.5",
-                  active === item.key ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent text-muted-foreground")}>
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
-              </button>
-            );
-          })}
+        <ScrollArea className="flex-1 py-2 px-1.5">
+          <div className="space-y-1 flex flex-col items-center">
+            {sections.map((item) => {
+              const Icon = item.icon;
+              const isActive = active === item.key;
+              return (
+                <motion.button
+                  key={item.key}
+                  onClick={() => setActive(item.key)}
+                  title={item.label}
+                  whileHover={{ scale: 1.06, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={clsx(
+                    "w-12 h-12 flex flex-col items-center justify-center rounded-2xl text-[10px] leading-tight transition-all gap-0.5",
+                    isActive
+                      ? "bg-[linear-gradient(135deg,rgba(196,181,253,0.6),rgba(255,192,230,0.5),rgba(191,219,254,0.5))] text-slate-800 font-medium shadow-[0_8px_30px_rgba(172,155,255,0.22)] border border-white/70"
+                      : "hover:bg-white/50 text-slate-500"
+                  )}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        <div className="p-1.5 border-t border-white/50 flex justify-center">
+          <motion.button
+            title="Log out"
+            onClick={onLogout}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            className="w-12 h-12 flex items-center justify-center rounded-2xl text-red-400 hover:bg-red-50/60 transition"
+          >
+            <LogOut className="h-5 w-5" />
+          </motion.button>
         </div>
-      </ScrollArea>
-      <div className="p-1.5 border-t flex justify-center">
-        <button title="Log out" onClick={onLogout} className="w-12 h-12 flex items-center justify-center rounded-xl text-destructive hover:bg-destructive/10 transition">
-          <LogOut className="h-5 w-5" />
-        </button>
       </div>
     </div>
   );
@@ -333,19 +356,23 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
 
 function ProductButton({ product, onClick }: { product: any; onClick: () => void }) {
   return (
-    <button onClick={onClick}
-      className="rounded-2xl border bg-white p-2.5 text-left shadow-sm active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation">
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      className="rounded-[22px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,249,255,0.88))] p-2.5 text-left shadow-[0_14px_40px_rgba(163,177,219,0.12)] backdrop-blur-xl active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation group"
+    >
       <div>
         <div className="flex items-start justify-between gap-1.5">
-          <div className="font-semibold text-[13px] leading-tight">{product.name}</div>
-          <Badge variant="secondary" className="shrink-0 text-[11px]">{euro(product.price)}</Badge>
+          <div className="font-semibold text-[13px] leading-tight text-slate-900">{product.name}</div>
+          <span className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/70 border border-white/80 text-slate-600 shadow-[0_4px_12px_rgba(162,178,226,0.10)]">{euro(product.price)}</span>
         </div>
         {product.modifierGroups?.length > 0 && (
-          <div className="text-[10px] text-muted-foreground mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
         )}
       </div>
-      {product.color && <div className="w-full h-1 rounded-full mt-1.5" style={{ backgroundColor: product.color }} />}
-    </button>
+      {product.color && <div className="w-full h-1 rounded-full mt-1.5 opacity-70 group-hover:opacity-100 transition" style={{ backgroundColor: product.color }} />}
+    </motion.button>
   );
 }
 
@@ -5424,65 +5451,80 @@ export default function SaakoukPOS() {
   };
 
   return (
-    <div className="h-dvh bg-background text-foreground flex overflow-hidden select-none">
+    <div className="h-dvh relative overflow-hidden flex select-none text-slate-900">
+      {/* Ambient pastel background */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbfcff_0%,#f3f6ff_48%,#eef2ff_100%)]" />
+        <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.35),transparent_70%)] blur-3xl" />
+        <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.25),transparent_70%)] blur-3xl" />
+        <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.35),transparent_70%)] blur-3xl" />
+      </div>
+
       <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <div className="shrink-0 border-b bg-card px-4 py-2 flex items-center justify-between">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
+        {/* Glass top bar */}
+        <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
           <div>
-            <h1 className="text-base font-bold leading-tight">{titles[active] || "Saakouk"}</h1>
-            <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}</div>
+            <h1 className="text-base font-semibold tracking-[-0.02em] text-slate-900 leading-tight">{titles[active] || "Saakouk"}</h1>
+            <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}</div>
           </div>
           <div className="flex items-center gap-2">
             {/* QR Orders indicator */}
             {qrOrders.length > 0 && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setActive("dashboard")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-100 text-orange-700 text-xs font-semibold animate-pulse"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-100/80 text-orange-700 text-xs font-semibold border border-orange-200/50 shadow-[0_8px_24px_rgba(251,191,36,0.12)] animate-pulse"
               >
                 <Bell className="h-4 w-4" />
                 {qrOrders.length} actieve bestelling{qrOrders.length !== 1 ? "en" : ""}
-              </button>
+              </motion.button>
             )}
             {/* Prep tickets indicator */}
             {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length > 0 && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setActive("prepstation")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-700 text-xs font-semibold"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100/80 text-amber-700 text-xs font-semibold border border-amber-200/50 shadow-[0_8px_24px_rgba(251,191,36,0.10)]"
               >
                 <ChefHat className="h-4 w-4" />
                 {prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length} prep
-              </button>
+              </motion.button>
             )}
 
             {/* Low stock alert */}
             {lowStockItems.length > 0 && (loggedInEmployee.role === "owner" || loggedInEmployee.role === "manager") && (
               <div className="relative">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
                   onClick={() => setShowLowStockPanel(!showLowStockPanel)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-100 text-red-700 text-xs font-semibold animate-pulse"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100/80 text-red-700 text-xs font-semibold border border-red-200/50 shadow-[0_8px_24px_rgba(239,68,68,0.10)] animate-pulse"
                 >
                   <Package className="h-4 w-4" />
                   {lowStockItems.length} lage voorraad
-                </button>
+                </motion.button>
                 {showLowStockPanel && (
-                  <div className="absolute right-0 top-10 z-50 w-80 bg-card border rounded-xl shadow-xl p-3 space-y-2 max-h-80 overflow-auto">
+                  <div className="absolute right-0 top-10 z-50 w-80 rounded-[22px] border border-white/70 bg-white/80 backdrop-blur-2xl shadow-[0_30px_80px_rgba(162,178,226,0.22)] p-4 space-y-2 max-h-80 overflow-auto">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold">⚠️ Lage voorraad</span>
-                      <button onClick={() => setShowLowStockPanel(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+                      <span className="text-sm font-bold text-slate-900">⚠️ Lage voorraad</span>
+                      <button onClick={() => setShowLowStockPanel(false)} className="text-slate-400 hover:text-slate-700"><X className="h-4 w-4" /></button>
                     </div>
                     {lowStockItems.map((item: any) => (
-                      <div key={item.id} className="flex items-center justify-between bg-red-50 rounded-lg px-3 py-2 text-xs">
+                      <div key={item.id} className="flex items-center justify-between bg-red-50/80 rounded-xl px-3 py-2 text-xs border border-red-100/50">
                         <div>
-                          <div className="font-semibold text-foreground">{item.item_name}</div>
-                          <div className="text-muted-foreground">{item.category}</div>
+                          <div className="font-semibold text-slate-900">{item.item_name}</div>
+                          <div className="text-slate-500">{item.category}</div>
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-red-600">{item.current_stock} {item.unit_type}</div>
-                          <div className="text-muted-foreground">min: {item.minimum_stock}</div>
+                          <div className="text-slate-500">min: {item.minimum_stock}</div>
                         </div>
                       </div>
                     ))}
-                    <button onClick={() => { setShowLowStockPanel(false); setActive("inventory"); }} className="w-full text-center text-xs font-semibold text-primary hover:underline pt-1">
+                    <button onClick={() => { setShowLowStockPanel(false); setActive("inventory"); }} className="w-full text-center text-xs font-semibold text-violet-600 hover:underline pt-1">
                       Ga naar Voorraad →
                     </button>
                   </div>
@@ -5491,16 +5533,19 @@ export default function SaakoukPOS() {
             )}
 
             {loggedInEmployee.role === "owner" && notifications.filter((n) => !n.read).length > 0 && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => { setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))); setActive("logs"); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-semibold"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100/80 text-blue-700 text-xs font-semibold border border-blue-200/50 shadow-[0_8px_24px_rgba(59,130,246,0.10)]"
               >
                 <Bell className="h-4 w-4" />
                 {notifications.filter((n) => !n.read).length} melding{notifications.filter((n) => !n.read).length !== 1 ? "en" : ""}
-              </button>
+              </motion.button>
             )}
-            <Badge variant="outline" className="text-[11px]">{todayOrders.length} orders</Badge>
-            <Badge variant="secondary" className="text-[11px]">{euro(todayRevenue)}</Badge>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/70 bg-white/60 backdrop-blur-xl text-[11px] font-medium text-slate-600 shadow-[0_8px_24px_rgba(162,178,226,0.10)]">
+              {todayOrders.length} orders · {euro(todayRevenue)}
+            </div>
           </div>
         </div>
         <div className="flex-1 overflow-auto p-4">
@@ -5508,9 +5553,9 @@ export default function SaakoukPOS() {
             {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={products} reservations={reservations} customers={customers} />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
-                <TabsList className="rounded-xl">
-                  <TabsTrigger value="counter">Counter</TabsTrigger>
-                  <TabsTrigger value="table">Tables</TabsTrigger>
+                <TabsList className="rounded-full bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+                  <TabsTrigger value="counter" className="rounded-full data-[state=active]:bg-[linear-gradient(135deg,rgba(196,181,253,0.5),rgba(255,192,230,0.4))] data-[state=active]:shadow-sm">Counter</TabsTrigger>
+                  <TabsTrigger value="table" className="rounded-full data-[state=active]:bg-[linear-gradient(135deg,rgba(196,181,253,0.5),rgba(255,192,230,0.4))] data-[state=active]:shadow-sm">Tables</TabsTrigger>
                 </TabsList>
                 <TabsContent value="counter">
                   <CounterView
