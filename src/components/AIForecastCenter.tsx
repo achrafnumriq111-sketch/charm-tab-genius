@@ -39,26 +39,97 @@ const RANGES = [
 type SegmentKey = typeof SEGMENTS[number]["key"];
 type RangeKey = typeof RANGES[number]["key"];
 
-// Fallback weather data in case API call fails
-function getFallbackWeather() {
-  const days = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
-  const today = new Date().getDay();
-  return Array.from({ length: 7 }, (_, i) => {
-    const rand = Math.random();
-    const temp = Math.round(14 + Math.random() * 12);
-    const sunny = rand > 0.4;
-    return {
-      day: days[(today + i) % 7],
-      temp,
-      sunny,
-      icon: sunny ? "☀️" : rand > 0.2 ? "⛅" : "🌧️",
-      impact: sunny ? Math.round(8 + temp * 0.5) : Math.round(-5 - (1 - rand) * 10),
-      label: sunny ? "Zonnig" : rand > 0.2 ? "Bewolkt" : "Regen",
-      rain: 0,
-      wind: 0,
-      isReal: false,
-    };
-  });
+const WEATHER_DAY_LABELS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"] as const;
+const FALLBACK_WEATHER_PATTERN = [
+  { temp: 11, sunny: false, icon: "⛅", impact: -1, label: "Bewolkt", rain: 0, wind: 2.1 },
+  { temp: 13, sunny: true, icon: "☀️", impact: 12, label: "Zonnig", rain: 0, wind: 1.8 },
+  { temp: 12, sunny: false, icon: "⛅", impact: -1, label: "Bewolkt", rain: 0.1, wind: 2.5 },
+  { temp: 12, sunny: false, icon: "⛅", impact: -2, label: "Licht bewolkt", rain: 0, wind: 2.7 },
+  { temp: 14, sunny: true, icon: "🌤️", impact: 10, label: "Licht bewolkt", rain: 0, wind: 2.2 },
+  { temp: 11, sunny: false, icon: "🌧️", impact: -12, label: "Regen", rain: 2.6, wind: 3.4 },
+  { temp: 10, sunny: false, icon: "⛅", impact: -2, label: "Bewolkt", rain: 0, wind: 2.0 },
+] as const;
+
+function toLocalDateOnly(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseIsoDateUTC(dateStr: string) {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+}
+
+function addDaysUTC(dateStr: string, days: number) {
+  const date = parseIsoDateUTC(dateStr);
+  date.setUTCDate(date.getUTCDate() + days);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDayLabelFromDate(dateStr: string) {
+  return WEATHER_DAY_LABELS[parseIsoDateUTC(dateStr).getUTCDay()];
+}
+
+function buildFallbackWeatherDay(dateStr: string, index: number) {
+  const pattern = FALLBACK_WEATHER_PATTERN[index % FALLBACK_WEATHER_PATTERN.length];
+  const dayIndex = parseIsoDateUTC(dateStr).getUTCDay();
+  const weekend = dayIndex === 0 || dayIndex === 6;
+
+  return {
+    day: WEATHER_DAY_LABELS[dayIndex],
+    date: dateStr,
+    temp: pattern.temp,
+    sunny: pattern.sunny,
+    icon: pattern.icon,
+    impact: weekend && pattern.sunny ? pattern.impact + 4 : pattern.impact,
+    label: pattern.label,
+    rain: pattern.rain,
+    wind: pattern.wind,
+    temp_max: pattern.temp + 3,
+    temp_min: pattern.temp - 3,
+    weekend,
+    isReal: false,
+  };
+}
+
+function getFallbackWeather(startDate = toLocalDateOnly(new Date())) {
+  return Array.from({ length: 7 }, (_, index) => buildFallbackWeatherDay(addDaysUTC(startDate, index), index));
+}
+
+function normalizeWeatherDays(days: any[]) {
+  const normalized = days
+    .filter(Boolean)
+    .map((day, index) => {
+      const date = typeof day.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day.date)
+        ? day.date
+        : addDaysUTC(toLocalDateOnly(new Date()), index);
+      const weekend = [0, 6].includes(parseIsoDateUTC(date).getUTCDay());
+
+      return {
+        ...buildFallbackWeatherDay(date, index),
+        ...day,
+        date,
+        day: getDayLabelFromDate(date),
+        weekend,
+        isReal: day.isReal ?? true,
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .filter((day, index, arr) => arr.findIndex((item) => item.date === day.date) === index);
+
+  if (!normalized.length) return getFallbackWeather();
+
+  while (normalized.length < 7) {
+    const nextDate = addDaysUTC(normalized[normalized.length - 1].date, 1);
+    normalized.push(buildFallbackWeatherDay(nextDate, normalized.length));
+  }
+
+  return normalized.slice(0, 7);
 }
 
 export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void }) {
@@ -74,7 +145,6 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
 
   const rangeDays = useMemo(() => RANGES.find(r => r.key === range)?.days || 7, [range]);
 
-  // Fetch real weather on mount
   useEffect(() => {
     (async () => {
       try {
@@ -83,7 +153,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         });
         if (fnErr || data?.error) throw new Error(data?.error || "Weather fetch failed");
         if (data?.daily?.length) {
-          setWeather(data.daily.map((d: any) => ({
+          setWeather(normalizeWeatherDays(data.daily.map((d: any) => ({
             day: d.day,
             temp: d.temp,
             sunny: d.sunny,
@@ -97,7 +167,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             temp_min: d.temp_min,
             weekend: d.weekend,
             isReal: true,
-          })));
+          }))));
           setWeatherSource("live");
           if (data.current) setCurrentWeather(data.current);
         }
