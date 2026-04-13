@@ -1510,30 +1510,30 @@ function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelec
 
 // KPI card IDs for favoriting
 const ALL_INSIGHTS = [
-  { id: "revenue", label: "Bruto-omzet", tab: "verkopen", color: "text-blue-600" },
-  { id: "order_revenue", label: "Omzet van alle bestellingen", tab: "verkopen", color: "text-blue-600" },
-  { id: "avg_ticket", label: "Gemiddelde verkoopprijs", tab: "verkopen", color: "text-blue-600" },
-  { id: "avg_order", label: "Gemiddelde bestelwaarde", tab: "verkopen", color: "text-blue-600" },
-  { id: "order_count", label: "Verkoop aantallen", tab: "verkopen", color: "text-blue-600" },
-  { id: "avg_table_time", label: "Gemiddelde tafelbezettingstijd", tab: "service", color: "text-purple-600" },
-  { id: "total_tips", label: "Totale fooien", tab: "service", color: "text-purple-600" },
-  { id: "tip_pct", label: "Fooi percentage", tab: "service", color: "text-purple-600" },
-  { id: "avg_table_revenue", label: "Gemiddelde tafelomzet", tab: "service", color: "text-purple-600" },
-  { id: "total_discounts", label: "Totale kortingen", tab: "service", color: "text-purple-600" },
-  { id: "returning_customers", label: "Terugkerende klanten", tab: "service", color: "text-purple-600" },
-  { id: "prep_count", label: "Totaal aantal verwerkte bonnen", tab: "prepstation", color: "text-amber-700" },
-  { id: "res_count", label: "Aantal reserveringen", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "walk_ins", label: "Walk-ins", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "avg_group_size", label: "Gemiddelde groepsgrootte", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "cancellations", label: "Annuleringen", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "no_shows", label: "No-shows", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "waitlist", label: "Aantal op de wachtlijst", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "couverts", label: "Aantal couverts", tab: "reserveringen", color: "text-cyan-600" },
-  { id: "products_sold", label: "Totale producten verkocht", tab: "producten", color: "text-orange-600" },
-  { id: "avg_products_per_order", label: "Gemiddeld aantal producten per bestelling", tab: "producten", color: "text-orange-600" },
-  { id: "cost_pct", label: "Kosten percentage ingrediënt", tab: "producten", color: "text-orange-600" },
-  { id: "top_categories", label: "Top productcategorieën", tab: "producten", color: "text-orange-600" },
-  { id: "top_products", label: "Top producten", tab: "producten", color: "text-orange-600" },
+  { id: "revenue", label: "Bruto-omzet", tab: "verkopen", color: "text-blue-600", info: "De totale omzet inclusief fooien en kortingen. Dit is het bruto bedrag dat binnenkwam in de geselecteerde periode." },
+  { id: "order_revenue", label: "Omzet van alle bestellingen", tab: "verkopen", color: "text-blue-600", info: "De totale omzet van alle bestellingen, exclusief fooien. Dit laat zien hoeveel er daadwerkelijk aan producten is verkocht." },
+  { id: "avg_ticket", label: "Gemiddelde verkoopprijs", tab: "verkopen", color: "text-blue-600", info: "Het gemiddelde bedrag per transactie (totaal ÷ aantal bestellingen). Hoger = klanten bestellen meer per bezoek." },
+  { id: "avg_order", label: "Gemiddelde bestelwaarde", tab: "verkopen", color: "text-blue-600", info: "Het gemiddelde bestelbedrag exclusief fooien. Gebruik dit om te zien of upselling effect heeft." },
+  { id: "order_count", label: "Verkoop aantallen", tab: "verkopen", color: "text-blue-600", info: "Het totale aantal afgeronde bestellingen in deze periode. Vergelijk met vorige perioden om trends te ontdekken." },
+  { id: "avg_table_time", label: "Gemiddelde tafelbezettingstijd", tab: "service", color: "text-purple-600", info: "Hoe lang een tafel gemiddeld bezet is per bestelling. Korter = snellere doorloop, meer gasten per dag." },
+  { id: "total_tips", label: "Totale fooien", tab: "service", color: "text-purple-600", info: "Het totale bedrag aan ontvangen fooien. Een goede indicator van klanttevredenheid en servicekwaliteit." },
+  { id: "tip_pct", label: "Fooi percentage", tab: "service", color: "text-purple-600", info: "Fooien als percentage van de totale omzet. Gemiddeld in horeca: 5-10%. Hoger wijst op uitstekende service." },
+  { id: "avg_table_revenue", label: "Gemiddelde tafelomzet", tab: "service", color: "text-purple-600", info: "De gemiddelde omzet per tafelbestelling. Vergelijk met walk-in bestellingen om te zien waar meer wordt besteed." },
+  { id: "total_discounts", label: "Totale kortingen", tab: "service", color: "text-purple-600", info: "Het totale kortingsbedrag dat is weggegeven. Houd dit in de gaten om te zorgen dat kortingen winstgevend blijven." },
+  { id: "returning_customers", label: "Terugkerende klanten", tab: "service", color: "text-purple-600", info: "Klanten die meerdere keren hebben besteld in deze periode. Hoge retentie = tevreden klanten en een sterk merk." },
+  { id: "prep_count", label: "Totaal aantal verwerkte bonnen", tab: "prepstation", color: "text-amber-700", info: "Het totale aantal individuele items dat is verwerkt door het prepstation. Gebruik dit voor capaciteitsplanning." },
+  { id: "res_count", label: "Aantal reserveringen", tab: "reserveringen", color: "text-cyan-600", info: "Het totale aantal bevestigde reserveringen in deze periode. Vergelijk met walk-ins voor de verhouding." },
+  { id: "walk_ins", label: "Walk-ins", tab: "reserveringen", color: "text-cyan-600", info: "Bestellingen zonder reservering. Een hoog aantal walk-ins kan wijzen op een goede locatie of spontaan bezoek." },
+  { id: "avg_group_size", label: "Gemiddelde groepsgrootte", tab: "reserveringen", color: "text-cyan-600", info: "Het gemiddelde aantal gasten per reservering. Handig voor het plannen van tafelindeling en personeel." },
+  { id: "cancellations", label: "Annuleringen", tab: "reserveringen", color: "text-cyan-600", info: "Het aantal geannuleerde reserveringen. Hoog percentage kan wijzen op problemen met boekingservaring of communicatie." },
+  { id: "no_shows", label: "No-shows", tab: "reserveringen", color: "text-cyan-600", info: "Gasten die niet kwamen opdagen zonder te annuleren. Overweeg een no-show beleid als dit hoog is." },
+  { id: "waitlist", label: "Aantal op de wachtlijst", tab: "reserveringen", color: "text-cyan-600", info: "Het aantal gasten dat op de wachtlijst staat. Dit wijst op hoge vraag — overweeg uitbreiding of langere openingstijden." },
+  { id: "couverts", label: "Aantal couverts", tab: "reserveringen", color: "text-cyan-600", info: "Het totale aantal gasten (couverts) dat is bediend via reserveringen. Belangrijke KPI voor capaciteitsbenutting." },
+  { id: "products_sold", label: "Totale producten verkocht", tab: "producten", color: "text-orange-600", info: "Het totale aantal verkochte producten (alle items opgeteld). Vergelijk met vorige perioden voor groeitrends." },
+  { id: "avg_products_per_order", label: "Gemiddeld aantal producten per bestelling", tab: "producten", color: "text-orange-600", info: "Hoeveel producten gemiddeld per bestelling worden gekocht. Meer = betere cross-selling en upselling." },
+  { id: "cost_pct", label: "Kosten percentage ingrediënt", tab: "producten", color: "text-orange-600", info: "Het percentage van de omzet dat opgaat aan ingrediëntkosten. Ideaal: 25-35%. Hoger = lagere marge." },
+  { id: "top_categories", label: "Top productcategorieën", tab: "producten", color: "text-orange-600", info: "Welke productcategorieën het meeste omzet genereren. Gebruik dit voor menu-optimalisatie en inkoop." },
+  { id: "top_products", label: "Top producten", tab: "producten", color: "text-orange-600", info: "De best verkopende producten op basis van omzet. Focus marketing en voorraad op deze items." },
 ] as const;
 
 function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, products, reservations, customers }: any) {
@@ -1696,14 +1696,17 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
   function InsightCard({ insight, showFavStar = true }: { insight: typeof ALL_INSIGHTS[number]; showFavStar?: boolean }) {
     const isFav = favorites.includes(insight.id);
     const isChart = insight.id === "top_categories" || insight.id === "top_products" || insight.id === "returning_customers" || insight.id === "total_discounts";
+    const [showInfo, setShowInfo] = useState(false);
 
     return (
       <Card className="rounded-2xl">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className={clsx("text-sm font-medium underline underline-offset-2 decoration-dotted", insight.color)}>{insight.label} →</span>
+            <span className={clsx("text-sm font-medium", insight.color)}>{insight.label}</span>
             <div className="flex items-center gap-1">
-              <button className="p-1 rounded-full hover:bg-muted" title="Info"><span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span></button>
+              <button className="p-1 rounded-full hover:bg-muted relative" onClick={() => setShowInfo(!showInfo)} title="Info">
+                <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-foreground text-background text-[10px] font-bold">i</span>
+              </button>
               {showFavStar && (
                 <button className="p-1 rounded-full hover:bg-muted" onClick={() => toggleFavorite(insight.id)} title={isFav ? "Verwijder uit favorieten" : "Toevoegen aan favorieten"}>
                   <Star className={clsx("h-4 w-4", isFav ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
@@ -1711,6 +1714,11 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
               )}
             </div>
           </div>
+          {showInfo && (
+            <div className="mb-3 p-3 rounded-xl bg-muted/60 border text-xs text-muted-foreground leading-relaxed animate-in fade-in slide-in-from-top-2">
+              {insight.info}
+            </div>
+          )}
           {isChart && insight.id === "top_categories" ? (
             <div className="space-y-1.5 mt-2">
               {topCategoryList.length === 0 ? <div className="text-sm text-muted-foreground">Geen data</div> : topCategoryList.map(([name, rev]) => (
