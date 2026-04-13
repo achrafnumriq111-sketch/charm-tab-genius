@@ -2247,7 +2247,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+  const [form, setForm] = useState({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [], vatRate: "" });
 
   const isOwner = currentRole === "owner";
 
@@ -2267,11 +2267,12 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         color: product.color || "#94a3b8",
         tags: (product.tags || []).join(", "),
         modifierGroupIds: (product.modifierGroups || []).map((g) => g.id),
+        vatRate: product.vatRate != null ? String(product.vatRate) : "",
       });
       addLog?.("product_edit_open", `Product bewerken geopend: ${product.name}`);
     } else {
       setEditing("new");
-      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [] });
+      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [], vatRate: "" });
       addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
@@ -2288,6 +2289,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
     const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
+    const vatRate = form.vatRate !== "" ? parseFloat(form.vatRate) : undefined;
     if (editing === "new") {
       const newProduct = {
         id: generateId(),
@@ -2298,6 +2300,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         tags,
         modifierGroups,
         color: form.color,
+        vatRate,
         createdBy: currentEmployee?.name || "Onbekend",
         createdById: currentEmployee?.id || null,
         createdAt: new Date().toISOString(),
@@ -2311,7 +2314,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         ]);
       }
     } else {
-      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, tags, modifierGroups, color: form.color } : p));
+      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, vatRate, tags, modifierGroups, color: form.color } : p));
       addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
@@ -2384,6 +2387,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
               </div>
             </div>
             <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Hot, Coffee, Signature" className="mt-1" /></div>
+            <div><Label>BTW % (leeg = categorie)</Label><Input type="number" step="0.5" min="0" max="100" value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: e.target.value })} placeholder="bijv. 9" className="mt-1" /></div>
           </div>
           <div>
             <Label>Modifier groups</Label>
@@ -3428,7 +3432,7 @@ function AccountingView({ orders }: any) {
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
-function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }: any) {
+function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, vatRates, setVatRates }: any) {
   return (
     <div className="space-y-4 max-w-2xl">
       {/* PassKit Configuration */}
@@ -3468,8 +3472,40 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }
           <div className="flex items-center justify-between"><div><Label>Business name</Label><div className="text-xs text-muted-foreground">Shown on receipts</div></div><Input defaultValue="Saakouk" className="max-w-[200px]" /></div>
           <Separator />
           <div className="flex items-center justify-between"><div><Label>Currency</Label><div className="text-xs text-muted-foreground">All prices display in this currency</div></div><Input defaultValue="EUR" className="max-w-[100px]" disabled /></div>
-          <Separator />
-          <div className="flex items-center justify-between"><div><Label>BTW rate</Label><div className="text-xs text-muted-foreground">Dutch standard VAT</div></div><Input defaultValue="21%" className="max-w-[100px]" disabled /></div>
+        </CardContent>
+      </Card>
+      {/* BTW / VAT Rates per category */}
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">BTW-tarieven per categorie</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {[...SECTIONS, "default"].map((cat) => (
+            <div key={cat} className="flex items-center justify-between py-1">
+              <div>
+                <Label>{cat === "default" ? "Overig (standaard)" : cat}</Label>
+                <div className="text-xs text-muted-foreground">{cat === "default" ? "Wordt gebruikt als er geen categorie-tarief is" : `BTW voor ${cat}`}</div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number" step="0.5" min="0" max="100"
+                  value={vatRates?.[cat] ?? (cat === "default" ? 21 : 9)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setVatRates?.((prev: any) => {
+                      const updated = { ...prev, [cat]: val };
+                      localStorage.setItem("saakouk_vat_rates", JSON.stringify(updated));
+                      return updated;
+                    });
+                  }}
+                  className="max-w-[80px] text-right"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+          ))}
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+            <div className="font-medium mb-1">ℹ️ Per-product override</div>
+            <div>Je kunt per product een afwijkend BTW-tarief instellen in de Product editor. Dit overschrijft het categorie-tarief.</div>
+          </div>
         </CardContent>
       </Card>
       <Card className="rounded-2xl">
@@ -4420,6 +4456,12 @@ export default function SaakoukPOS() {
   const [features, setFeatures] = useState({
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
   });
+  const [vatRates, setVatRates] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem("saakouk_vat_rates");
+    return saved ? JSON.parse(saved) : {
+      "Signature Drinks": 9, "Specials": 9, "Cold Drinks": 9, "Hot Drinks": 9, "Sweets": 9, default: 21,
+    };
+  });
   const [passkitConfig, setPasskitConfig] = useState({
     programId: "24RMbRfRp5Y9h9ptYWnwFe",
     tierId: "",
@@ -4856,7 +4898,7 @@ export default function SaakoukPOS() {
             {active === "cashaudit" && <CashAuditView />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
-            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
+            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
           </div>
         </div>
       </main>
