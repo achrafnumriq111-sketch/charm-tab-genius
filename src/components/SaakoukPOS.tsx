@@ -4420,6 +4420,12 @@ export default function SaakoukPOS() {
   const [features, setFeatures] = useState({
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
   });
+  const [vatRates, setVatRates] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem("saakouk_vat_rates");
+    return saved ? JSON.parse(saved) : {
+      "Signature Drinks": 9, "Specials": 9, "Cold Drinks": 9, "Hot Drinks": 9, "Sweets": 9, default: 21,
+    };
+  });
   const [passkitConfig, setPasskitConfig] = useState({
     programId: "24RMbRfRp5Y9h9ptYWnwFe",
     tierId: "",
