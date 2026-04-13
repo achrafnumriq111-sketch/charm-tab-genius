@@ -1223,9 +1223,9 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                 // This sends the pulse to kick pin 2 of the cash drawer via the receipt printer
                 const escposCmd = new Uint8Array([0x1B, 0x70, 0x00, 0x19, 0xFA]);
                 try {
-                  // Try WebUSB for direct Epson connection
-                  if (navigator.usb) {
-                    navigator.usb.requestDevice({ filters: [{ vendorId: 0x04B8 }] }).then((device) => {
+                  const nav = navigator as any;
+                  if (nav.usb) {
+                    nav.usb.requestDevice({ filters: [{ vendorId: 0x04B8 }] }).then((device: any) => {
                       device.open().then(() => device.selectConfiguration(1)).then(() => device.claimInterface(0)).then(() => {
                         device.transferOut(1, escposCmd).then(() => { device.close(); });
                       });
