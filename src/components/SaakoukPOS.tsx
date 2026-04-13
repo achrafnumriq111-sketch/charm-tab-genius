@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
-import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, AIForecastView, DynamicStockView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
+import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, AIForecastView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -4878,6 +4878,7 @@ export default function SaakoukPOS() {
                   <TabsTrigger value="voorraad">Voorraad</TabsTrigger>
                   <TabsTrigger value="dynamic">Dynamic Stock</TabsTrigger>
                   <TabsTrigger value="intake">Intake</TabsTrigger>
+                  <TabsTrigger value="waste">Verspilling</TabsTrigger>
                 </TabsList>
                 <TabsContent value="voorraad">
                   <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />
@@ -4887,6 +4888,9 @@ export default function SaakoukPOS() {
                 </TabsContent>
                 <TabsContent value="intake">
                   <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />
+                </TabsContent>
+                <TabsContent value="waste">
+                  <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />
                 </TabsContent>
               </Tabs>
             )}
