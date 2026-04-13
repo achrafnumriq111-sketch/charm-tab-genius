@@ -297,33 +297,56 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     return true;
   });
   return (
-    <div className="w-[72px] border-r bg-white flex flex-col shrink-0">
-      <div className="py-3 px-2 border-b flex flex-col items-center gap-0.5">
-        <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-          {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+    <div className="w-[72px] flex flex-col shrink-0 relative z-20">
+      {/* Glass sidebar background */}
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border-r border-white/70 shadow-[4px_0_40px_rgba(162,178,226,0.10)]" />
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="py-3 px-2 border-b border-white/50 flex flex-col items-center gap-0.5">
+          <motion.div
+            whileHover={{ scale: 1.08, rotate: -4 }}
+            className="w-9 h-9 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffffff,#f1ecff_45%,#ddd6fe_72%,#fbcfe8_100%)] border border-white/80 flex items-center justify-center text-xs font-bold text-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_8px_24px_rgba(172,155,255,0.18)]"
+          >
+            {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+          </motion.div>
+          <span className="text-[8px] text-slate-500 truncate w-full text-center">{employeeName.split(" ")[0]}</span>
         </div>
-        <span className="text-[8px] text-muted-foreground truncate w-full text-center">{employeeName.split(" ")[0]}</span>
-      </div>
-      <ScrollArea className="flex-1 py-2 px-1.5">
-        <div className="space-y-1 flex flex-col items-center">
-          {sections.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button key={item.key} onClick={() => setActive(item.key)}
-                title={item.label}
-                className={clsx("w-12 h-12 flex flex-col items-center justify-center rounded-xl text-[10px] leading-tight transition-all gap-0.5",
-                  active === item.key ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent text-muted-foreground")}>
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
-              </button>
-            );
-          })}
+        <ScrollArea className="flex-1 py-2 px-1.5">
+          <div className="space-y-1 flex flex-col items-center">
+            {sections.map((item) => {
+              const Icon = item.icon;
+              const isActive = active === item.key;
+              return (
+                <motion.button
+                  key={item.key}
+                  onClick={() => setActive(item.key)}
+                  title={item.label}
+                  whileHover={{ scale: 1.06, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={clsx(
+                    "w-12 h-12 flex flex-col items-center justify-center rounded-2xl text-[10px] leading-tight transition-all gap-0.5",
+                    isActive
+                      ? "bg-[linear-gradient(135deg,rgba(196,181,253,0.6),rgba(255,192,230,0.5),rgba(191,219,254,0.5))] text-slate-800 font-medium shadow-[0_8px_30px_rgba(172,155,255,0.22)] border border-white/70"
+                      : "hover:bg-white/50 text-slate-500"
+                  )}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="truncate w-full text-center">{item.label.length > 6 ? item.label.slice(0, 5) + "." : item.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        <div className="p-1.5 border-t border-white/50 flex justify-center">
+          <motion.button
+            title="Log out"
+            onClick={onLogout}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            className="w-12 h-12 flex items-center justify-center rounded-2xl text-red-400 hover:bg-red-50/60 transition"
+          >
+            <LogOut className="h-5 w-5" />
+          </motion.button>
         </div>
-      </ScrollArea>
-      <div className="p-1.5 border-t flex justify-center">
-        <button title="Log out" onClick={onLogout} className="w-12 h-12 flex items-center justify-center rounded-xl text-destructive hover:bg-destructive/10 transition">
-          <LogOut className="h-5 w-5" />
-        </button>
       </div>
     </div>
   );
