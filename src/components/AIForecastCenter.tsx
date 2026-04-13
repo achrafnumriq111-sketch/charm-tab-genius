@@ -39,8 +39,8 @@ const RANGES = [
 type SegmentKey = typeof SEGMENTS[number]["key"];
 type RangeKey = typeof RANGES[number]["key"];
 
-// Mock weather data (in production would come from weather API)
-function getWeatherForecast() {
+// Fallback weather data in case API call fails
+function getFallbackWeather() {
   const days = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
   const today = new Date().getDay();
   return Array.from({ length: 7 }, (_, i) => {
@@ -54,6 +54,9 @@ function getWeatherForecast() {
       icon: sunny ? "☀️" : rand > 0.2 ? "⛅" : "🌧️",
       impact: sunny ? Math.round(8 + temp * 0.5) : Math.round(-5 - (1 - rand) * 10),
       label: sunny ? "Zonnig" : rand > 0.2 ? "Bewolkt" : "Regen",
+      rain: 0,
+      wind: 0,
+      isReal: false,
     };
   });
 }
