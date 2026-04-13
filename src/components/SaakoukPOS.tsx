@@ -4268,6 +4268,131 @@ function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: 
   );
 }
 
+// ─── SECTION PICKER SCREEN ──────────────────────────────────────────────────
+
+const sectionPickerItems = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true, color: "from-violet-400 to-indigo-400" },
+  { key: "pos", label: "Point of Sale", icon: ShoppingCart, adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
+  { key: "prepstation", label: "Prepstation", icon: ChefHat, adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
+  { key: "cashclose", label: "Kassa Afsluiting", icon: Lock, adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
+  { key: "activity", label: "Order History", icon: Activity, adminOnly: false, ownerOnly: true, color: "from-blue-400 to-cyan-400" },
+  { key: "reservations", label: "Reserveringen", icon: CalendarDays, adminOnly: false, ownerOnly: false, color: "from-fuchsia-400 to-purple-400" },
+  { key: "products", label: "Producten", icon: Package, adminOnly: false, ownerOnly: false, color: "from-lime-400 to-green-400" },
+  { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false, color: "from-sky-400 to-blue-400" },
+  { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false, color: "from-teal-400 to-emerald-400" },
+  { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true, color: "from-yellow-400 to-amber-400" },
+  { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true, color: "from-purple-400 to-violet-400" },
+  { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false, color: "from-indigo-400 to-blue-400" },
+  { key: "customers", label: "Klanten", icon: Users, adminOnly: false, ownerOnly: false, color: "from-rose-400 to-pink-400" },
+  { key: "giftcards", label: "Cadeaukaarten", icon: Gift, adminOnly: false, ownerOnly: false, color: "from-orange-400 to-red-400" },
+  { key: "sales", label: "Sales Reports", icon: Receipt, adminOnly: true, ownerOnly: true, color: "from-cyan-400 to-sky-400" },
+  { key: "accounting", label: "Boekhouding", icon: Calculator, adminOnly: true, ownerOnly: true, color: "from-green-400 to-emerald-400" },
+  { key: "cashaudit", label: "Cash Audit", icon: Shield, adminOnly: false, ownerOnly: true, color: "from-red-400 to-rose-400" },
+  { key: "logs", label: "Activiteiten Log", icon: FileText, adminOnly: false, ownerOnly: true, color: "from-slate-400 to-gray-400" },
+  { key: "employees", label: "Medewerkers", icon: UserCog, adminOnly: true, ownerOnly: false, color: "from-violet-400 to-fuchsia-400" },
+  { key: "settings", label: "Instellingen", icon: Settings, adminOnly: true, ownerOnly: false, color: "from-gray-400 to-slate-400" },
+];
+
+function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; onSelect: (key: string) => void; onLogout: () => void }) {
+  const isAdmin = employee.role === "owner" || employee.role === "manager";
+  const isOwner = employee.role === "owner";
+
+  const available = sectionPickerItems.filter((s) => {
+    if (s.ownerOnly && !isOwner) return false;
+    if (s.adminOnly && !isAdmin) return false;
+    return true;
+  });
+
+  return (
+    <div className="relative h-dvh overflow-hidden bg-[#f6f8ff] text-slate-900 select-none touch-manipulation">
+      {/* Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.55),transparent_70%)] blur-3xl" />
+        <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.45),transparent_70%)] blur-3xl" />
+        <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.55),transparent_70%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbfcff_0%,#f3f6ff_48%,#eef2ff_100%)]" />
+        <motion.div
+          animate={{ x: [0, 20, 0], y: [0, -10, 0], rotate: [8, 10, 8] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-[-8%] top-[18%] h-24 w-[58%] rounded-full bg-[linear-gradient(90deg,rgba(192,206,255,0.18),rgba(244,197,255,0.35),rgba(255,255,255,0.08))] blur-2xl"
+        />
+      </div>
+
+      <main className="relative z-10 flex h-full flex-col items-center px-6 py-8 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-[900px]"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <motion.div
+                whileHover={{ scale: 1.06, rotate: -4 }}
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/80 bg-[radial-gradient(circle_at_30%_30%,#ffffff,#f1ecff_45%,#ddd6fe_72%,#fbcfe8_100%)] text-sm font-semibold text-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_10px_30px_rgba(172,155,255,0.18)]"
+              >
+                {employee.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+              </motion.div>
+              <div>
+                <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-900">
+                  Hoi, {employee.name.split(" ")[0]}
+                </h1>
+                <p className="text-sm text-slate-500 capitalize">{employee.role} · Kies een sectie</p>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={onLogout}
+              className="flex items-center gap-2 rounded-full border border-white/70 bg-white/60 backdrop-blur-xl px-4 py-2.5 text-sm font-medium text-red-500 shadow-[0_10px_30px_rgba(162,178,226,0.12)] hover:bg-red-50/60 transition min-h-[44px]"
+            >
+              <LogOut className="h-4 w-4" />
+              Uitloggen
+            </motion.button>
+          </div>
+
+          {/* Section grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {available.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <motion.button
+                  key={item.key}
+                  initial={{ opacity: 0, y: 24, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: index * 0.04, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -6, scale: 1.03, rotateX: 3 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => onSelect(item.key)}
+                  className="group relative text-left touch-manipulation"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  {/* hover glow */}
+                  <div className={`absolute -inset-[2px] rounded-[24px] bg-gradient-to-br ${item.color} opacity-0 blur-md transition duration-500 group-hover:opacity-40`} />
+
+                  <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[22px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,249,255,0.88))] px-4 py-6 shadow-[0_18px_50px_rgba(163,177,219,0.14)] backdrop-blur-xl transition duration-500 group-hover:shadow-[0_26px_70px_rgba(170,148,255,0.20)] min-h-[120px]">
+                    {/* inner shine */}
+                    <div className="absolute inset-x-0 top-0 h-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0))]" />
+
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-[0_8px_24px_rgba(0,0,0,0.12)]`}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+
+                    <span className="text-[15px] font-semibold tracking-[-0.01em] text-slate-800 text-center leading-tight">
+                      {item.label}
+                    </span>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+      </main>
+    </div>
+  );
+}
+
 // ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
 
 function EmployeesView({ employees, setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
