@@ -4573,6 +4573,30 @@ export default function SaakoukPOS() {
       }
     }
 
+    // ─── Route items to prep stations ───
+    const stationGroups: Record<string, { name: string; qty: number; modifiers: any[]; notes?: string }[]> = {};
+    stamped.items.forEach((item: any) => {
+      const product = products.find((p: any) => p.id === item.productId);
+      const station = product?.prep_station;
+      if (!station) return;
+      if (!stationGroups[station]) stationGroups[station] = [];
+      stationGroups[station].push({ name: item.name, qty: item.qty, modifiers: item.modifiers || [], notes: item.notes });
+    });
+    const orderType = stamped.table ? `Tafel ${stamped.table}` : "Afhaal";
+    Object.entries(stationGroups).forEach(([station, items]) => {
+      const ticket: PrepTicket = {
+        id: `prep-${generateId()}`,
+        orderId: stamped.id,
+        station: station as PrepTicket["station"],
+        items,
+        status: "ordered",
+        createdAt: new Date(),
+        orderType,
+        paymentStatus: "Betaald",
+      };
+      setPrepTickets((prev) => [ticket, ...prev]);
+    });
+
     if (order.table) {
       setOpenTickets((prev) => { const next = { ...prev }; delete next[order.table]; return next; });
     } else {
