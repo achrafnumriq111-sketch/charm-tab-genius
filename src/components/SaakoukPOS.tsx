@@ -1791,18 +1791,56 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
 
   // Hourly chart component
   function HourlyChart() {
-    const activeHours = Object.entries(byHour).filter(([, v]) => v > 0);
+    const activeHours = Object.entries(byHour).filter(([, v]) => v.revenue > 0);
     if (activeHours.length === 0) return <div className="text-sm text-muted-foreground py-4">Geen data</div>;
     return (
       <div className="flex items-end gap-1 h-32">
         {Object.entries(byHour).filter(([h]) => Number(h) >= 10 && Number(h) <= 23).map(([h, v]) => (
           <div key={h} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full bg-primary/70 rounded-t" style={{ height: `${(v / peakHour) * 100}%`, minHeight: v > 0 ? "4px" : "0px" }} />
+            <div className="w-full bg-primary/70 rounded-t" style={{ height: `${(v.revenue / peakHour) * 100}%`, minHeight: v.revenue > 0 ? "4px" : "0px" }} />
             <span className="text-[9px] text-muted-foreground">{h}:00</span>
           </div>
         ))}
       </div>
     );
+  }
+
+  // Hourly heatmap data
+  const hourlyData = Object.entries(byHour)
+    .filter(([h]) => Number(h) >= 7 && Number(h) <= 22)
+    .map(([h, v]) => ({
+      hour: Number(h),
+      label: `${h.padStart(2, "0")}:00`,
+      revenue: v.revenue,
+      orders: v.orders,
+      avgTicket: v.orders > 0 ? v.revenue / v.orders : 0,
+    }));
+
+  const peakHourEntry = hourlyData.reduce((best, h) => h.revenue > best.revenue ? h : best, hourlyData[0] || { label: "-", revenue: 0, orders: 0, avgTicket: 0 });
+  const slowHourEntry = hourlyData.filter(h => h.orders > 0).reduce((worst, h) => h.revenue < worst.revenue ? h : worst, hourlyData.find(h => h.orders > 0) || { label: "-", revenue: 0, orders: 0, avgTicket: 0 });
+  const avgOrdersPerHour = hourlyData.length > 0 ? hourlyData.reduce((s, h) => s + h.orders, 0) / hourlyData.filter(h => h.orders > 0).length || 0 : 0;
+
+  // Daypart analysis
+  const dayparts = [
+    { name: "Ochtend", range: [7, 11] as [number, number] },
+    { name: "Lunch", range: [11, 14] as [number, number] },
+    { name: "Middag", range: [14, 17] as [number, number] },
+    { name: "Avond", range: [17, 22] as [number, number] },
+  ];
+  const daypartData = dayparts.map(dp => {
+    const hours = hourlyData.filter(h => h.hour >= dp.range[0] && h.hour < dp.range[1]);
+    return { name: dp.name, revenue: hours.reduce((s, h) => s + h.revenue, 0), orders: hours.reduce((s, h) => s + h.orders, 0) };
+  });
+  const bestDaypart = daypartData.reduce((best, dp) => dp.revenue > best.revenue ? dp : best, daypartData[0]);
+
+  function getHeatColor(revenue: number): string {
+    if (revenue <= 0) return "bg-muted/30";
+    const ratio = revenue / peakHour;
+    if (ratio < 0.2) return "bg-muted";
+    if (ratio < 0.4) return "bg-orange-100 dark:bg-orange-950/30";
+    if (ratio < 0.6) return "bg-orange-200 dark:bg-orange-900/40";
+    if (ratio < 0.8) return "bg-orange-300 dark:bg-orange-800/50";
+    return "bg-red-400 dark:bg-red-700/60";
   }
 
   const dashTabs = [
