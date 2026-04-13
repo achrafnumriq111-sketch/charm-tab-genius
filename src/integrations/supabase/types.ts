@@ -76,17 +76,20 @@ export type Database = {
       }
       inventory_items: {
         Row: {
+          ai_forecast_enabled: boolean
           avg_monthly_usage: number
           category: Database["public"]["Enums"]["inventory_category"]
           cost_per_unit: number
           created_at: string
           current_stock: number
           id: string
+          is_dynamic: boolean
           item_name: string
           last_count_date: string | null
           last_delivery_date: string | null
           location: string | null
           minimum_stock: number
+          recommended_threshold: number
           reorder_level: number
           sku: string | null
           supplier: string | null
@@ -95,17 +98,20 @@ export type Database = {
           waste_percentage: number
         }
         Insert: {
+          ai_forecast_enabled?: boolean
           avg_monthly_usage?: number
           category?: Database["public"]["Enums"]["inventory_category"]
           cost_per_unit?: number
           created_at?: string
           current_stock?: number
           id?: string
+          is_dynamic?: boolean
           item_name: string
           last_count_date?: string | null
           last_delivery_date?: string | null
           location?: string | null
           minimum_stock?: number
+          recommended_threshold?: number
           reorder_level?: number
           sku?: string | null
           supplier?: string | null
@@ -114,17 +120,20 @@ export type Database = {
           waste_percentage?: number
         }
         Update: {
+          ai_forecast_enabled?: boolean
           avg_monthly_usage?: number
           category?: Database["public"]["Enums"]["inventory_category"]
           cost_per_unit?: number
           created_at?: string
           current_stock?: number
           id?: string
+          is_dynamic?: boolean
           item_name?: string
           last_count_date?: string | null
           last_delivery_date?: string | null
           location?: string | null
           minimum_stock?: number
+          recommended_threshold?: number
           reorder_level?: number
           sku?: string | null
           supplier?: string | null
