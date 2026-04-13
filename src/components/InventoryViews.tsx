@@ -1307,3 +1307,372 @@ export async function restoreStockForRefund(orderItems: any[], employeeName?: st
     console.error("Stock restore error:", err);
   }
 }
+
+// ─── DYNAMIC STOCK VIEW ─────────────────────────────────────────────────────
+
+export function DynamicStockView({ onToast, addLog, currentRole, employeeName }: any) {
+  const [items, setItems] = useState<any[]>([]);
+  const [allInventory, setAllInventory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [customRefill, setCustomRefill] = useState<Record<string, string>>({});
+  const [showCustom, setShowCustom] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [aiForecast, setAiForecast] = useState<Record<string, any>>({});
+  const [form, setForm] = useState({
+    item_name: "", category: "ingredient", unit_type: "liter",
+    current_stock: "0", minimum_stock: "0", recommended_threshold: "0",
+    cost_per_unit: "0", supplier: "", ai_forecast_enabled: true,
+  });
+
+  const isOwner = currentRole === "owner";
+
+  async function loadItems() {
+    setLoading(true);
+    const [dynRes, allRes] = await Promise.all([
+      supabase.from("inventory_items").select("*").eq("is_dynamic", true).order("item_name"),
+      supabase.from("inventory_items").select("id, item_name, unit_type").order("item_name"),
+    ]);
+    setItems(dynRes.data || []);
+    setAllInventory(allRes.data || []);
+    setLoading(false);
+  }
+
+  useEffect(() => { loadItems(); }, []);
+
+  async function createDynamicItem() {
+    if (!form.item_name.trim()) return;
+    const { error } = await supabase.from("inventory_items").insert({
+      item_name: form.item_name,
+      category: form.category as any,
+      unit_type: form.unit_type,
+      current_stock: parseFloat(form.current_stock) || 0,
+      minimum_stock: parseFloat(form.minimum_stock) || 0,
+      recommended_threshold: parseFloat(form.recommended_threshold) || 0,
+      cost_per_unit: parseFloat(form.cost_per_unit) || 0,
+      supplier: form.supplier || null,
+      ai_forecast_enabled: form.ai_forecast_enabled,
+      is_dynamic: true,
+    });
+    if (error) { onToast?.("Fout bij aanmaken: " + error.message); return; }
+    onToast?.(`${form.item_name} aangemaakt als dynamic stock`);
+    addLog?.("dynamic_stock_created", `Dynamic stock item aangemaakt: ${form.item_name}`);
+    setShowAdd(false);
+    setForm({ item_name: "", category: "ingredient", unit_type: "liter", current_stock: "0", minimum_stock: "0", recommended_threshold: "0", cost_per_unit: "0", supplier: "", ai_forecast_enabled: true });
+    loadItems();
+  }
+
+  async function quickRefill(item: any, amount: number) {
+    const newStock = (item.current_stock || 0) + amount;
+    await supabase.from("inventory_items").update({ current_stock: newStock }).eq("id", item.id);
+    await supabase.from("stock_movements").insert({
+      inventory_item_id: item.id,
+      movement_type: "stock_intake" as any,
+      quantity: amount,
+      source: "dynamic_refill",
+      employee_name: employeeName || null,
+      notes: `Quick refill +${amount} ${item.unit_type}`,
+    });
+    addLog?.("dynamic_refill", `${item.item_name} bijgevuld: +${amount} ${item.unit_type}`);
+    onToast?.(`${item.item_name} +${amount} ${item.unit_type}`);
+    loadItems();
+  }
+
+  async function fetchAIForecast(item: any) {
+    setAiLoading(item.id);
+    try {
+      const { data: movements } = await supabase
+        .from("stock_movements")
+        .select("*")
+        .eq("inventory_item_id", item.id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      const { data: intakes } = await supabase
+        .from("stock_intakes")
+        .select("*")
+        .eq("inventory_item_id", item.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      const response = await supabase.functions.invoke("inventory-forecast", {
+        body: { type: "dynamic_item", itemId: item.id, itemName: item.item_name, movements, intakes, currentStock: item.current_stock, unitType: item.unit_type },
+      });
+
+      if (response.data?.data) {
+        setAiForecast(prev => ({ ...prev, [item.id]: response.data.data }));
+      }
+    } catch (e) {
+      console.error("AI forecast error:", e);
+      onToast?.("AI forecast fout");
+    }
+    setAiLoading(null);
+  }
+
+  async function toggleDynamic(item: any) {
+    await supabase.from("inventory_items").update({ is_dynamic: false }).eq("id", item.id);
+    addLog?.("dynamic_stock_removed", `${item.item_name} verwijderd als dynamic stock`);
+    onToast?.(`${item.item_name} is niet meer dynamic`);
+    loadItems();
+  }
+
+  // Compute stats
+  const criticalItems = items.filter(i => i.current_stock <= i.minimum_stock && i.minimum_stock > 0);
+  const lowItems = items.filter(i => i.current_stock > i.minimum_stock && i.current_stock <= i.recommended_threshold && i.recommended_threshold > 0);
+
+  if (loading) return <div className="py-20 text-center text-muted-foreground">Laden...</div>;
+
+  return (
+    <div className="space-y-4">
+      {/* KPI widgets */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="rounded-2xl">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><RefreshCw className="h-3 w-3" /> Actieve items</div>
+            <div className="text-2xl font-bold">{items.length}</div>
+          </CardContent>
+        </Card>
+        <Card className={clsx("rounded-2xl", criticalItems.length > 0 && "border-red-300")}>
+          <CardContent className="p-4">
+            <div className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Kritiek</div>
+            <div className="text-2xl font-bold text-red-600">{criticalItems.length}</div>
+          </CardContent>
+        </Card>
+        <Card className={clsx("rounded-2xl", lowItems.length > 0 && "border-amber-300")}>
+          <CardContent className="p-4">
+            <div className="text-xs text-amber-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Lage voorraad</div>
+            <div className="text-2xl font-bold text-amber-600">{lowItems.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><Brain className="h-3 w-3" /> AI Forecast</div>
+            <div className="text-2xl font-bold">{items.filter(i => i.ai_forecast_enabled).length}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Alerts */}
+      {criticalItems.length > 0 && (
+        <Card className="rounded-2xl border-red-300 bg-red-50">
+          <CardContent className="p-4">
+            <div className="font-semibold text-red-800 text-sm mb-2 flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" /> Kritieke voorraad!</div>
+            <div className="flex flex-wrap gap-2">
+              {criticalItems.map(i => (
+                <Badge key={i.id} variant="destructive" className="text-xs">{i.item_name}: {i.current_stock} {i.unit_type}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Add button */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-muted-foreground">{items.length} dynamic stock items</div>
+        <Button onClick={() => setShowAdd(true)} className="rounded-xl">
+          <Plus className="h-4 w-4 mr-1" /> Dynamic Stock Item
+        </Button>
+      </div>
+
+      {/* Creation modal */}
+      {showAdd && (
+        <Card className="rounded-2xl border-2 border-primary/20">
+          <CardContent className="p-4 space-y-3">
+            <div className="font-semibold text-sm">Nieuw Dynamic Stock Item</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div><Label className="text-xs">Naam *</Label><Input value={form.item_name} onChange={e => setForm(p => ({ ...p, item_name: e.target.value }))} placeholder="bijv. Volle Melk" /></div>
+              <div><Label className="text-xs">Categorie</Label>
+                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                  {["ingredient", "packaging", "pastry", "retail", "cleaning", "misc"].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div><Label className="text-xs">Eenheid</Label>
+                <select value={form.unit_type} onChange={e => setForm(p => ({ ...p, unit_type: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                  {["liter", "ml", "pieces", "gram", "kg", "units"].map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+              <div><Label className="text-xs">Huidige voorraad</Label><Input type="number" step="0.1" value={form.current_stock} onChange={e => setForm(p => ({ ...p, current_stock: e.target.value }))} /></div>
+              <div><Label className="text-xs">Minimum threshold</Label><Input type="number" step="0.1" value={form.minimum_stock} onChange={e => setForm(p => ({ ...p, minimum_stock: e.target.value }))} /></div>
+              <div><Label className="text-xs">Aanbevolen threshold</Label><Input type="number" step="0.1" value={form.recommended_threshold} onChange={e => setForm(p => ({ ...p, recommended_threshold: e.target.value }))} /></div>
+              {isOwner && <div><Label className="text-xs">Kostprijs / eenheid (€)</Label><Input type="number" step="0.001" value={form.cost_per_unit} onChange={e => setForm(p => ({ ...p, cost_per_unit: e.target.value }))} /></div>}
+              <div><Label className="text-xs">Leverancier</Label><Input value={form.supplier} onChange={e => setForm(p => ({ ...p, supplier: e.target.value }))} /></div>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.ai_forecast_enabled} onChange={e => setForm(p => ({ ...p, ai_forecast_enabled: e.target.checked }))} className="rounded" />
+                <Brain className="h-4 w-4 text-muted-foreground" /> AI Forecast inschakelen
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={createDynamicItem} disabled={!form.item_name.trim()}><Check className="h-4 w-4 mr-1" /> Aanmaken</Button>
+              <Button variant="outline" onClick={() => setShowAdd(false)}>Annuleren</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dynamic stock cards */}
+      {items.length === 0 && !showAdd && (
+        <Card className="rounded-2xl">
+          <CardContent className="p-12 text-center text-muted-foreground">
+            <RefreshCw className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <div className="font-medium mb-1">Geen dynamic stock items</div>
+            <div className="text-sm">Voeg rolling perishable items toe zoals melk, croissants, of sappen.</div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {items.map(item => {
+          const isCritical = item.current_stock <= item.minimum_stock && item.minimum_stock > 0;
+          const isLow = !isCritical && item.current_stock <= item.recommended_threshold && item.recommended_threshold > 0;
+          const forecast = aiForecast[item.id];
+          const daysLeft = item.avg_monthly_usage > 0 ? Math.round((item.current_stock / (item.avg_monthly_usage / 30)) * 10) / 10 : null;
+
+          return (
+            <Card key={item.id} className={clsx(
+              "rounded-2xl transition-all",
+              isCritical && "border-red-400 bg-red-50/50 shadow-red-100 shadow-lg animate-pulse",
+              isLow && "border-amber-300 bg-amber-50/30",
+            )}>
+              <CardContent className="p-4 space-y-3">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-sm flex items-center gap-2">
+                      {item.item_name}
+                      {isCritical && <Badge variant="destructive" className="text-[10px]">KRITIEK</Badge>}
+                      {isLow && <Badge className="text-[10px] bg-amber-100 text-amber-800 border-amber-300">LAAG</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] capitalize">{item.category}</Badge>
+                      {item.supplier && <span>· {item.supplier}</span>}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={clsx("text-2xl font-black", isCritical && "text-red-600", isLow && "text-amber-600")}>
+                      {item.current_stock}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">{item.unit_type}</div>
+                  </div>
+                </div>
+
+                {/* Stock bar */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>Min: {item.minimum_stock}</span>
+                    <span>Aanbevolen: {item.recommended_threshold || "—"}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={clsx("h-full rounded-full transition-all", isCritical ? "bg-red-500" : isLow ? "bg-amber-400" : "bg-green-500")}
+                      style={{ width: `${Math.min(100, item.recommended_threshold > 0 ? (item.current_stock / item.recommended_threshold) * 100 : item.minimum_stock > 0 ? (item.current_stock / (item.minimum_stock * 3)) * 100 : 50)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Quick stats */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-muted/50 rounded-lg p-1.5">
+                    <div className="text-[10px] text-muted-foreground">Gem. /dag</div>
+                    <div className="text-xs font-bold">{item.avg_monthly_usage > 0 ? (item.avg_monthly_usage / 30).toFixed(1) : "—"}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-1.5">
+                    <div className="text-[10px] text-muted-foreground">Dagen over</div>
+                    <div className={clsx("text-xs font-bold", daysLeft !== null && daysLeft < 2 && "text-red-600")}>{daysLeft !== null ? daysLeft : "—"}</div>
+                  </div>
+                  {isOwner && (
+                    <div className="bg-muted/50 rounded-lg p-1.5">
+                      <div className="text-[10px] text-muted-foreground">Waarde</div>
+                      <div className="text-xs font-bold">{euro(item.current_stock * item.cost_per_unit)}</div>
+                    </div>
+                  )}
+                  {!isOwner && (
+                    <div className="bg-muted/50 rounded-lg p-1.5">
+                      <div className="text-[10px] text-muted-foreground">Verspilling</div>
+                      <div className="text-xs font-bold">{item.waste_percentage}%</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick refill buttons */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Quick Refill</div>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 5, 10].map(n => (
+                      <Button key={n} variant="outline" size="sm" className="h-8 px-3 text-xs rounded-xl font-bold hover:bg-green-50 hover:border-green-300 hover:text-green-700"
+                        onClick={() => quickRefill(item, n)}>
+                        +{n}
+                      </Button>
+                    ))}
+                    {showCustom === item.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number" step="0.1" min="0.1"
+                          value={customRefill[item.id] || ""}
+                          onChange={e => setCustomRefill(p => ({ ...p, [item.id]: e.target.value }))}
+                          placeholder="qty"
+                          className="h-8 w-20 text-xs"
+                          autoFocus
+                        />
+                        <Button size="sm" className="h-8 px-2 text-xs rounded-xl"
+                          onClick={() => {
+                            const val = parseFloat(customRefill[item.id] || "0");
+                            if (val > 0) quickRefill(item, val);
+                            setShowCustom(null);
+                            setCustomRefill(p => ({ ...p, [item.id]: "" }));
+                          }}>
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setShowCustom(null)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-xl"
+                        onClick={() => setShowCustom(item.id)}>
+                        Anders
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* AI Forecast */}
+                {item.ai_forecast_enabled && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                        <Brain className="h-3 w-3" /> AI Forecast
+                      </div>
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => fetchAIForecast(item)} disabled={aiLoading === item.id}>
+                        {aiLoading === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        {aiLoading === item.id ? " Analyseren..." : " Analyseer"}
+                      </Button>
+                    </div>
+                    {forecast && (
+                      <div className="bg-primary/5 rounded-xl p-3 text-xs space-y-1.5 border border-primary/10">
+                        {forecast.recommendation && <div className="font-medium text-foreground">{forecast.recommendation}</div>}
+                        {forecast.predicted_usage && <div className="text-muted-foreground">Verwacht gebruik morgen: <span className="font-bold text-foreground">{forecast.predicted_usage} {item.unit_type}</span></div>}
+                        {forecast.suggested_stock && <div className="text-muted-foreground">Aanbevolen voorraad: <span className="font-bold text-foreground">{forecast.suggested_stock} {item.unit_type}</span></div>}
+                        {forecast.trend && <div className="text-muted-foreground">Trend: {forecast.trend}</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                  {(isOwner || currentRole === "manager") && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive" onClick={() => toggleDynamic(item)}>
+                      <X className="h-3 w-3 mr-1" /> Verwijder dynamic
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
