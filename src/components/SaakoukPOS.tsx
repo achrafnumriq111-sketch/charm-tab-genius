@@ -1650,10 +1650,14 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
   const cAvgTicket = compareFiltered.length > 0 ? cRevenue / compareFiltered.length : 0;
 
   // By hour for chart
-  const byHour: Record<number, number> = {};
-  for (let h = 0; h <= 23; h++) byHour[h] = 0;
-  filtered.forEach((o: any) => { byHour[o.date.getHours()] += o.total; });
-  const peakHour = Math.max(...Object.values(byHour), 1);
+  const byHour: Record<number, { revenue: number; orders: number }> = {};
+  for (let h = 0; h <= 23; h++) byHour[h] = { revenue: 0, orders: 0 };
+  filtered.forEach((o: any) => {
+    const h = o.date.getHours();
+    byHour[h].revenue += o.total;
+    byHour[h].orders += 1;
+  });
+  const peakHour = Math.max(...Object.values(byHour).map(v => v.revenue), 1);
 
   // Top products and categories
   const topProducts: Record<string, { name: string; qty: number; revenue: number }> = {};
