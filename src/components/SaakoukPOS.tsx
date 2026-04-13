@@ -275,7 +275,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
-    { key: "intake", label: "Intake", icon: Zap, adminOnly: true, ownerOnly: false },
+    
     { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
     { key: "aiforecast", label: "AI", icon: Sparkles, adminOnly: false, ownerOnly: true },
@@ -4706,7 +4706,7 @@ export default function SaakoukPOS() {
     reservations: "Reservations",
     products: "Products",
     inventory: "Voorraad Management",
-    intake: "Stock Intake",
+    intake: "Voorraad Management",
     stockcount: "Maandelijkse Telling",
     costing: "Costing & Marges",
     aiforecast: "AI Forecast",
@@ -4830,8 +4830,20 @@ export default function SaakoukPOS() {
             {active === "activity" && <ActivityView orders={orders} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
-            {active === "inventory" && <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />}
-            {active === "intake" && <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
+            {(active === "inventory" || active === "intake") && (
+              <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="voorraad">Voorraad</TabsTrigger>
+                  <TabsTrigger value="intake">Intake</TabsTrigger>
+                </TabsList>
+                <TabsContent value="voorraad">
+                  <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />
+                </TabsContent>
+                <TabsContent value="intake">
+                  <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />
+                </TabsContent>
+              </Tabs>
+            )}
             {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
             {active === "costing" && <CostingView products={products} orders={orders} onToast={setToast} />}
             {active === "aiforecast" && <AIForecastView onToast={setToast} />}
