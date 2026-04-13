@@ -3428,7 +3428,7 @@ function AccountingView({ orders }: any) {
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
-function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }: any) {
+function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, vatRates, setVatRates }: any) {
   return (
     <div className="space-y-4 max-w-2xl">
       {/* PassKit Configuration */}
@@ -3468,8 +3468,40 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig }
           <div className="flex items-center justify-between"><div><Label>Business name</Label><div className="text-xs text-muted-foreground">Shown on receipts</div></div><Input defaultValue="Saakouk" className="max-w-[200px]" /></div>
           <Separator />
           <div className="flex items-center justify-between"><div><Label>Currency</Label><div className="text-xs text-muted-foreground">All prices display in this currency</div></div><Input defaultValue="EUR" className="max-w-[100px]" disabled /></div>
-          <Separator />
-          <div className="flex items-center justify-between"><div><Label>BTW rate</Label><div className="text-xs text-muted-foreground">Dutch standard VAT</div></div><Input defaultValue="21%" className="max-w-[100px]" disabled /></div>
+        </CardContent>
+      </Card>
+      {/* BTW / VAT Rates per category */}
+      <Card className="rounded-2xl">
+        <CardHeader><CardTitle className="text-sm">BTW-tarieven per categorie</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {[...SECTIONS, "default"].map((cat) => (
+            <div key={cat} className="flex items-center justify-between py-1">
+              <div>
+                <Label>{cat === "default" ? "Overig (standaard)" : cat}</Label>
+                <div className="text-xs text-muted-foreground">{cat === "default" ? "Wordt gebruikt als er geen categorie-tarief is" : `BTW voor ${cat}`}</div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number" step="0.5" min="0" max="100"
+                  value={vatRates?.[cat] ?? (cat === "default" ? 21 : 9)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setVatRates?.((prev: any) => {
+                      const updated = { ...prev, [cat]: val };
+                      localStorage.setItem("saakouk_vat_rates", JSON.stringify(updated));
+                      return updated;
+                    });
+                  }}
+                  className="max-w-[80px] text-right"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+          ))}
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+            <div className="font-medium mb-1">ℹ️ Per-product override</div>
+            <div>Je kunt per product een afwijkend BTW-tarief instellen in de Product editor. Dit overschrijft het categorie-tarief.</div>
+          </div>
         </CardContent>
       </Card>
       <Card className="rounded-2xl">
@@ -4862,7 +4894,7 @@ export default function SaakoukPOS() {
             {active === "cashaudit" && <CashAuditView />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
-            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} />}
+            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
           </div>
         </div>
       </main>
