@@ -74,6 +74,90 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_items: {
+        Row: {
+          avg_monthly_usage: number
+          category: Database["public"]["Enums"]["inventory_category"]
+          cost_per_unit: number
+          created_at: string
+          current_stock: number
+          id: string
+          item_name: string
+          last_count_date: string | null
+          last_delivery_date: string | null
+          location: string | null
+          minimum_stock: number
+          reorder_level: number
+          sku: string | null
+          supplier: string | null
+          unit_type: string
+          updated_at: string
+          waste_percentage: number
+        }
+        Insert: {
+          avg_monthly_usage?: number
+          category?: Database["public"]["Enums"]["inventory_category"]
+          cost_per_unit?: number
+          created_at?: string
+          current_stock?: number
+          id?: string
+          item_name: string
+          last_count_date?: string | null
+          last_delivery_date?: string | null
+          location?: string | null
+          minimum_stock?: number
+          reorder_level?: number
+          sku?: string | null
+          supplier?: string | null
+          unit_type?: string
+          updated_at?: string
+          waste_percentage?: number
+        }
+        Update: {
+          avg_monthly_usage?: number
+          category?: Database["public"]["Enums"]["inventory_category"]
+          cost_per_unit?: number
+          created_at?: string
+          current_stock?: number
+          id?: string
+          item_name?: string
+          last_count_date?: string | null
+          last_delivery_date?: string | null
+          location?: string | null
+          minimum_stock?: number
+          reorder_level?: number
+          sku?: string | null
+          supplier?: string | null
+          unit_type?: string
+          updated_at?: string
+          waste_percentage?: number
+        }
+        Relationships: []
+      }
+      margin_targets: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          target_margin_pct: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          target_margin_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          target_margin_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pos_transactions: {
         Row: {
           created_at: string
@@ -173,6 +257,53 @@ export type Database = {
         }
         Relationships: []
       }
+      product_recipes: {
+        Row: {
+          created_at: string
+          id: string
+          inventory_item_id: string
+          is_optional: boolean
+          product_id: string
+          product_name: string
+          quantity: number
+          unit: string
+          updated_at: string
+          waste_factor_pct: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          is_optional?: boolean
+          product_id: string
+          product_name: string
+          quantity?: number
+          unit?: string
+          updated_at?: string
+          waste_factor_pct?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          is_optional?: boolean
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          unit?: string
+          updated_at?: string
+          waste_factor_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recipes_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_orders: {
         Row: {
           created_at: string
@@ -209,6 +340,153 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_counts: {
+        Row: {
+          adjustment_reason: string | null
+          count_session_id: string
+          counted_by: string | null
+          created_at: string
+          difference: number
+          difference_pct: number
+          id: string
+          inventory_item_id: string
+          physical_count: number
+          system_stock: number
+        }
+        Insert: {
+          adjustment_reason?: string | null
+          count_session_id: string
+          counted_by?: string | null
+          created_at?: string
+          difference?: number
+          difference_pct?: number
+          id?: string
+          inventory_item_id: string
+          physical_count?: number
+          system_stock?: number
+        }
+        Update: {
+          adjustment_reason?: string | null
+          count_session_id?: string
+          counted_by?: string | null
+          created_at?: string
+          difference?: number
+          difference_pct?: number
+          id?: string
+          inventory_item_id?: string
+          physical_count?: number
+          system_stock?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_intakes: {
+        Row: {
+          created_at: string
+          delivery_date: string
+          employee_name: string | null
+          id: string
+          inventory_item_id: string
+          invoice_reference: string | null
+          location: string | null
+          purchase_price: number
+          quantity: number
+          supplier: string | null
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_date?: string
+          employee_name?: string | null
+          id?: string
+          inventory_item_id: string
+          invoice_reference?: string | null
+          location?: string | null
+          purchase_price?: number
+          quantity?: number
+          supplier?: string | null
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          delivery_date?: string
+          employee_name?: string | null
+          id?: string
+          inventory_item_id?: string
+          invoice_reference?: string | null
+          location?: string | null
+          purchase_price?: number
+          quantity?: number
+          supplier?: string | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_intakes_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          employee_id: string | null
+          employee_name: string | null
+          id: string
+          inventory_item_id: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes: string | null
+          order_id: string | null
+          product_sold: string | null
+          quantity: number
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          inventory_item_id: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          order_id?: string | null
+          product_sold?: string | null
+          quantity?: number
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          inventory_item_id?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          order_id?: string | null
+          product_sold?: string | null
+          quantity?: number
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -217,7 +495,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      inventory_category:
+        | "ingredient"
+        | "packaging"
+        | "pastry"
+        | "retail"
+        | "cleaning"
+        | "misc"
+      movement_type:
+        | "sale_deduction"
+        | "stock_intake"
+        | "manual_correction"
+        | "waste"
+        | "count_adjustment"
+        | "refund_restore"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -344,6 +635,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      inventory_category: [
+        "ingredient",
+        "packaging",
+        "pastry",
+        "retail",
+        "cleaning",
+        "misc",
+      ],
+      movement_type: [
+        "sale_deduction",
+        "stock_intake",
+        "manual_correction",
+        "waste",
+        "count_adjustment",
+        "refund_restore",
+      ],
+    },
   },
 } as const
