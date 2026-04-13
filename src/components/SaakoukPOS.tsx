@@ -4431,6 +4431,8 @@ export default function SaakoukPOS() {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [prepTickets, setPrepTickets] = useState<PrepTicket[]>([]);
+  const [lowStockItems, setLowStockItems] = useState<any[]>([]);
+  const [showLowStockPanel, setShowLowStockPanel] = useState(false);
   const [showCashClosing, setShowCashClosing] = useState(false);
 
   const addLog = useCallback((action: string, details: string) => {
@@ -4445,6 +4447,20 @@ export default function SaakoukPOS() {
       timestamp: new Date(),
     }, ...prev]);
   }, [loggedInEmployee]);
+
+  // Poll low-stock items every 30s
+  useEffect(() => {
+    async function checkLowStock() {
+      const { data } = await supabase.from("inventory_items").select("id, item_name, current_stock, minimum_stock, unit_type, category");
+      if (data) {
+        const low = data.filter((i: any) => i.current_stock <= i.minimum_stock && i.minimum_stock > 0);
+        setLowStockItems(low);
+      }
+    }
+    checkLowStock();
+    const interval = setInterval(checkLowStock, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Load saved transactions from database
   useEffect(() => {
