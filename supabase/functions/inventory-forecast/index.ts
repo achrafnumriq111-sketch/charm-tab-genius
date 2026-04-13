@@ -17,7 +17,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch all relevant data
     const [inventoryRes, movementsRes, intakesRes, countsRes, transactionsRes] = await Promise.all([
       supabase.from("inventory_items").select("*"),
       supabase.from("stock_movements").select("*").order("created_at", { ascending: false }).limit(1000),
@@ -32,19 +31,17 @@ serve(async (req) => {
     const counts = countsRes.data || [];
     const transactions = transactionsRes.data || [];
 
-    const { type } = await req.json().catch(() => ({ type: "forecast" }));
+    const body = await req.json().catch(() => ({}));
+    const { type = "forecast", range = 7 } = body;
 
-    const systemPrompt = `Je bent een AI-assistent voor voorraad- en kostprijsbeheer van een premium matcha café (SAAKOUK).
-Je analyseert verkoopdata, voorraaddata, leveringen, tellingen en bewegingen.
+    const systemPrompt = `Je bent een AI-assistent voor voorraad-, omzet- en operationeel beheer van een premium matcha café (SAAKOUK).
+Je analyseert verkoopdata, voorraaddata, leveringen, tellingen, bewegingen en weersinvloeden.
 Je geeft antwoorden in het Nederlands, kort en zakelijk.
 Gebruik euro-notatie (€). Geef concrete acties en cijfers.
-Focus op: voorspellingen, besteladvies, verspilling, marges, en seizoenspatronen.`;
+Focus op: voorspellingen, besteladvies, verspilling, marges, seizoenspatronen, personeel en weer-impact.
+Forecast range: ${range} dagen.`;
 
-    let userPrompt = "";
-
-    if (type === "forecast") {
-      userPrompt = `Analyseer de volgende voorraaddata en geef een forecast rapport:
-
+    const dataContext = `
 INVENTARIS (${inventory.length} items):
 ${inventory.map(i => `- ${i.item_name}: ${i.current_stock} ${i.unit_type}, min: ${i.minimum_stock}, kost: €${i.cost_per_unit}/${i.unit_type}, gem. gebruik: ${i.avg_monthly_usage}/${i.unit_type}/maand`).join("\n")}
 
@@ -54,56 +51,97 @@ ${movements.slice(0, 50).map(m => `- ${m.movement_type}: ${m.quantity} (${m.prod
 LEVERINGEN (${intakes.length}):
 ${intakes.slice(0, 20).map(i => `- ${i.quantity} ${i.unit} @ €${i.purchase_price} van ${i.supplier || "onbekend"} op ${i.delivery_date}`).join("\n")}
 
-TELLINGEN (${counts.length}):
-${counts.slice(0, 20).map(c => `- Systeem: ${c.system_stock}, Geteld: ${c.physical_count}, Verschil: ${c.difference} (${c.difference_pct}%)`).join("\n")}
-
 TRANSACTIES (laatste ${transactions.length}):
 - Totaal omzet: €${transactions.reduce((s, t) => s + (t.total || 0), 0).toFixed(2)}
 - Gem. per dag: €${(transactions.reduce((s, t) => s + (t.total || 0), 0) / Math.max(1, new Set(transactions.map(t => t.created_at?.split("T")[0])).size)).toFixed(2)}
+- Dagen met data: ${new Set(transactions.map(t => t.created_at?.split("T")[0])).size}`;
 
-Geef exact dit JSON format terug:
+    let userPrompt = "";
+
+    if (type === "revenue") {
+      userPrompt = `${dataContext}
+
+Geef een omzetforecast voor de komende ${range} dagen. Analyseer weekdagpatronen, trends en seizoensinvloeden.
+
+Geef JSON terug:
+{
+  "summary": "executive summary in 2-3 zinnen met concrete cijfers",
+  "forecast_total": number,
+  "forecast_low": number,
+  "forecast_high": number,
+  "trend_pct": number,
+  "peak_day": "dag",
+  "recommendations": ["actie 1", "actie 2", "actie 3"],
+  "daily_forecast": [{"day": "Ma", "forecast": number, "confidence": number}]
+}`;
+    } else if (type === "product") {
+      userPrompt = `${dataContext}
+
+Geef een productforecast voor de komende ${range} dagen. Welke producten worden het meest verkocht?
+
+Geef JSON terug:
 {
   "summary": "korte samenvatting",
-  "predictions": [{"item": "naam", "days_left": number, "monthly_forecast": number, "reorder_date": "yyyy-mm-dd", "suggested_quantity": number, "confidence": "high|medium|low"}],
+  "product_forecasts": [{"product": "naam", "forecast_7d": number, "forecast_14d": number, "confidence": number, "weather_sensitive": boolean}],
+  "recommendations": ["advies 1", "advies 2"]
+}`;
+    } else if (type === "stock" || type === "forecast") {
+      userPrompt = `${dataContext}
+
+TELLINGEN (${counts.length}):
+${counts.slice(0, 20).map(c => `- Systeem: ${c.system_stock}, Geteld: ${c.physical_count}, Verschil: ${c.difference} (${c.difference_pct}%)`).join("\n")}
+
+Geef een voorraadforecast voor de komende ${range} dagen.
+
+Geef JSON terug:
+{
+  "summary": "korte samenvatting",
+  "predictions": [{"item": "naam", "days_left": number, "monthly_forecast": number, "reorder_date": "yyyy-mm-dd", "suggested_quantity": number, "confidence": "high|medium|low", "predicted_usage": number, "unit": "eenheid"}],
   "alerts": [{"type": "low_stock|waste|price_change|shrinkage", "message": "beschrijving", "severity": "high|medium|low"}],
   "recommendations": ["actie 1", "actie 2"],
   "trends": {"busiest_day": "dag", "avg_daily_sales": number, "growth_pct": number}
 }`;
-    } else if (type === "pricing") {
-      userPrompt = `Analyseer de marges en geef prijsadvies voor het café.
+    } else if (type === "staffing") {
+      userPrompt = `${dataContext}
 
-TRANSACTIES: ${transactions.length} bestellingen, totaal €${transactions.reduce((s, t) => s + (t.total || 0), 0).toFixed(2)}
-
-INVENTARIS KOSTEN:
-${inventory.map(i => `- ${i.item_name}: €${i.cost_per_unit}/${i.unit_type}`).join("\n")}
+Analyseer verkooppatronen per uur en geef personeelaanbevelingen voor de komende ${range} dagen.
 
 Geef JSON terug:
 {
+  "summary": "korte samenvatting",
+  "recommendations": ["advies 1", "advies 2", "advies 3"],
+  "peak_hours": [{"hour": "12:00", "load_pct": number, "recommended_staff": number}],
+  "total_hours_needed": number
+}`;
+    } else if (type === "pricing") {
+      userPrompt = `${dataContext}
+
+Analyseer de marges en geef prijsadvies.
+
+Geef JSON terug:
+{
+  "summary": "korte samenvatting",
   "pricing_recommendations": [{"product": "naam", "current_margin": number, "suggested_price": number, "reason": "uitleg"}],
   "cost_alerts": [{"item": "naam", "message": "uitleg"}],
   "overall_health": "good|warning|critical",
-  "avg_margin": number
+  "avg_margin": number,
+  "recommendations": ["advies 1"]
 }`;
     } else if (type === "dynamic_item") {
-      const { itemName, movements: itemMovements, intakes: itemIntakes, currentStock, unitType } = await req.json().catch(() => ({}));
-      userPrompt = `Analyseer dit dynamic stock item en geef een forecast:
-
+      const { itemName, movements: itemMovements, intakes: itemIntakes, currentStock, unitType } = body;
+      userPrompt = `Analyseer dit dynamic stock item:
 ITEM: ${itemName || "Onbekend"}
 HUIDIGE VOORRAAD: ${currentStock} ${unitType}
-
-BEWEGINGEN (laatste ${(itemMovements || []).length}):
-${(itemMovements || []).slice(0, 50).map((m: any) => `- ${m.movement_type}: ${m.quantity} ${unitType} (${m.product_sold || "n/a"}) op ${m.created_at}`).join("\n")}
-
-LEVERINGEN (laatste ${(itemIntakes || []).length}):
-${(itemIntakes || []).slice(0, 20).map((i: any) => `- +${i.quantity} ${i.unit} op ${i.delivery_date}`).join("\n")}
+BEWEGINGEN: ${(itemMovements || []).slice(0, 50).map((m: any) => `- ${m.movement_type}: ${m.quantity} ${unitType} op ${m.created_at}`).join("\n")}
+LEVERINGEN: ${(itemIntakes || []).slice(0, 20).map((i: any) => `- +${i.quantity} ${i.unit} op ${i.delivery_date}`).join("\n")}
 
 Geef JSON terug:
 {
   "recommendation": "korte aanbeveling",
   "predicted_usage": number,
   "suggested_stock": number,
-  "trend": "beschrijving van trend",
-  "weekday_pattern": "patroon per weekdag",
+  "trend": "beschrijving",
+  "weekday_pattern": "patroon",
   "confidence": "high|medium|low"
 }`;
     }
@@ -141,7 +179,6 @@ Geef JSON terug:
     const aiData = await response.json();
     const content = aiData.choices?.[0]?.message?.content || "";
 
-    // Try to parse JSON from the response
     let parsed;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
