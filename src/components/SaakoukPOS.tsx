@@ -4635,6 +4635,7 @@ export default function SaakoukPOS() {
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     pos: "Point of Sale",
+    prepstation: "Prepstation",
     cashclose: "Kassa Afsluiting",
     activity: "Order History",
     reservations: "Reservations",
