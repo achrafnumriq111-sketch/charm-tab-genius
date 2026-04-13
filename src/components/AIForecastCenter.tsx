@@ -258,9 +258,17 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
           <div className="flex items-center gap-2 mb-2">
             <Cloud className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Weer & Impact</span>
+            <Badge variant={weatherSource === "live" ? "default" : "outline"} className="text-[10px] h-4">
+              {weatherSource === "live" ? "🟢 Live" : "Mock data"}
+            </Badge>
+            {currentWeather && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                Nu: {currentWeather.temp}° {currentWeather.description} — {currentWeather.city}
+              </span>
+            )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {weather.map((w, i) => (
+            {weather.map((w: any, i: number) => (
               <div key={i} className={cn(
                 "flex flex-col items-center min-w-[52px] rounded-xl px-2 py-1.5 border text-center",
                 w.sunny ? "bg-amber-50/50 border-amber-200/50" : "bg-slate-50/50 border-slate-200/50"

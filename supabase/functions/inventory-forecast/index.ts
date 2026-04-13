@@ -32,14 +32,15 @@ serve(async (req) => {
     const transactions = transactionsRes.data || [];
 
     const body = await req.json().catch(() => ({}));
-    const { type = "forecast", range = 7 } = body;
+    const { type = "forecast", range = 7, weatherContext = "" } = body;
 
     const systemPrompt = `Je bent een AI-assistent voor voorraad-, omzet- en operationeel beheer van een premium matcha café (SAAKOUK).
 Je analyseert verkoopdata, voorraaddata, leveringen, tellingen, bewegingen en weersinvloeden.
 Je geeft antwoorden in het Nederlands, kort en zakelijk.
 Gebruik euro-notatie (€). Geef concrete acties en cijfers.
 Focus op: voorspellingen, besteladvies, verspilling, marges, seizoenspatronen, personeel en weer-impact.
-Forecast range: ${range} dagen.`;
+Forecast range: ${range} dagen.
+${weatherContext ? `\nACTUELE WEERSVOORSPELLING (live data): ${weatherContext}\nGebruik deze weerdata actief in je forecast. Zonnig weer = hogere traffic/iced drinks. Regen = lagere footfall.` : ""}`;
 
     const dataContext = `
 INVENTARIS (${inventory.length} items):
