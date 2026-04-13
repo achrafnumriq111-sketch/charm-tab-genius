@@ -4015,6 +4015,242 @@ function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, 
   );
 }
 
+// ─── PREP STATION VIEW ───────────────────────────────────────────────────────
+
+type PrepTicket = {
+  id: string;
+  orderId: string;
+  station: "drinks" | "food" | "pickup";
+  items: { name: string; qty: number; modifiers: { optionName: string; price: number }[]; notes?: string }[];
+  status: "ordered" | "preparing" | "ready" | "completed";
+  createdAt: Date;
+  startedAt?: Date;
+  readyAt?: Date;
+  completedAt?: Date;
+  orderType: string;
+  paymentStatus: string;
+};
+
+function PrepTicketTimer({ createdAt }: { createdAt: Date }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const diffSec = Math.floor((now - createdAt.getTime()) / 1000);
+  const mins = Math.floor(diffSec / 60);
+  const secs = diffSec % 60;
+  const isLate = mins >= 5;
+  return (
+    <span className={clsx("font-mono text-xs font-bold", isLate ? "text-red-600 animate-pulse" : "text-muted-foreground")}>
+      {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+    </span>
+  );
+}
+
+function PrepStationView({ prepTickets, onUpdateStatus }: { prepTickets: PrepTicket[]; onUpdateStatus: (id: string, status: PrepTicket["status"]) => void }) {
+  const [activeStation, setActiveStation] = useState<"all" | "drinks" | "food" | "pickup">("all");
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(i);
+  }, []);
+
+  const stations = [
+    { key: "all" as const, label: "Alle", icon: "📋" },
+    { key: "drinks" as const, label: "Drinks", icon: "🥤" },
+    { key: "food" as const, label: "Food", icon: "🍰" },
+    { key: "pickup" as const, label: "Pickup", icon: "📦" },
+  ];
+
+  const filtered = activeStation === "all" ? prepTickets : prepTickets.filter((t) => t.station === activeStation);
+  const activeTickets = filtered.filter((t) => t.status !== "completed");
+  const completedTickets = filtered.filter((t) => t.status === "completed");
+
+  // Analytics
+  const todayTickets = prepTickets.filter((t) => isToday(t.createdAt));
+  const completedToday = todayTickets.filter((t) => t.status === "completed");
+  const waitingCount = prepTickets.filter((t) => t.status === "ordered" || t.status === "preparing").length;
+  const avgPrepTime = completedToday.length > 0
+    ? completedToday.reduce((s, t) => s + ((t.completedAt?.getTime() || 0) - t.createdAt.getTime()), 0) / completedToday.length / 1000 / 60
+    : 0;
+  const longestWaiting = prepTickets
+    .filter((t) => t.status === "ordered" || t.status === "preparing")
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0];
+
+  const statusColors: Record<string, string> = {
+    ordered: "bg-muted border-muted-foreground/20",
+    preparing: "bg-orange-50 border-orange-300",
+    ready: "bg-green-50 border-green-300",
+    completed: "bg-blue-50 border-blue-300 opacity-60",
+  };
+
+  const statusLabels: Record<string, string> = {
+    ordered: "Besteld",
+    preparing: "Bereiding",
+    ready: "Klaar",
+    completed: "Voltooid",
+  };
+
+  const statusBadgeColors: Record<string, string> = {
+    ordered: "bg-muted-foreground/20 text-muted-foreground",
+    preparing: "bg-orange-200 text-orange-800",
+    ready: "bg-green-200 text-green-800",
+    completed: "bg-blue-200 text-blue-800",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header + station tabs */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h2 className="text-xl font-black flex items-center gap-2">
+            <ChefHat className="h-6 w-6" /> Prepstation
+          </h2>
+          <p className="text-xs text-muted-foreground">Live keuken- en barweergave</p>
+        </div>
+        <div className="flex gap-1.5">
+          {stations.map((s) => (
+            <button key={s.key} onClick={() => setActiveStation(s.key)}
+              className={clsx("px-4 py-2 rounded-full text-sm font-medium transition",
+                activeStation === s.key ? "bg-foreground text-background" : "bg-muted/50 hover:bg-muted")}>
+              {s.icon} {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick analytics */}
+      <div className="grid grid-cols-4 gap-3">
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Wachtend</div>
+            <div className="text-2xl font-black">{waitingCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Voltooid vandaag</div>
+            <div className="text-2xl font-black">{completedToday.length}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Gem. preptijd</div>
+            <div className="text-2xl font-black">{avgPrepTime > 0 ? `${avgPrepTime.toFixed(1)}m` : "—"}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardContent className="p-3 text-center">
+            <div className="text-xs text-muted-foreground">Langst wachtend</div>
+            <div className="text-2xl font-black">
+              {longestWaiting ? <PrepTicketTimer createdAt={longestWaiting.createdAt} /> : "—"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active tickets grid */}
+      {activeTickets.length === 0 ? (
+        <Card className="rounded-2xl">
+          <CardContent className="p-12 text-center">
+            <ChefHat className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+            <p className="font-medium">Geen actieve tickets</p>
+            <p className="text-sm text-muted-foreground mt-1">Nieuwe tickets verschijnen automatisch na betaling.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {activeTickets.map((ticket) => (
+            <Card key={ticket.id} className={clsx("rounded-2xl border-2 transition-all", statusColors[ticket.status])}>
+              <CardContent className="p-4 space-y-3">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-lg">#{ticket.orderId}</span>
+                  <Badge className={clsx("text-[10px]", statusBadgeColors[ticket.status])}>{statusLabels[ticket.status]}</Badge>
+                </div>
+
+                {/* Timer */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <PrepTicketTimer createdAt={ticket.createdAt} />
+                  </div>
+                  <Badge variant="outline" className="text-[9px] capitalize">{ticket.station}</Badge>
+                </div>
+
+                {/* Order type */}
+                <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                  <span className="capitalize">{ticket.orderType}</span>
+                  <span>· {ticket.paymentStatus}</span>
+                </div>
+
+                {/* Items */}
+                <div className="space-y-1.5">
+                  {ticket.items.map((item, idx) => (
+                    <div key={idx} className="text-sm">
+                      <div className="font-medium">{item.qty}× {item.name}</div>
+                      {item.modifiers?.length > 0 && (
+                        <div className="text-[11px] text-muted-foreground ml-3">
+                          {item.modifiers.map((m) => m.optionName).join(", ")}
+                        </div>
+                      )}
+                      {item.notes && <div className="text-[11px] italic text-orange-600 ml-3">📝 {item.notes}</div>}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 pt-1">
+                  {ticket.status === "ordered" && (
+                    <Button size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs"
+                      onClick={() => onUpdateStatus(ticket.id, "preparing")}>
+                      <Play className="h-3.5 w-3.5 mr-1" /> Start
+                    </Button>
+                  )}
+                  {ticket.status === "preparing" && (
+                    <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs"
+                      onClick={() => onUpdateStatus(ticket.id, "ready")}>
+                      <Check className="h-3.5 w-3.5 mr-1" /> Klaar
+                    </Button>
+                  )}
+                  {ticket.status === "ready" && (
+                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs"
+                      onClick={() => onUpdateStatus(ticket.id, "completed")}>
+                      <Check className="h-3.5 w-3.5 mr-1" /> Voltooid
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Completed section */}
+      {completedTickets.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-muted-foreground">Voltooid ({completedTickets.length})</h3>
+          <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+            {completedTickets.slice(0, 12).map((ticket) => (
+              <div key={ticket.id} className="rounded-xl border bg-muted/30 p-3 opacity-60">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-sm">#{ticket.orderId}</span>
+                  <Badge className="bg-blue-100 text-blue-700 text-[9px]">Voltooid</Badge>
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-1">
+                  {ticket.items.map((i) => `${i.qty}× ${i.name}`).join(", ")}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── CASH CLOSING VIEW (trigger for all staff) ──────────────────────────────
 
 function CashCloseView({ onOpen }: { onOpen: () => void }) {
