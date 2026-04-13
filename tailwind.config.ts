@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
 export default {
   darkMode: ["class"],
@@ -57,28 +58,35 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Pastel fintech palette
+        bubblegum: "rgb(255 236 246)",
+        lavender: "rgb(222 215 255)",
+        skyglass: "rgb(223 242 255)",
+        ink: "#0f172a",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "24px",
+        "2xl": "32px",
+        "3xl": "38px",
+      },
+      fontFamily: {
+        sans: ["SF Pro Display", "DM Sans", "ui-sans-serif", ...fontFamily.sans],
+      },
+      boxShadow: {
+        glow: "0 28px 110px rgba(161, 177, 219, 0.22)",
+        "glow-strong": "0 30px 130px rgba(171, 142, 255, 0.25)",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
