@@ -1846,6 +1846,7 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
   const dashTabs = [
     { key: "favorieten", label: "Favorieten" },
     { key: "verkopen", label: "Verkopen" },
+    { key: "uuranalyse", label: "Omzet per uur" },
     { key: "service", label: "Service" },
     { key: "prepstation", label: "Prepstation" },
     { key: "reserveringen", label: "Reserveringen" },
