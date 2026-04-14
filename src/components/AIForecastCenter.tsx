@@ -46,6 +46,23 @@ const RANGES = [
 type SegmentKey = typeof SEGMENTS[number]["key"];
 type RangeKey = typeof RANGES[number]["key"];
 
+// Amsterdam timezone helper
+function getAmsterdamNow(): Date {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Amsterdam" }));
+}
+function getAmsterdamDateStr(): string {
+  const d = getAmsterdamNow();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function getAmsterdamHour(): number {
+  return getAmsterdamNow().getHours();
+}
+function formatAmsterdamTime(d: Date): string {
+  return d.toLocaleTimeString("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit" });
+}
+
+const WEATHER_REFRESH_MS = 15 * 60 * 1000; // 15 minutes
+
 export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void }) {
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("next7");
@@ -61,42 +78,59 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   });
   const [correlations, setCorrelations] = useState<LearnedCorrelation[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [liveTime, setLiveTime] = useState<Date>(new Date());
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   const rangeDays = useMemo(() => RANGES.find(r => r.key === range)?.days || 7, [range]);
 
-  // ─── Fetch weather from Apple WeatherKit ───────────────────────────────
+  // ─── Live clock tick every 30s ─────────────────────────────────────────
   useEffect(() => {
-    (async () => {
-      try {
-        const { data, error: fnErr } = await supabase.functions.invoke("apple-weatherkit", {
-          body: { store: true },
-        });
-        if (fnErr || !data?.success) throw new Error(data?.error || "WeatherKit fetch failed");
-
-        if (data.daily?.length) {
-          // Filter to today onwards (API may include yesterday)
-          const todayStr = new Date().toISOString().slice(0, 10);
-          const filtered = data.daily.filter((d: any) => d.date >= todayStr);
-          setDaily(filtered.length > 0 ? filtered : data.daily);
-          setWeatherSource("live");
-        }
-        if (data.hourly?.length) setHourly(data.hourly);
-        if (data.current) setCurrentWeather(data.current);
-        if (data.summary) {
-          setWeatherSummary({
-            sunnyDays: data.summary.sunny_days,
-            rainyDays: data.summary.rainy_days,
-            avgImpact: data.summary.avg_impact,
-            avgTemp: data.summary.avg_temp,
-            trend: data.summary.trend,
-            totalDays: data.summary.total_days,
-          });
-        }
-      } catch (e) {
-        console.warn("WeatherKit fallback:", e);
-      }
-    })();
+    const tick = setInterval(() => setLiveTime(new Date()), 30_000);
+    return () => clearInterval(tick);
   }, []);
+
+  // ─── Fetch weather from Apple WeatherKit (with auto-refresh) ───────────
+  const fetchWeather = useCallback(async (silent = false) => {
+    if (!silent) setWeatherLoading(true);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke("apple-weatherkit", {
+        body: { store: true },
+      });
+      if (fnErr || !data?.success) throw new Error(data?.error || "WeatherKit fetch failed");
+
+      const todayStr = getAmsterdamDateStr();
+
+      if (data.daily?.length) {
+        const filtered = data.daily.filter((d: any) => d.date >= todayStr);
+        setDaily(filtered.length > 0 ? filtered : data.daily);
+        setWeatherSource("live");
+      }
+      if (data.hourly?.length) setHourly(data.hourly);
+      if (data.current) setCurrentWeather(data.current);
+      if (data.summary) {
+        setWeatherSummary({
+          sunnyDays: data.summary.sunny_days,
+          rainyDays: data.summary.rainy_days,
+          avgImpact: data.summary.avg_impact,
+          avgTemp: data.summary.avg_temp,
+          trend: data.summary.trend,
+          totalDays: data.summary.total_days,
+        });
+      }
+      setLastUpdated(new Date());
+    } catch (e) {
+      console.warn("WeatherKit fallback:", e);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, []);
+
+  // Initial fetch + auto-refresh every 15 min
+  useEffect(() => {
+    fetchWeather();
+    const interval = setInterval(() => fetchWeather(true), WEATHER_REFRESH_MS);
+    return () => clearInterval(interval);
+  }, [fetchWeather]);
 
   // ─── Fetch learned correlations ────────────────────────────────────────
   useEffect(() => {
