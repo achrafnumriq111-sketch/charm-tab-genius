@@ -149,10 +149,12 @@ function normalizeHourly(raw: any): any[] {
   if (!raw?.forecastHourly?.hours) return [];
   return raw.forecastHourly.hours.map((h: any) => {
     const dt = new Date(h.forecastStart);
+    // Convert to Amsterdam local time (CET/CEST)
+    const ams = toAmsterdam(dt);
     return {
       datetime: h.forecastStart,
-      localHour: dt.getHours(),
-      date: toDateStr(dt),
+      localHour: ams.hour,
+      date: ams.dateStr,
       conditionCode: h.conditionCode,
       conditionLabel: getLabel(h.conditionCode),
       icon: getIcon(h.conditionCode),
