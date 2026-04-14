@@ -2370,90 +2370,93 @@ function ActivityView({ orders, employees }: any) {
 
   return (
     <div className="space-y-4">
-      {/* Filters row */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Zoek order, klant, medewerker..." className="pl-9 h-11 rounded-xl" />
-        </div>
-
-        {/* Employee filter */}
-        <select
-          value={filterEmployee}
-          onChange={(e) => setFilterEmployee(e.target.value)}
-          className="h-11 min-w-[160px] rounded-xl border border-white/80 bg-white/70 backdrop-blur-lg px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-200"
-        >
-          <option value="all">Alle medewerkers</option>
-          {employeeOptions.map(([id, name]) => (
-            <option key={id} value={id}>{name}</option>
-          ))}
-        </select>
-
-        {/* Date mode pills */}
-        <div className="flex items-center gap-1 rounded-xl border border-white/80 bg-white/70 backdrop-blur-lg p-1 shadow-sm">
-          {([["all", "Alles"], ["today", "Vandaag"], ["week", "Week"], ["custom", "Custom"]] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setDateMode(key)}
-              className={clsx(
-                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
-                dateMode === key
-                  ? "bg-gradient-to-b from-violet-500 to-indigo-500 text-white shadow-md"
-                  : "text-slate-600 hover:bg-white/80"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Custom date inputs */}
-        {dateMode === "custom" && (
-          <div className="flex items-center gap-1.5">
-            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-11 rounded-xl w-[140px] text-xs" />
-            <span className="text-xs text-slate-400">→</span>
-            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-11 rounded-xl w-[140px] text-xs" />
+      {/* Filters — stacked for iPad touch friendliness */}
+      <div className="flex flex-col gap-3">
+        {/* Row 1: Search + Employee */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Zoek order, klant, medewerker..." className="pl-10 h-12 rounded-2xl text-sm" />
           </div>
-        )}
+          <select
+            value={filterEmployee}
+            onChange={(e) => setFilterEmployee(e.target.value)}
+            className="h-12 min-w-[170px] rounded-2xl border border-white/80 bg-white/70 backdrop-blur-lg px-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-200 touch-manipulation"
+          >
+            <option value="all">Alle medewerkers</option>
+            {employeeOptions.map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
+          </select>
+        </div>
 
-        {/* Summary badges */}
-        <div className="flex items-center gap-2 ml-auto">
-          <Badge variant="secondary" className="rounded-lg">{filtered.length} orders</Badge>
-          <Badge className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">{euro(totalRevenue)}</Badge>
+        {/* Row 2: Date pills + custom + summary */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 rounded-2xl border border-white/80 bg-white/70 backdrop-blur-lg p-1 shadow-sm">
+            {([["all", "Alles"], ["today", "Vandaag"], ["week", "Week"], ["custom", "Custom"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setDateMode(key)}
+                className={clsx(
+                  "min-h-[44px] px-4 rounded-xl text-sm font-medium transition-all touch-manipulation",
+                  dateMode === key
+                    ? "bg-gradient-to-b from-violet-500 to-indigo-500 text-white shadow-md"
+                    : "text-slate-600 hover:bg-white/80 active:bg-white/90"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {dateMode === "custom" && (
+            <div className="flex items-center gap-2">
+              <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-12 rounded-2xl w-[150px] text-sm touch-manipulation" />
+              <span className="text-sm text-slate-400">→</span>
+              <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-12 rounded-2xl w-[150px] text-sm touch-manipulation" />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 ml-auto">
+            <Badge variant="secondary" className="rounded-xl h-8 px-3 text-sm">{filtered.length} orders</Badge>
+            <Badge className="rounded-xl h-8 px-3 text-sm bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">{euro(totalRevenue)}</Badge>
+          </div>
         </div>
       </div>
 
-      {/* Orders list */}
+      {/* Orders list — touch-optimized rows */}
       <Card className="rounded-2xl">
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="text-center text-muted-foreground py-12">Geen orders gevonden.</div>
+            <div className="text-center text-muted-foreground py-16 text-sm">Geen orders gevonden.</div>
           ) : (
             <div className="divide-y">
               {filtered.map((order: any) => (
-                <div key={order.id} className="flex items-center justify-between p-4 hover:bg-neutral-50 transition cursor-pointer" onClick={() => setReceiptOrder(order)}>
-                  <div className="flex items-center gap-4">
-                    <div>
+                <button
+                  key={order.id}
+                  onClick={() => setReceiptOrder(order)}
+                  className="flex items-center justify-between w-full text-left min-h-[56px] px-4 py-3 hover:bg-neutral-50 active:bg-neutral-100 transition touch-manipulation"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="shrink-0">
                       <div className="font-mono text-sm font-medium">#{order.id}</div>
                       <div className="text-xs text-muted-foreground">{formatDate(order.date)} · {formatTime(order.date)}</div>
                     </div>
-                    <div>
-                      <div className="text-sm">{order.customerName || "Walk-in"}</div>
+                    <div className="min-w-0">
+                      <div className="text-sm truncate">{order.customerName || "Walk-in"}</div>
                       <div className="text-xs text-muted-foreground">{order.items.length} item{order.items.length !== 1 ? "s" : ""}</div>
                     </div>
                     {order.employeeName && (
-                      <Badge variant="outline" className="text-[10px] rounded-full">{order.employeeName.split(" ")[0]}</Badge>
+                      <Badge variant="outline" className="text-[11px] rounded-full shrink-0">{order.employeeName.split(" ")[0]}</Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Badge variant="outline" className="capitalize text-xs">{order.method}</Badge>
                     {order.status === "refunded" && <Badge variant="destructive" className="text-xs">Refunded</Badge>}
-                    {order.discountName && <Badge variant="secondary" className="text-xs">{order.discountName}</Badge>}
-                    <div className="font-semibold">{euro(order.total)}</div>
+                    <div className="font-semibold text-sm">{euro(order.total)}</div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
