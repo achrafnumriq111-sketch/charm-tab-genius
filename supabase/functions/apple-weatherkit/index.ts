@@ -63,15 +63,19 @@ async function generateWeatherKitJWT(): Promise<string> {
     throw new Error("Apple WeatherKit credentials not configured");
   }
 
-  // Reconstruct PEM: secrets may store as single line with literal \n or spaces
+  // Reconstruct PEM: secrets may store raw base64 without headers, or flatten newlines
   let pem = privateKeyPem.trim();
   
   // Handle literal backslash-n sequences
   pem = pem.replace(/\\n/g, "\n");
   
-  // If still no real newlines, rebuild the PEM structure
-  if (!pem.includes("\n") || pem.split("\n").length < 3) {
-    // Extract base64 content between headers
+  // If there are no PEM headers, the user stored raw base64
+  if (!pem.includes("-----BEGIN")) {
+    const base64Content = pem.replace(/[\s\r\n-]+/g, "");
+    const lines = base64Content.match(/.{1,64}/g) || [];
+    pem = `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----`;
+  } else if (!pem.includes("\n") || pem.split("\n").length < 3) {
+    // Has headers but no proper newlines
     const base64Match = pem.match(/-----BEGIN PRIVATE KEY-----(.*?)-----END PRIVATE KEY-----/s);
     if (base64Match) {
       const base64Content = base64Match[1].replace(/[\s\r\n]+/g, "");
@@ -79,8 +83,6 @@ async function generateWeatherKitJWT(): Promise<string> {
       pem = `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----`;
     }
   }
-
-  console.log("PEM lines count:", pem.split("\n").length, "starts with:", pem.substring(0, 30));
 
   const privateKey = await jose.importPKCS8(pem, "ES256");
 
