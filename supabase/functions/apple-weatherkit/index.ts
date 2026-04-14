@@ -63,19 +63,24 @@ async function generateWeatherKitJWT(): Promise<string> {
     throw new Error("Apple WeatherKit credentials not configured");
   }
 
-  // Reconstruct PEM format: secrets storage may flatten newlines
+  // Reconstruct PEM: secrets may store as single line with literal \n or spaces
   let pem = privateKeyPem.trim();
-  // If newlines were replaced by spaces or literal \n, fix them
-  if (!pem.includes("\n")) {
-    pem = pem
-      .replace(/-----BEGIN PRIVATE KEY-----\s*/, "-----BEGIN PRIVATE KEY-----\n")
-      .replace(/\s*-----END PRIVATE KEY-----/, "\n-----END PRIVATE KEY-----")
-      .replace(/-----BEGIN PRIVATE KEY-----\n(.+)\n-----END PRIVATE KEY-----/, (_, body) => {
-        const cleaned = body.replace(/\s+/g, "");
-        const lines = cleaned.match(/.{1,64}/g) || [];
-        return `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----`;
-      });
+  
+  // Handle literal backslash-n sequences
+  pem = pem.replace(/\\n/g, "\n");
+  
+  // If still no real newlines, rebuild the PEM structure
+  if (!pem.includes("\n") || pem.split("\n").length < 3) {
+    // Extract base64 content between headers
+    const base64Match = pem.match(/-----BEGIN PRIVATE KEY-----(.*?)-----END PRIVATE KEY-----/s);
+    if (base64Match) {
+      const base64Content = base64Match[1].replace(/[\s\r\n]+/g, "");
+      const lines = base64Content.match(/.{1,64}/g) || [];
+      pem = `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----`;
+    }
   }
+
+  console.log("PEM lines count:", pem.split("\n").length, "starts with:", pem.substring(0, 30));
 
   const privateKey = await jose.importPKCS8(pem, "ES256");
 
