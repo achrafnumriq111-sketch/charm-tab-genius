@@ -3,17 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Brain, Sparkles, TrendingUp, TrendingDown, Cloud, Sun, CloudRain,
   Thermometer, Users, Package, DollarSign, BarChart3, Clock, Loader2,
   AlertTriangle, ShieldCheck, Zap, CalendarDays, ArrowUp, ArrowDown,
-  RefreshCw, ChevronRight,
+  RefreshCw, ChevronRight, Droplets, Wind,
 } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ComposedChart, Line, Cell, Legend,
 } from "recharts";
+import type {
+  NormalizedDailyWeather, NormalizedHourlyWeather, NormalizedCurrentWeather,
+  WeatherSummary, LearnedCorrelation, HourlyStaffingInsight,
+} from "@/lib/weather/weatherIntelligence";
+import {
+  generateExecutiveSummary, generateStaffingInsights, computeConfidence,
+  getFallbackDaily,
+} from "@/lib/weather/weatherIntelligence";
 
 function euro(v: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(v);
@@ -39,141 +46,77 @@ const RANGES = [
 type SegmentKey = typeof SEGMENTS[number]["key"];
 type RangeKey = typeof RANGES[number]["key"];
 
-const WEATHER_DAY_LABELS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"] as const;
-const FALLBACK_WEATHER_PATTERN = [
-  { temp: 11, sunny: false, icon: "⛅", impact: -1, label: "Bewolkt", rain: 0, wind: 2.1 },
-  { temp: 13, sunny: true, icon: "☀️", impact: 12, label: "Zonnig", rain: 0, wind: 1.8 },
-  { temp: 12, sunny: false, icon: "⛅", impact: -1, label: "Bewolkt", rain: 0.1, wind: 2.5 },
-  { temp: 12, sunny: false, icon: "⛅", impact: -2, label: "Licht bewolkt", rain: 0, wind: 2.7 },
-  { temp: 14, sunny: true, icon: "🌤️", impact: 10, label: "Licht bewolkt", rain: 0, wind: 2.2 },
-  { temp: 11, sunny: false, icon: "🌧️", impact: -12, label: "Regen", rain: 2.6, wind: 3.4 },
-  { temp: 10, sunny: false, icon: "⛅", impact: -2, label: "Bewolkt", rain: 0, wind: 2.0 },
-] as const;
-
-function toLocalDateOnly(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function parseIsoDateUTC(dateStr: string) {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
-}
-
-function addDaysUTC(dateStr: string, days: number) {
-  const date = parseIsoDateUTC(dateStr);
-  date.setUTCDate(date.getUTCDate() + days);
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getDayLabelFromDate(dateStr: string) {
-  return WEATHER_DAY_LABELS[parseIsoDateUTC(dateStr).getUTCDay()];
-}
-
-function buildFallbackWeatherDay(dateStr: string, index: number) {
-  const pattern = FALLBACK_WEATHER_PATTERN[index % FALLBACK_WEATHER_PATTERN.length];
-  const dayIndex = parseIsoDateUTC(dateStr).getUTCDay();
-  const weekend = dayIndex === 0 || dayIndex === 6;
-
-  return {
-    day: WEATHER_DAY_LABELS[dayIndex],
-    date: dateStr,
-    temp: pattern.temp,
-    sunny: pattern.sunny,
-    icon: pattern.icon,
-    impact: weekend && pattern.sunny ? pattern.impact + 4 : pattern.impact,
-    label: pattern.label,
-    rain: pattern.rain,
-    wind: pattern.wind,
-    temp_max: pattern.temp + 3,
-    temp_min: pattern.temp - 3,
-    weekend,
-    isReal: false,
-  };
-}
-
-function getFallbackWeather(startDate = toLocalDateOnly(new Date())) {
-  return Array.from({ length: 7 }, (_, index) => buildFallbackWeatherDay(addDaysUTC(startDate, index), index));
-}
-
-function normalizeWeatherDays(days: any[]) {
-  const normalized = days
-    .filter(Boolean)
-    .map((day, index) => {
-      const date = typeof day.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(day.date)
-        ? day.date
-        : addDaysUTC(toLocalDateOnly(new Date()), index);
-      const weekend = [0, 6].includes(parseIsoDateUTC(date).getUTCDay());
-
-      return {
-        ...buildFallbackWeatherDay(date, index),
-        ...day,
-        date,
-        day: getDayLabelFromDate(date),
-        weekend,
-        isReal: day.isReal ?? true,
-      };
-    })
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .filter((day, index, arr) => arr.findIndex((item) => item.date === day.date) === index);
-
-  if (!normalized.length) return getFallbackWeather();
-
-  while (normalized.length < 7) {
-    const nextDate = addDaysUTC(normalized[normalized.length - 1].date, 1);
-    normalized.push(buildFallbackWeatherDay(nextDate, normalized.length));
-  }
-
-  return normalized.slice(0, 7);
-}
-
 export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void }) {
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("next7");
   const [loading, setLoading] = useState(false);
   const [forecast, setForecast] = useState<any>(null);
   const [error, setError] = useState("");
-  const [weather, setWeather] = useState(getFallbackWeather);
+  const [daily, setDaily] = useState<NormalizedDailyWeather[]>(getFallbackDaily);
+  const [hourly, setHourly] = useState<NormalizedHourlyWeather[]>([]);
+  const [currentWeather, setCurrentWeather] = useState<NormalizedCurrentWeather | null>(null);
   const [weatherSource, setWeatherSource] = useState<"live" | "fallback">("fallback");
-  const [currentWeather, setCurrentWeather] = useState<any>(null);
+  const [weatherSummary, setWeatherSummary] = useState<WeatherSummary>({
+    sunnyDays: 0, rainyDays: 0, avgImpact: 0, avgTemp: 11, trend: "neutral", totalDays: 0,
+  });
+  const [correlations, setCorrelations] = useState<LearnedCorrelation[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const rangeDays = useMemo(() => RANGES.find(r => r.key === range)?.days || 7, [range]);
 
+  // ─── Fetch weather from Apple WeatherKit ───────────────────────────────
   useEffect(() => {
     (async () => {
       try {
-        const { data, error: fnErr } = await supabase.functions.invoke("weather-forecast", {
-          body: { city: "Amsterdam" },
+        const { data, error: fnErr } = await supabase.functions.invoke("apple-weatherkit", {
+          body: { store: true },
         });
-        if (fnErr || data?.error) throw new Error(data?.error || "Weather fetch failed");
-        if (data?.daily?.length) {
-          setWeather(normalizeWeatherDays(data.daily.map((d: any) => ({
-            day: d.day,
-            temp: d.temp,
-            sunny: d.sunny,
-            icon: d.icon,
-            impact: d.impact,
-            label: d.label,
-            rain: d.rain || 0,
-            wind: d.wind || 0,
-            date: d.date,
-            temp_max: d.temp_max,
-            temp_min: d.temp_min,
-            weekend: d.weekend,
-            isReal: true,
-          }))));
+        if (fnErr || !data?.success) throw new Error(data?.error || "WeatherKit fetch failed");
+
+        if (data.daily?.length) {
+          setDaily(data.daily);
           setWeatherSource("live");
-          if (data.current) setCurrentWeather(data.current);
+        }
+        if (data.hourly?.length) setHourly(data.hourly);
+        if (data.current) setCurrentWeather(data.current);
+        if (data.summary) {
+          setWeatherSummary({
+            sunnyDays: data.summary.sunny_days,
+            rainyDays: data.summary.rainy_days,
+            avgImpact: data.summary.avg_impact,
+            avgTemp: data.summary.avg_temp,
+            trend: data.summary.trend,
+            totalDays: data.summary.total_days,
+          });
         }
       } catch (e) {
-        console.warn("Weather API fallback:", e);
+        console.warn("WeatherKit fallback:", e);
       }
+    })();
+  }, []);
+
+  // ─── Fetch learned correlations ────────────────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("weather_business_correlations")
+          .select("*")
+          .order("sample_size", { ascending: false })
+          .limit(50);
+        if (data) {
+          setCorrelations(data.map((c: any) => ({
+            patternKey: c.pattern_key,
+            scope: c.scope,
+            category: c.category,
+            sampleSize: c.sample_size,
+            upliftPercent: c.uplift_percent,
+            confidenceScore: c.confidence_score,
+            avgOmzet: c.avg_omzet,
+            avgOrders: c.avg_orders,
+          })));
+        }
+      } catch { /* ignore */ }
     })();
   }, []);
 
@@ -181,7 +124,10 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     setLoading(true);
     setError("");
     try {
-      const weatherContext = weather.map(w => `${w.day}: ${w.temp}°C ${w.label} impact:${w.impact}%`).join(", ");
+      const weatherContext = daily.slice(0, 10).map(w =>
+        `${w.dayLabel}: ${w.avgTempC}°C ${w.conditionLabel} impact:${w.impactScore}% ${w.isRain ? "regen" : ""} ${w.sunny ? "zon" : ""}`
+      ).join(", ");
+
       const { data, error: fnError } = await supabase.functions.invoke("inventory-forecast", {
         body: { type: segment, range: rangeDays, weatherContext },
       });
@@ -195,33 +141,33 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     } finally {
       setLoading(false);
     }
-  }, [segment, rangeDays, onToast, weather]);
+  }, [segment, rangeDays, onToast, daily]);
 
-  // Auto-run on segment/range change
   useEffect(() => { runForecast(); }, [segment, range]);
 
-  // Generate mock chart data based on forecast
+  // ─── Chart data with weather-driven intelligence ───────────────────────
   const chartData = useMemo(() => {
     const days = rangeDays;
     const baseRevenue = 800 + Math.random() * 400;
     return Array.from({ length: days }, (_, i) => {
-      const dayOfWeek = (new Date().getDay() + i) % 7;
+      const dayWeather = daily[i % daily.length];
+      const dayOfWeek = dayWeather?.dayOfWeek ?? ((new Date().getDay() + i) % 7);
       const weekendBoost = dayOfWeek === 5 || dayOfWeek === 6 ? 1.35 : 1;
-      const weatherImpact = weather[i % 7]?.sunny ? 1.15 : 0.92;
-      const noise = 0.85 + Math.random() * 0.3;
-      const actual = i < 3 ? Math.round(baseRevenue * weekendBoost * weatherImpact * noise) : null;
-      const forecastVal = Math.round(baseRevenue * weekendBoost * weatherImpact * (0.95 + Math.random() * 0.1));
+      const weatherMultiplier = 1 + (dayWeather?.impactScore ?? 0) / 100;
+      const noise = 0.9 + Math.random() * 0.2;
+      const actual = i < 3 ? Math.round(baseRevenue * weekendBoost * weatherMultiplier * noise) : null;
+      const forecastVal = Math.round(baseRevenue * weekendBoost * weatherMultiplier * (0.97 + Math.random() * 0.06));
       const prev = Math.round(baseRevenue * weekendBoost * 0.9 * noise);
       return {
-        day: `Dag ${i + 1}`,
+        day: dayWeather?.dayLabel ?? `Dag ${i + 1}`,
         actual,
         forecast: forecastVal,
-        forecastLow: Math.round(forecastVal * 0.82),
-        forecastHigh: Math.round(forecastVal * 1.18),
+        forecastLow: Math.round(forecastVal * 0.85),
+        forecastHigh: Math.round(forecastVal * 1.15),
         previous: prev,
       };
     });
-  }, [rangeDays, weather]);
+  }, [rangeDays, daily]);
 
   const totalForecast = chartData.reduce((s, d) => s + d.forecast, 0);
   const totalLow = chartData.reduce((s, d) => s + d.forecastLow, 0);
@@ -230,12 +176,13 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   const trendPct = totalPrev > 0 ? Math.round(((totalForecast - totalPrev) / totalPrev) * 1000) / 10 : 0;
 
   const peakDay = chartData.reduce((best, d) => d.forecast > best.forecast ? d : best, chartData[0]);
-  const avgWeatherImpact = weather.reduce((s, w) => s + w.impact, 0) / weather.length;
 
-  const confidenceScore = range === "7d" || range === "next7" ? 91 : range === "next14" ? 84 : range === "next21" ? 76 : 72;
+  const dataCompleteness = correlations.length > 0 ? Math.min(1, correlations.length / 20) : 0.1;
+  const confidenceScore = computeConfidence(rangeDays, correlations, dataCompleteness);
 
-  // Executive summary
-  const executiveSummary = forecast?.summary || `Verwachte omzet komende ${rangeDays} dagen: ${euro(totalForecast)}. ${trendPct > 0 ? `Stijging van +${trendPct}%` : `Daling van ${trendPct}%`} t.o.v. vorige periode. ${avgWeatherImpact > 0 ? `Weer heeft positief effect (+${Math.round(avgWeatherImpact)}% gemiddeld).` : `Weer drukt de omzet licht.`} ${weather[0]?.sunny ? "Morgen zonnig — verwacht hogere traffic." : "Morgen bewolkt/regen — plan conservatief."}`;
+  const executiveSummary = forecast?.summary || generateExecutiveSummary(
+    daily, weatherSummary, totalForecast, trendPct, confidenceScore, correlations
+  );
 
   return (
     <div className="space-y-4">
@@ -245,7 +192,9 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Brain className="h-6 w-6 text-primary" /> AI Forecast & Insights
           </h2>
-          <p className="text-sm text-muted-foreground">AI analyseert omzet, vraag, weer en operationele trends</p>
+          <p className="text-sm text-muted-foreground">
+            Weather-aware intelligence — Apple WeatherKit
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {lastUpdated && (
@@ -253,7 +202,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
               Bijgewerkt: {lastUpdated.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })}
             </span>
           )}
-          <Button variant="outline" size="sm" onClick={runForecast} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={runForecast} disabled={loading} className="min-h-[44px] min-w-[44px]">
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
           </Button>
         </div>
@@ -266,7 +215,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             key={s.key}
             onClick={() => setSegment(s.key)}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+              "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap min-h-[44px] touch-manipulation",
               segment === s.key
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -285,7 +234,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             key={r.key}
             onClick={() => setRange(r.key)}
             className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border",
+              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border min-h-[44px] touch-manipulation",
               range === r.key
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-background text-muted-foreground border-border hover:border-primary/40"
@@ -303,7 +252,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Zap className="h-4 w-4 text-primary" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">AI Executive Summary</div>
               <p className="text-sm leading-relaxed">{executiveSummary}</p>
             </div>
@@ -322,36 +271,60 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         </Card>
       )}
 
-      {/* Weather Strip */}
+      {/* Weather Strip — Apple WeatherKit powered */}
       <Card className="rounded-2xl">
         <CardContent className="p-3">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <Cloud className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Weer & Impact</span>
-            <Badge variant={weatherSource === "live" ? "default" : "outline"} className="text-[10px] h-4">
-              {weatherSource === "live" ? "🟢 Live" : "Mock data"}
+            <Badge variant={weatherSource === "live" ? "default" : "outline"} className="text-[10px] h-5">
+              {weatherSource === "live" ? "🟢 Apple WeatherKit" : "⚪ Fallback"}
             </Badge>
             {currentWeather && (
               <span className="text-xs text-muted-foreground ml-auto">
-                Nu: {currentWeather.temp}° {currentWeather.description} — {currentWeather.city}
+                Nu: {currentWeather.temperatureC}° {currentWeather.conditionLabel} — {currentWeather.city}
               </span>
             )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {weather.map((w: any, i: number) => (
+            {daily.slice(0, 10).map((w, i) => (
               <div key={i} className={cn(
-                "flex flex-col items-center min-w-[52px] rounded-xl px-2 py-1.5 border text-center",
-                w.sunny ? "bg-amber-50/50 border-amber-200/50" : "bg-slate-50/50 border-slate-200/50"
+                "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 border text-center touch-manipulation",
+                w.sunny ? "bg-amber-50/50 border-amber-200/50" : w.isRain ? "bg-blue-50/50 border-blue-200/50" : "bg-slate-50/50 border-slate-200/50"
               )}>
-                <span className="text-[10px] font-medium text-muted-foreground">{w.day}</span>
-                <span className="text-lg">{w.icon}</span>
-                <span className="text-xs font-bold">{w.temp}°</span>
-                <span className={cn("text-[10px] font-semibold", w.impact > 0 ? "text-green-600" : "text-red-500")}>
-                  {w.impact > 0 ? "+" : ""}{w.impact}%
+                <span className="text-[10px] font-medium text-muted-foreground">{w.dayLabel}</span>
+                <span className="text-lg leading-none my-0.5">{w.icon}</span>
+                <span className="text-xs font-bold">{w.avgTempC}°</span>
+                <span className="text-[9px] text-muted-foreground">{w.minTempC}°/{w.maxTempC}°</span>
+                <span className={cn("text-[10px] font-semibold mt-0.5",
+                  w.impactScore > 0 ? "text-green-600" : w.impactScore < -3 ? "text-red-500" : "text-muted-foreground"
+                )}>
+                  {w.impactScore > 0 ? "+" : ""}{w.impactScore}%
                 </span>
+                {w.confidence < 50 && (
+                  <span className="text-[8px] text-muted-foreground">~</span>
+                )}
               </div>
             ))}
           </div>
+          {/* Hourly mini-strip for today */}
+          {hourly.length > 0 && (
+            <div className="mt-2 pt-2 border-t border-border/50">
+              <span className="text-[10px] font-medium text-muted-foreground mb-1 block">Vandaag per uur</span>
+              <div className="flex gap-1 overflow-x-auto pb-1">
+                {hourly.filter(h => h.date === daily[0]?.date && h.localHour >= 8 && h.localHour <= 20).map((h, i) => (
+                  <div key={i} className="flex flex-col items-center min-w-[36px] text-center">
+                    <span className="text-[9px] text-muted-foreground">{h.localHour}:00</span>
+                    <span className="text-xs">{h.icon}</span>
+                    <span className="text-[10px] font-medium">{h.temperatureC}°</span>
+                    {h.precipitationChance > 30 && (
+                      <span className="text-[8px] text-blue-500">{h.precipitationChance}%</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -365,7 +338,6 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         </Card>
       )}
 
-      {/* ─── REVENUE FORECAST ─── */}
       {segment === "revenue" && !loading && (
         <RevenueView
           chartData={chartData}
@@ -379,23 +351,15 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
           forecast={forecast}
         />
       )}
-
-      {/* ─── PRODUCT FORECAST ─── */}
       {segment === "product" && !loading && (
-        <ProductView forecast={forecast} rangeDays={rangeDays} weather={weather} />
+        <ProductView forecast={forecast} rangeDays={rangeDays} daily={daily} />
       )}
-
-      {/* ─── STOCK FORECAST ─── */}
       {segment === "stock" && !loading && (
         <StockView forecast={forecast} rangeDays={rangeDays} />
       )}
-
-      {/* ─── STAFFING FORECAST ─── */}
       {segment === "staffing" && !loading && (
-        <StaffingView forecast={forecast} rangeDays={rangeDays} weather={weather} />
+        <StaffingView forecast={forecast} rangeDays={rangeDays} daily={daily} hourly={hourly} />
       )}
-
-      {/* ─── PRICING ─── */}
       {segment === "pricing" && !loading && (
         <PricingView forecast={forecast} />
       )}
@@ -415,7 +379,6 @@ function RevenueView({ chartData, totalForecast, totalLow, totalHigh, trendPct, 
 
   return (
     <div className="space-y-4">
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {kpis.map((k, i) => (
           <Card key={i} className="rounded-2xl">
@@ -439,7 +402,6 @@ function RevenueView({ chartData, totalForecast, totalLow, totalHigh, trendPct, 
         ))}
       </div>
 
-      {/* Main Chart */}
       <Card className="rounded-2xl">
         <CardHeader className="p-4 pb-0">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -454,57 +416,25 @@ function RevenueView({ chartData, totalForecast, totalLow, totalHigh, trendPct, 
                 <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                 <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `€${v}`} />
                 <Tooltip
-                  contentStyle={{
-                    borderRadius: 12,
-                    border: "1px solid hsl(var(--border))",
-                    background: "hsl(var(--background))",
-                    fontSize: 12,
-                  }}
+                  contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", fontSize: 12 }}
                   formatter={(v: number, name: string) => [euro(v), name]}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                {/* Confidence band */}
-                <Area
-                  type="monotone"
-                  dataKey="forecastHigh"
-                  stroke="none"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.08}
-                  name="Forecast hoog"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="forecastLow"
-                  stroke="none"
-                  fill="hsl(var(--background))"
-                  fillOpacity={1}
-                  name="Forecast laag"
-                />
-                {/* Previous period bars */}
+                <Area type="monotone" dataKey="forecastHigh" stroke="none" fill="hsl(var(--primary))" fillOpacity={0.08} name="Forecast hoog" />
+                <Area type="monotone" dataKey="forecastLow" stroke="none" fill="hsl(var(--background))" fillOpacity={1} name="Forecast laag" />
                 <Bar dataKey="previous" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="Vorige periode" barSize={16} />
-                {/* Actual bars */}
                 <Bar dataKey="actual" radius={[4, 4, 0, 0]} name="Werkelijk" barSize={16}>
                   {chartData.map((_: any, i: number) => (
                     <Cell key={i} fill={chartData[i].actual != null ? "hsl(var(--primary))" : "transparent"} />
                   ))}
                 </Bar>
-                {/* Forecast line */}
-                <Line
-                  type="monotone"
-                  dataKey="forecast"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  strokeDasharray="6 3"
-                  dot={{ r: 3, fill: "hsl(var(--primary))" }}
-                  name="Forecast"
-                />
+                <Line type="monotone" dataKey="forecast" stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="6 3" dot={{ r: 3, fill: "hsl(var(--primary))" }} name="Forecast" />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      {/* AI Recommendations */}
       {forecast?.recommendations?.length > 0 && (
         <Card className="rounded-2xl">
           <CardHeader className="p-4 pb-2">
@@ -526,8 +456,7 @@ function RevenueView({ chartData, totalForecast, totalLow, totalHigh, trendPct, 
 
 // ─── Product Forecast Sub-view ───────────────────────────────────────────────
 
-function ProductView({ forecast, rangeDays, weather }: any) {
-  // Generate product forecast data
+function ProductView({ forecast, rangeDays, daily }: { forecast: any; rangeDays: number; daily: NormalizedDailyWeather[] }) {
   const products = useMemo(() => {
     if (forecast?.product_forecasts) return forecast.product_forecasts;
     const items = [
@@ -539,14 +468,14 @@ function ProductView({ forecast, rangeDays, weather }: any) {
       { name: "Matcha Cheesecake", base: 4, weatherSensitive: false },
     ];
     return items.map(p => {
-      const sunnyDays = weather.filter((w: any) => w.sunny).length;
-      const weatherMultiplier = p.weatherSensitive ? 1 + (sunnyDays / 7) * 0.25 : 1;
+      const sunnyDays = daily.filter(w => w.sunny).length;
+      const weatherMultiplier = p.weatherSensitive ? 1 + (sunnyDays / daily.length) * 0.25 : 1;
       const f7 = Math.round(p.base * 7 * weatherMultiplier);
       const f14 = Math.round(p.base * 14 * weatherMultiplier * 0.97);
       const conf = Math.round(85 + Math.random() * 10);
       return { product: p.name, forecast_7d: f7, forecast_14d: f14, confidence: conf, weather_sensitive: p.weatherSensitive };
     });
-  }, [forecast, weather]);
+  }, [forecast, daily]);
 
   return (
     <div className="space-y-4">
@@ -575,9 +504,7 @@ function ProductView({ forecast, rangeDays, weather }: any) {
                     <td className="px-4 py-2.5 text-right font-bold">{p.forecast_7d}</td>
                     <td className="px-4 py-2.5 text-right">{p.forecast_14d}</td>
                     <td className="px-4 py-2.5 text-center">
-                      <Badge variant={p.confidence >= 88 ? "default" : "outline"} className="text-[10px]">
-                        {p.confidence}%
-                      </Badge>
+                      <Badge variant={p.confidence >= 88 ? "default" : "outline"} className="text-[10px]">{p.confidence}%</Badge>
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {p.weather_sensitive && (
@@ -635,11 +562,9 @@ function StockView({ forecast, rangeDays }: any) {
             <CardContent className="p-4">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">{item.item}</div>
               <div className="text-xl font-bold">{item.predicted_usage} {item.unit}</div>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Badge variant={item.days_left < 5 ? "destructive" : item.days_left < 10 ? "outline" : "default"} className="text-[10px] h-5">
-                  {item.days_left} dagen over
-                </Badge>
-              </div>
+              <Badge variant={item.days_left < 5 ? "destructive" : item.days_left < 10 ? "outline" : "default"} className="text-[10px] h-5 mt-1">
+                {item.days_left} dagen over
+              </Badge>
             </CardContent>
           </Card>
         ))}
@@ -673,9 +598,7 @@ function StockView({ forecast, rangeDays }: any) {
                     )}>{item.days_left}</td>
                     <td className="px-4 py-2.5 text-right font-medium">{item.suggested_quantity} {item.unit}</td>
                     <td className="px-4 py-2.5 text-center">
-                      <Badge variant={item.confidence === "high" ? "default" : "outline"} className="text-[10px]">
-                        {item.confidence}
-                      </Badge>
+                      <Badge variant={item.confidence === "high" ? "default" : "outline"} className="text-[10px]">{item.confidence}</Badge>
                     </td>
                   </tr>
                 ))}
@@ -707,33 +630,20 @@ function StockView({ forecast, rangeDays }: any) {
 
 // ─── Staffing Forecast Sub-view ──────────────────────────────────────────────
 
-function StaffingView({ forecast, rangeDays, weather }: any) {
+function StaffingView({ forecast, rangeDays, daily, hourly }: {
+  forecast: any; rangeDays: number; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[];
+}) {
   const staffingData = useMemo(() => {
-    const hours = Array.from({ length: 12 }, (_, i) => {
-      const hour = 8 + i;
-      const isLunch = hour >= 12 && hour <= 14;
-      const isMorning = hour >= 9 && hour <= 11;
-      const baseLoad = isLunch ? 85 : isMorning ? 60 : 40;
-      const weatherBoost = weather[0]?.sunny ? 12 : -5;
-      const load = Math.min(100, baseLoad + weatherBoost + Math.round(Math.random() * 10));
-      const staff = load > 75 ? 3 : load > 50 ? 2 : 1;
-      return {
-        hour: `${hour}:00`,
-        load,
-        recommended_staff: staff,
-        risk: load > 80 ? "high" : load > 60 ? "medium" : "low",
-      };
-    });
-    return hours;
-  }, [weather]);
+    return generateStaffingInsights(daily, hourly);
+  }, [daily, hourly]);
 
-  const peakHour = staffingData.reduce((best, h) => h.load > best.load ? h : best, staffingData[0]);
-  const totalStaffHours = staffingData.reduce((s, h) => s + h.recommended_staff, 0);
+  const peakHour = staffingData.reduce((best, h) => h.loadPercent > best.loadPercent ? h : best, staffingData[0]);
+  const totalStaffHours = staffingData.reduce((s, h) => s + h.recommendedStaff, 0);
 
   const insights = forecast?.recommendations || [
-    `Piekuur verwacht: ${peakHour.hour} (${peakHour.load}% capaciteit)`,
-    peakHour.load > 80 ? "Overweeg extra medewerker tijdens lunch" : "Huidige bezetting lijkt toereikend",
-    weather[0]?.sunny ? "Zonnig weer → hogere iced drinks vraag, prep station belasting" : "Bewolkt weer → standaard bezetting volstaat",
+    `Piekuur verwacht: ${peakHour?.hour} (${peakHour?.loadPercent}% capaciteit)`,
+    peakHour?.loadPercent > 80 ? "Overweeg extra medewerker tijdens lunch" : "Huidige bezetting lijkt toereikend",
+    daily[0]?.sunny ? "Zonnig weer → hogere iced drinks vraag, prep station belasting" : daily[0]?.isRain ? "Regen → lagere walk-in traffic verwacht" : "Bewolkt weer → standaard bezetting volstaat",
     `Totaal aanbevolen: ${totalStaffHours} werkuren morgen`,
   ];
 
@@ -743,8 +653,8 @@ function StaffingView({ forecast, rangeDays, weather }: any) {
         <Card className="rounded-2xl">
           <CardContent className="p-4">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Piekuur</div>
-            <div className="text-xl font-bold">{peakHour.hour}</div>
-            <div className="text-xs text-muted-foreground">{peakHour.load}% belasting</div>
+            <div className="text-xl font-bold">{peakHour?.hour}</div>
+            <div className="text-xs text-muted-foreground">{peakHour?.loadPercent}% belasting</div>
           </CardContent>
         </Card>
         <Card className="rounded-2xl">
@@ -757,13 +667,12 @@ function StaffingView({ forecast, rangeDays, weather }: any) {
         <Card className="rounded-2xl">
           <CardContent className="p-4">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Max bezetting</div>
-            <div className="text-xl font-bold">{Math.max(...staffingData.map(h => h.recommended_staff))}</div>
+            <div className="text-xl font-bold">{Math.max(...staffingData.map(h => h.recommendedStaff))}</div>
             <div className="text-xs text-muted-foreground">medewerkers tegelijk</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Staffing heatmap */}
       <Card className="rounded-2xl overflow-hidden">
         <CardHeader className="p-4 pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -773,7 +682,7 @@ function StaffingView({ forecast, rangeDays, weather }: any) {
         <CardContent className="p-4 pt-2">
           <div className="space-y-1.5">
             {staffingData.map((h, i) => (
-              <div key={i} className="flex items-center gap-3">
+              <div key={i} className="flex items-center gap-3 min-h-[36px]">
                 <span className="text-xs font-mono w-12 text-muted-foreground">{h.hour}</span>
                 <div className="flex-1 h-7 rounded-lg overflow-hidden bg-muted/50 relative">
                   <div
@@ -781,10 +690,11 @@ function StaffingView({ forecast, rangeDays, weather }: any) {
                       "h-full rounded-lg transition-all",
                       h.risk === "high" ? "bg-destructive/70" : h.risk === "medium" ? "bg-orange-400/70" : "bg-green-500/50"
                     )}
-                    style={{ width: `${h.load}%` }}
+                    style={{ width: `${h.loadPercent}%` }}
                   />
                   <span className="absolute inset-0 flex items-center px-2 text-[10px] font-medium">
-                    {h.load}% — {h.recommended_staff} medewerker{h.recommended_staff > 1 ? "s" : ""}
+                    {h.loadPercent}% — {h.recommendedStaff} medewerker{h.recommendedStaff > 1 ? "s" : ""}
+                    {h.weatherEffect !== "normaal" && <span className="ml-1 text-muted-foreground">({h.weatherEffect})</span>}
                   </span>
                 </div>
                 {h.risk === "high" && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
@@ -794,10 +704,9 @@ function StaffingView({ forecast, rangeDays, weather }: any) {
         </CardContent>
       </Card>
 
-      {/* Insights */}
       <Card className="rounded-2xl">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-sm flex items-center gap-1.5"><Brain className="h-4 w-4" /> Staffing Insights</CardTitle>
+          <CardTitle className="text-sm flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Personeel Inzichten</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-2">
           {insights.map((r: string, i: number) => (
@@ -815,35 +724,30 @@ function StaffingView({ forecast, rangeDays, weather }: any) {
 // ─── Pricing Sub-view ────────────────────────────────────────────────────────
 
 function PricingView({ forecast }: any) {
-  const pricingData = useMemo(() => {
-    if (forecast?.pricing_recommendations) return forecast.pricing_recommendations;
-    return [
-      { product: "Matcha Latte", current_margin: 78, suggested_price: 5.5, reason: "Marge onder target, stijgende inkoopkosten" },
-      { product: "Iced Specials", current_margin: 82, suggested_price: null, reason: "Zonnig weekend → +€0.50 opslag mogelijk" },
-      { product: "Croissant", current_margin: 65, suggested_price: 3.25, reason: "Lage marge, overweeg bundel-deal" },
-    ];
-  }, [forecast]);
-
-  const healthStatus = forecast?.overall_health || "good";
-  const avgMargin = forecast?.avg_margin || 76;
+  const pricingData = forecast?.pricing_recommendations || [
+    { product: "Matcha Latte", current_margin: 72, suggested_price: 5.5, reason: "Hoge vraag, ruimte voor prijsverhoging" },
+    { product: "Iced Matcha", current_margin: 68, suggested_price: 6.0, reason: "Weer-gevoelig premium product" },
+    { product: "Croissant", current_margin: 55, suggested_price: 3.5, reason: "Marktconforme prijs" },
+  ];
+  const health = forecast?.overall_health || "good";
+  const avgMargin = forecast?.avg_margin || 65;
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <Card className="rounded-2xl">
           <CardContent className="p-4">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Gemiddelde marge</div>
-            <div className="text-2xl font-bold">{avgMargin}%</div>
-            <Badge variant={healthStatus === "good" ? "default" : healthStatus === "warning" ? "outline" : "destructive"} className="text-[10px] mt-1">
-              {healthStatus === "good" ? "Gezond" : healthStatus === "warning" ? "Aandacht" : "Kritiek"}
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Gem. marge</div>
+            <div className="text-xl font-bold">{avgMargin}%</div>
+            <Badge variant={health === "good" ? "default" : health === "warning" ? "outline" : "destructive"} className="text-[10px] mt-1">
+              {health === "good" ? "Gezond" : health === "warning" ? "Let op" : "Kritiek"}
             </Badge>
           </CardContent>
         </Card>
         <Card className="rounded-2xl">
           <CardContent className="p-4">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Prijsadvies</div>
-            <div className="text-2xl font-bold">{pricingData.length}</div>
-            <span className="text-xs text-muted-foreground">aanbevelingen</span>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Producten geanalyseerd</div>
+            <div className="text-xl font-bold">{pricingData.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -860,7 +764,7 @@ function PricingView({ forecast }: any) {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-2.5 text-left font-medium">Product</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Huidige marge</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Marge</th>
                   <th className="px-4 py-2.5 text-right font-medium">Adviesprijs</th>
                   <th className="px-4 py-2.5 text-left font-medium">Reden</th>
                 </tr>
@@ -869,9 +773,9 @@ function PricingView({ forecast }: any) {
                 {pricingData.map((p: any, i: number) => (
                   <tr key={i} className="border-b hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-2.5 font-medium">{p.product}</td>
-                    <td className={cn("px-4 py-2.5 text-right font-bold", p.current_margin < 70 ? "text-destructive" : "text-green-600")}>{p.current_margin}%</td>
-                    <td className="px-4 py-2.5 text-right font-bold">{p.suggested_price ? euro(p.suggested_price) : "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{p.reason}</td>
+                    <td className="px-4 py-2.5 text-right">{p.current_margin}%</td>
+                    <td className="px-4 py-2.5 text-right font-bold">€{p.suggested_price?.toFixed(2)}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground text-xs">{p.reason}</td>
                   </tr>
                 ))}
               </tbody>
@@ -880,16 +784,16 @@ function PricingView({ forecast }: any) {
         </CardContent>
       </Card>
 
-      {forecast?.cost_alerts?.length > 0 && (
+      {forecast?.recommendations?.length > 0 && (
         <Card className="rounded-2xl">
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm flex items-center gap-1.5"><AlertTriangle className="h-4 w-4" /> Kosten Alerts</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-1.5"><Sparkles className="h-4 w-4" /> Prijsadvies</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0 space-y-2">
-            {forecast.cost_alerts.map((a: any, i: number) => (
-              <div key={i} className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm">
-                <div className="font-medium">{a.item}</div>
-                <div className="text-muted-foreground">{a.message}</div>
+            {forecast.recommendations.map((r: string, i: number) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>{r}</span>
               </div>
             ))}
           </CardContent>
@@ -898,5 +802,3 @@ function PricingView({ forecast }: any) {
     </div>
   );
 }
-
-export default AIForecastCenter;
