@@ -87,7 +87,7 @@ interface HourlyFact {
 export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void }) {
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("7d");
-  const [daily, setDaily] = useState<NormalizedDailyWeather[]>(getFallbackDaily);
+  const [daily, setDaily] = useState<NormalizedDailyWeather[]>([]);
   const [hourly, setHourly] = useState<NormalizedHourlyWeather[]>([]);
   const [currentWeather, setCurrentWeather] = useState<NormalizedCurrentWeather | null>(null);
   const [weatherSource, setWeatherSource] = useState<"live" | "fallback">("fallback");
@@ -376,31 +376,44 @@ function WeatherStrip({
           </div>
         </div>
 
-        {/* Daily strip */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {daily.slice(0, 10).map((w, i) => {
-            const isToday = w.date === todayStr;
-            return (
-              <div key={w.date || i} className={cn(
-                "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 text-center touch-manipulation transition-all",
-                isToday
-                  ? "bg-primary/10 border-2 border-primary shadow-md ring-2 ring-primary/20 scale-105"
-                  : "border border-border/40 bg-muted/30"
-              )}>
-                <span className={cn("text-[10px] font-medium", isToday ? "text-primary font-bold" : "text-muted-foreground")}>{isToday ? "Vandaag" : w.dayLabel}</span>
-                <span className="text-lg leading-none my-0.5">{w.icon}</span>
-                <span className={cn("text-xs font-bold", isToday && "text-primary")}>{isToday && currentWeather ? currentWeather.temperatureC : w.avgTempC}°</span>
-                <span className="text-[9px] text-muted-foreground">{w.minTempC}°/{w.maxTempC}°</span>
-                <span className={cn("text-[10px] font-semibold mt-0.5",
-                  w.impactScore > 0 ? "text-green-600" : w.impactScore < -3 ? "text-red-500" : "text-muted-foreground"
+        {/* Daily strip — only shown with live data */}
+        {daily.length === 0 && weatherLoading && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
+            <span className="text-sm text-muted-foreground">Weerdata ophalen...</span>
+          </div>
+        )}
+        {daily.length === 0 && !weatherLoading && weatherSource === "fallback" && (
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            Weerdata tijdelijk niet beschikbaar.
+          </div>
+        )}
+        {daily.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {daily.slice(0, 10).map((w, i) => {
+              const isToday = w.date === todayStr;
+              return (
+                <div key={w.date || i} className={cn(
+                  "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 text-center touch-manipulation transition-all",
+                  isToday
+                    ? "bg-primary/10 border-2 border-primary shadow-md ring-2 ring-primary/20 scale-105"
+                    : "border border-border/40 bg-muted/30"
                 )}>
-                  {w.impactScore > 0 ? "+" : ""}{w.impactScore}%
-                </span>
-                {w.confidence < 50 && <span className="text-[8px] text-muted-foreground">~</span>}
-              </div>
-            );
-          })}
-        </div>
+                  <span className={cn("text-[10px] font-medium", isToday ? "text-primary font-bold" : "text-muted-foreground")}>{isToday ? "Vandaag" : w.dayLabel}</span>
+                  <span className="text-lg leading-none my-0.5">{w.icon}</span>
+                  <span className={cn("text-xs font-bold", isToday && "text-primary")}>{isToday && currentWeather ? currentWeather.temperatureC : w.avgTempC}°</span>
+                  <span className="text-[9px] text-muted-foreground">{w.minTempC}°/{w.maxTempC}°</span>
+                  <span className={cn("text-[10px] font-semibold mt-0.5",
+                    w.impactScore > 0 ? "text-green-600" : w.impactScore < -3 ? "text-red-500" : "text-muted-foreground"
+                  )}>
+                    {w.impactScore > 0 ? "+" : ""}{w.impactScore}%
+                  </span>
+                  {w.confidence < 50 && <span className="text-[8px] text-muted-foreground">~</span>}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Hourly strip — only open hours, from now onwards */}
         {todayOpenHours.length > 0 && (
