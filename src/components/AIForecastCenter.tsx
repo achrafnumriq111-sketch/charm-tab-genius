@@ -74,7 +74,10 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         if (fnErr || !data?.success) throw new Error(data?.error || "WeatherKit fetch failed");
 
         if (data.daily?.length) {
-          setDaily(data.daily);
+          // Filter to today onwards (API may include yesterday)
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const filtered = data.daily.filter((d: any) => d.date >= todayStr);
+          setDaily(filtered.length > 0 ? filtered : data.daily);
           setWeatherSource("live");
         }
         if (data.hourly?.length) setHourly(data.hourly);
