@@ -294,14 +294,14 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
               const isToday = w.date === new Date().toISOString().slice(0, 10);
               return (
               <div key={i} className={cn(
-                "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 border text-center touch-manipulation",
+                "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 text-center touch-manipulation transition-all",
                 isToday
-                  ? "bg-primary/10 border-primary ring-2 ring-primary/30"
-                  : w.sunny ? "bg-amber-50/50 border-amber-200/50" : w.isRain ? "bg-blue-50/50 border-blue-200/50" : "bg-slate-50/50 border-slate-200/50"
+                  ? "bg-primary/10 border-2 border-primary shadow-md ring-2 ring-primary/20 scale-105"
+                  : "border border-border/40 bg-muted/30"
               )}>
                 <span className={cn("text-[10px] font-medium", isToday ? "text-primary font-bold" : "text-muted-foreground")}>{isToday ? "Vandaag" : w.dayLabel}</span>
                 <span className="text-lg leading-none my-0.5">{w.icon}</span>
-                <span className="text-xs font-bold">{w.avgTempC}°</span>
+                <span className={cn("text-xs font-bold", isToday && "text-primary")}>{w.avgTempC}°</span>
                 <span className="text-[9px] text-muted-foreground">{w.minTempC}°/{w.maxTempC}°</span>
                 <span className={cn("text-[10px] font-semibold mt-0.5",
                   w.impactScore > 0 ? "text-green-600" : w.impactScore < -3 ? "text-red-500" : "text-muted-foreground"
