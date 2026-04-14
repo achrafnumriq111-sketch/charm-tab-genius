@@ -290,10 +290,14 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {daily.slice(0, 10).map((w, i) => (
+            {daily.slice(0, 10).map((w, i) => {
+              const isToday = w.date === new Date().toISOString().slice(0, 10);
+              return (
               <div key={i} className={cn(
                 "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 border text-center touch-manipulation",
-                w.sunny ? "bg-amber-50/50 border-amber-200/50" : w.isRain ? "bg-blue-50/50 border-blue-200/50" : "bg-slate-50/50 border-slate-200/50"
+                isToday
+                  ? "bg-primary/10 border-primary ring-2 ring-primary/30"
+                  : w.sunny ? "bg-amber-50/50 border-amber-200/50" : w.isRain ? "bg-blue-50/50 border-blue-200/50" : "bg-slate-50/50 border-slate-200/50"
               )}>
                 <span className="text-[10px] font-medium text-muted-foreground">{w.dayLabel}</span>
                 <span className="text-lg leading-none my-0.5">{w.icon}</span>
