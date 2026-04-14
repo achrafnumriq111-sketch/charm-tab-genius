@@ -308,26 +308,43 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         </Card>
       )}
 
-      {/* Weather Strip — Apple WeatherKit powered */}
+      {/* Weather Strip — LIVE Apple WeatherKit */}
       <Card className="rounded-2xl">
         <CardContent className="p-3">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <Cloud className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Weer & Impact</span>
-            <Badge variant={weatherSource === "live" ? "default" : "outline"} className="text-[10px] h-5">
-              {weatherSource === "live" ? "🟢 Apple WeatherKit" : "⚪ Fallback"}
+            <Badge variant={weatherSource === "live" ? "default" : "outline"} className="text-[10px] h-5 gap-1">
+              {weatherSource === "live" && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>}
+              {weatherSource === "live" ? "Live — WeatherKit" : "⚪ Fallback"}
             </Badge>
-            {currentWeather && (
-              <span className="text-xs text-muted-foreground ml-auto">
-                Nu: {currentWeather.temperatureC}° {currentWeather.conditionLabel} — {currentWeather.city}
+            {weatherLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            <div className="ml-auto flex items-center gap-2">
+              {currentWeather && (
+                <span className="text-xs text-muted-foreground">
+                  {currentWeather.icon} {currentWeather.temperatureC}° {currentWeather.conditionLabel} — {currentWeather.city}
+                </span>
+              )}
+              <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+                {formatAmsterdamTime(liveTime)}
               </span>
-            )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 touch-manipulation"
+                onClick={() => fetchWeather()}
+                disabled={weatherLoading}
+              >
+                <RefreshCw className={cn("h-3 w-3", weatherLoading && "animate-spin")} />
+              </Button>
+            </div>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {daily.slice(0, 10).map((w, i) => {
-              const isToday = w.date === new Date().toISOString().slice(0, 10);
+              const todayStr = getAmsterdamDateStr();
+              const isToday = w.date === todayStr;
               return (
-              <div key={i} className={cn(
+              <div key={w.date || i} className={cn(
                 "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 text-center touch-manipulation transition-all",
                 isToday
                   ? "bg-primary/10 border-2 border-primary shadow-md ring-2 ring-primary/20 scale-105"
@@ -335,7 +352,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
               )}>
                 <span className={cn("text-[10px] font-medium", isToday ? "text-primary font-bold" : "text-muted-foreground")}>{isToday ? "Vandaag" : w.dayLabel}</span>
                 <span className="text-lg leading-none my-0.5">{w.icon}</span>
-                <span className={cn("text-xs font-bold", isToday && "text-primary")}>{w.avgTempC}°</span>
+                <span className={cn("text-xs font-bold", isToday && "text-primary")}>{isToday && currentWeather ? currentWeather.temperatureC : w.avgTempC}°</span>
                 <span className="text-[9px] text-muted-foreground">{w.minTempC}°/{w.maxTempC}°</span>
                 <span className={cn("text-[10px] font-semibold mt-0.5",
                   w.impactScore > 0 ? "text-green-600" : w.impactScore < -3 ? "text-red-500" : "text-muted-foreground"
@@ -349,24 +366,55 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
               );
             })}
           </div>
-          {/* Hourly mini-strip for today */}
-          {hourly.length > 0 && (
+          {/* Hourly strip for today — current hour highlighted */}
+          {hourly.length > 0 && (() => {
+            const todayStr = getAmsterdamDateStr();
+            const currentHour = getAmsterdamHour();
+            const todayHours = hourly.filter(h => h.date === todayStr && h.localHour >= 7 && h.localHour <= 22);
+            if (todayHours.length === 0) return null;
+            return (
             <div className="mt-2 pt-2 border-t border-border/50">
-              <span className="text-[10px] font-medium text-muted-foreground mb-1 block">Vandaag per uur</span>
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-[10px] font-medium text-muted-foreground">Vandaag per uur</span>
+                {lastUpdated && (
+                  <span className="text-[9px] text-muted-foreground/60 ml-auto">
+                    Bijgewerkt {formatAmsterdamTime(lastUpdated)}
+                  </span>
+                )}
+              </div>
               <div className="flex gap-1 overflow-x-auto pb-1">
-                {hourly.filter(h => h.date === new Date().toISOString().slice(0, 10) && h.localHour >= 8 && h.localHour <= 20).map((h, i) => (
-                  <div key={i} className="flex flex-col items-center min-w-[36px] text-center">
-                    <span className="text-[9px] text-muted-foreground">{h.localHour}:00</span>
+                {todayHours.map((h, i) => {
+                  const isCurrent = h.localHour === currentHour;
+                  const isPast = h.localHour < currentHour;
+                  return (
+                  <div key={h.localHour} className={cn(
+                    "flex flex-col items-center min-w-[40px] text-center rounded-lg px-1 py-1 transition-all",
+                    isCurrent
+                      ? "bg-primary/10 border border-primary/40 ring-1 ring-primary/20"
+                      : isPast ? "opacity-50" : ""
+                  )}>
+                    <span className={cn("text-[9px]", isCurrent ? "text-primary font-bold" : "text-muted-foreground")}>
+                      {isCurrent ? "Nu" : `${h.localHour}:00`}
+                    </span>
                     <span className="text-xs">{h.icon}</span>
-                    <span className="text-[10px] font-medium">{h.temperatureC}°</span>
+                    <span className={cn("text-[10px] font-medium", isCurrent && "text-primary font-bold")}>{h.temperatureC}°</span>
                     {h.precipitationChance > 30 && (
-                      <span className="text-[8px] text-blue-500">{h.precipitationChance}%</span>
+                      <span className="text-[8px] text-blue-500 flex items-center gap-0.5">
+                        <Droplets className="h-2 w-2" />{h.precipitationChance}%
+                      </span>
+                    )}
+                    {(h as any).windSpeed > 25 && (
+                      <span className="text-[8px] text-muted-foreground flex items-center gap-0.5">
+                        <Wind className="h-2 w-2" />{(h as any).windSpeed}
+                      </span>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
-          )}
+            );
+          })()}
         </CardContent>
       </Card>
 
