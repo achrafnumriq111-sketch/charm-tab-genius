@@ -273,7 +273,7 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
               return (
                 <div key={w.date || i} className={cn(
                   "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 text-center transition-all",
-                  isToday ? "bg-primary/10 border-2 border-primary shadow-md ring-2 ring-primary/20 scale-105" : "border border-border/40 bg-muted/30"
+                  isToday ? "bg-card border border-foreground/20 shadow-sm" : "border border-border/40 bg-muted/30"
                 )}>
                   <span className={cn("text-[10px] font-medium", isToday ? "text-primary font-bold" : "text-muted-foreground")}>{isToday ? "Vandaag" : w.dayLabel}</span>
                   <span className="text-lg leading-none my-0.5">{w.icon}</span>
