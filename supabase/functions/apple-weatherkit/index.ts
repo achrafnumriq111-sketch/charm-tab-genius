@@ -179,15 +179,21 @@ function normalizeDaily(raw: any): any[] {
 
   return raw.forecastDaily.days.map((d: any) => {
     const dt = new Date(d.forecastStart);
-    const dayOfWeek = dt.getDay();
+    const ams = toAmsterdam(dt);
+    const dayOfWeek = ams.dayOfWeek;
     const condCode = d.conditionCode;
     const sunny = isSunnyCode(condCode);
     const isRain = isRainCode(condCode);
     const isStorm = isStormCode(condCode);
     const avgTemp = round1(((d.temperatureMax ?? 0) + (d.temperatureMin ?? 0)) / 2);
 
+    // WeatherKit daily: daytimeForecast has cloudCover, restOfDayForecast etc.
+    const dtForecast = d.daytimeForecast || {};
+    const cloudCover = round1(((dtForecast.cloudCover ?? d.cloudCover ?? 0)) * 100);
+    const humidity = round1(((dtForecast.humidity ?? d.humidity ?? 0)) * 100);
+
     return {
-      date: toDateStr(dt),
+      date: ams.dateStr,
       dayLabel: DAY_NAMES[dayOfWeek],
       dayOfWeek,
       conditionCode: condCode,
@@ -197,11 +203,11 @@ function normalizeDaily(raw: any): any[] {
       maxTempC: round1(d.temperatureMax),
       avgTempC: avgTemp,
       precipitationChance: round1((d.precipitationChance ?? 0) * 100),
-      humidity: round1((d.humidity ?? 0) * 100),
+      humidity,
       windSpeed: round1(d.windSpeedMax ?? d.windSpeedAvg ?? 0),
-      cloudCover: round1((d.cloudCover ?? 0) * 100),
-      pressure: round1(d.pressure ?? 0),
-      visibility: round1(d.visibility ?? 0),
+      cloudCover,
+      pressure: round1(dtForecast.pressure ?? d.pressure ?? 0),
+      visibility: round1(dtForecast.visibility ?? d.visibility ?? 0),
       uvIndex: d.maxUvIndex ?? d.uvIndex ?? 0,
       sunrise: d.sunrise,
       sunset: d.sunset,
