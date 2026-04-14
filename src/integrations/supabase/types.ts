@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_daily_facts: {
+        Row: {
+          avg_order_value: number
+          card_revenue: number | null
+          cash_revenue: number | null
+          created_at: string
+          date: string
+          discount_total: number | null
+          holiday_name: string | null
+          id: string
+          is_holiday: boolean | null
+          labor_cost: number | null
+          labor_hours: number | null
+          month: number
+          omzet: number
+          orders_count: number
+          refund_total: number | null
+          season: string
+          updated_at: string
+          week_number: number
+          weekday: number
+        }
+        Insert: {
+          avg_order_value?: number
+          card_revenue?: number | null
+          cash_revenue?: number | null
+          created_at?: string
+          date: string
+          discount_total?: number | null
+          holiday_name?: string | null
+          id?: string
+          is_holiday?: boolean | null
+          labor_cost?: number | null
+          labor_hours?: number | null
+          month?: number
+          omzet?: number
+          orders_count?: number
+          refund_total?: number | null
+          season?: string
+          updated_at?: string
+          week_number?: number
+          weekday?: number
+        }
+        Update: {
+          avg_order_value?: number
+          card_revenue?: number | null
+          cash_revenue?: number | null
+          created_at?: string
+          date?: string
+          discount_total?: number | null
+          holiday_name?: string | null
+          id?: string
+          is_holiday?: boolean | null
+          labor_cost?: number | null
+          labor_hours?: number | null
+          month?: number
+          omzet?: number
+          orders_count?: number
+          refund_total?: number | null
+          season?: string
+          updated_at?: string
+          week_number?: number
+          weekday?: number
+        }
+        Relationships: []
+      }
+      business_hourly_facts: {
+        Row: {
+          avg_order_value: number
+          created_at: string
+          date: string
+          id: string
+          is_peak: boolean | null
+          is_weekend: boolean | null
+          labor_cost: number | null
+          local_hour: number
+          omzet: number
+          orders_count: number
+          staff_count: number | null
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          avg_order_value?: number
+          created_at?: string
+          date: string
+          id?: string
+          is_peak?: boolean | null
+          is_weekend?: boolean | null
+          labor_cost?: number | null
+          local_hour: number
+          omzet?: number
+          orders_count?: number
+          staff_count?: number | null
+          updated_at?: string
+          weekday?: number
+        }
+        Update: {
+          avg_order_value?: number
+          created_at?: string
+          date?: string
+          id?: string
+          is_peak?: boolean | null
+          is_weekend?: boolean | null
+          labor_cost?: number | null
+          local_hour?: number
+          omzet?: number
+          orders_count?: number
+          staff_count?: number | null
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       cash_closings: {
         Row: {
           closing_date: string
@@ -71,6 +185,48 @@ export type Database = {
           second_checker_id?: string
           second_checker_name?: string
           status?: string
+        }
+        Relationships: []
+      }
+      forecast_learning_metrics: {
+        Row: {
+          absolute_error: number | null
+          actual_value: number | null
+          confidence: number
+          contributing_signals: Json | null
+          created_at: string
+          forecast_date: string
+          forecast_target: string
+          id: string
+          model_scope: string
+          percent_error: number | null
+          predicted_value: number
+        }
+        Insert: {
+          absolute_error?: number | null
+          actual_value?: number | null
+          confidence?: number
+          contributing_signals?: Json | null
+          created_at?: string
+          forecast_date: string
+          forecast_target?: string
+          id?: string
+          model_scope?: string
+          percent_error?: number | null
+          predicted_value?: number
+        }
+        Update: {
+          absolute_error?: number | null
+          actual_value?: number | null
+          confidence?: number
+          contributing_signals?: Json | null
+          created_at?: string
+          forecast_date?: string
+          forecast_target?: string
+          id?: string
+          model_scope?: string
+          percent_error?: number | null
+          predicted_value?: number
         }
         Relationships: []
       }
@@ -498,6 +654,204 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      weather_business_correlations: {
+        Row: {
+          avg_omzet: number | null
+          avg_orders: number | null
+          category: string
+          confidence_score: number
+          created_at: string
+          id: string
+          last_updated: string
+          metadata: Json | null
+          pattern_key: string
+          sample_size: number
+          scope: string
+          uplift_percent: number
+        }
+        Insert: {
+          avg_omzet?: number | null
+          avg_orders?: number | null
+          category?: string
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          last_updated?: string
+          metadata?: Json | null
+          pattern_key: string
+          sample_size?: number
+          scope?: string
+          uplift_percent?: number
+        }
+        Update: {
+          avg_omzet?: number | null
+          avg_orders?: number | null
+          category?: string
+          confidence_score?: number
+          created_at?: string
+          id?: string
+          last_updated?: string
+          metadata?: Json | null
+          pattern_key?: string
+          sample_size?: number
+          scope?: string
+          uplift_percent?: number
+        }
+        Relationships: []
+      }
+      weather_daily_observations: {
+        Row: {
+          avg_temp_c: number | null
+          cloud_cover: number | null
+          condition_code: string | null
+          condition_label: string | null
+          created_at: string
+          date: string
+          humidity: number | null
+          id: string
+          is_rain: boolean | null
+          is_severe: boolean | null
+          is_storm: boolean | null
+          location_key: string
+          max_temp_c: number | null
+          min_temp_c: number | null
+          precipitation_chance: number | null
+          pressure: number | null
+          raw_payload: Json | null
+          source: string
+          sunrise_time: string | null
+          sunset_time: string | null
+          updated_at: string
+          uv_index: number | null
+          visibility: number | null
+          wind_speed: number | null
+        }
+        Insert: {
+          avg_temp_c?: number | null
+          cloud_cover?: number | null
+          condition_code?: string | null
+          condition_label?: string | null
+          created_at?: string
+          date: string
+          humidity?: number | null
+          id?: string
+          is_rain?: boolean | null
+          is_severe?: boolean | null
+          is_storm?: boolean | null
+          location_key?: string
+          max_temp_c?: number | null
+          min_temp_c?: number | null
+          precipitation_chance?: number | null
+          pressure?: number | null
+          raw_payload?: Json | null
+          source?: string
+          sunrise_time?: string | null
+          sunset_time?: string | null
+          updated_at?: string
+          uv_index?: number | null
+          visibility?: number | null
+          wind_speed?: number | null
+        }
+        Update: {
+          avg_temp_c?: number | null
+          cloud_cover?: number | null
+          condition_code?: string | null
+          condition_label?: string | null
+          created_at?: string
+          date?: string
+          humidity?: number | null
+          id?: string
+          is_rain?: boolean | null
+          is_severe?: boolean | null
+          is_storm?: boolean | null
+          location_key?: string
+          max_temp_c?: number | null
+          min_temp_c?: number | null
+          precipitation_chance?: number | null
+          pressure?: number | null
+          raw_payload?: Json | null
+          source?: string
+          sunrise_time?: string | null
+          sunset_time?: string | null
+          updated_at?: string
+          uv_index?: number | null
+          visibility?: number | null
+          wind_speed?: number | null
+        }
+        Relationships: []
+      }
+      weather_hourly_observations: {
+        Row: {
+          cloud_cover: number | null
+          condition_code: string | null
+          condition_label: string | null
+          created_at: string
+          date: string
+          datetime_hour: string
+          feels_like_c: number | null
+          humidity: number | null
+          id: string
+          is_daylight: boolean | null
+          local_hour: number
+          location_key: string
+          precipitation_chance: number | null
+          precipitation_intensity: number | null
+          pressure: number | null
+          raw_payload: Json | null
+          temperature_c: number | null
+          updated_at: string
+          uv_index: number | null
+          visibility: number | null
+          wind_speed: number | null
+        }
+        Insert: {
+          cloud_cover?: number | null
+          condition_code?: string | null
+          condition_label?: string | null
+          created_at?: string
+          date: string
+          datetime_hour: string
+          feels_like_c?: number | null
+          humidity?: number | null
+          id?: string
+          is_daylight?: boolean | null
+          local_hour: number
+          location_key?: string
+          precipitation_chance?: number | null
+          precipitation_intensity?: number | null
+          pressure?: number | null
+          raw_payload?: Json | null
+          temperature_c?: number | null
+          updated_at?: string
+          uv_index?: number | null
+          visibility?: number | null
+          wind_speed?: number | null
+        }
+        Update: {
+          cloud_cover?: number | null
+          condition_code?: string | null
+          condition_label?: string | null
+          created_at?: string
+          date?: string
+          datetime_hour?: string
+          feels_like_c?: number | null
+          humidity?: number | null
+          id?: string
+          is_daylight?: boolean | null
+          local_hour?: number
+          location_key?: string
+          precipitation_chance?: number | null
+          precipitation_intensity?: number | null
+          pressure?: number | null
+          raw_payload?: Json | null
+          temperature_c?: number | null
+          updated_at?: string
+          uv_index?: number | null
+          visibility?: number | null
+          wind_speed?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
