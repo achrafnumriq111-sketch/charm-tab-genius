@@ -299,11 +299,11 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
                 return (
                   <div key={h.localHour} className={cn(
                     "flex flex-col items-center min-w-[40px] text-center rounded-lg px-1 py-1 transition-all",
-                    isCurrent ? "bg-primary/10 border border-primary/40 ring-1 ring-primary/20" : ""
+                    isCurrent ? "bg-card border border-foreground/20 shadow-sm" : ""
                   )}>
-                    <span className={cn("text-[9px]", isCurrent ? "text-primary font-bold" : "text-muted-foreground")}>{isCurrent ? "Nu" : `${h.localHour}:00`}</span>
+                    <span className={cn("text-[9px]", isCurrent ? "text-foreground font-semibold" : "text-muted-foreground")}>{isCurrent ? "Nu" : `${h.localHour}:00`}</span>
                     <span className="text-xs">{h.icon}</span>
-                    <span className={cn("text-[10px] font-medium", isCurrent && "text-primary font-bold")}>{h.temperatureC}°</span>
+                    <span className={cn("text-[10px] font-medium")}>{h.temperatureC}°</span>
                     {h.precipitationChance > 30 && <span className="text-[8px] text-blue-500 flex items-center gap-0.5"><Droplets className="h-2 w-2" />{h.precipitationChance}%</span>}
                   </div>
                 );
