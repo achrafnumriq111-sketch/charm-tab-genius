@@ -2314,31 +2314,124 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
 
 // ─── ACTIVITY / ORDER HISTORY ────────────────────────────────────────────────
 
-function ActivityView({ orders }: any) {
+function ActivityView({ orders, employees }: any) {
   const [search, setSearch] = useState("");
   const [receiptOrder, setReceiptOrder] = useState(null);
+  const [filterEmployee, setFilterEmployee] = useState("all");
+  const [dateMode, setDateMode] = useState<"all" | "today" | "week" | "custom">("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
-  const filtered = orders.filter((o) =>
-    o.id.toLowerCase().includes(search.toLowerCase()) ||
-    (o.customerName || "").toLowerCase().includes(search.toLowerCase())
-  ).reverse();
+  const filtered = useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfToday);
+    startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7)); // Monday
+
+    return orders.filter((o: any) => {
+      // Employee filter
+      if (filterEmployee !== "all" && o.employeeId !== filterEmployee) return false;
+
+      // Date filter
+      const d = o.date instanceof Date ? o.date : new Date(o.date);
+      if (dateMode === "today" && d < startOfToday) return false;
+      if (dateMode === "week" && d < startOfWeek) return false;
+      if (dateMode === "custom") {
+        if (customFrom && d < new Date(customFrom + "T00:00:00")) return false;
+        if (customTo && d > new Date(customTo + "T23:59:59")) return false;
+      }
+
+      // Search filter
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          !o.id.toLowerCase().includes(q) &&
+          !(o.customerName || "").toLowerCase().includes(q) &&
+          !(o.employeeName || "").toLowerCase().includes(q)
+        ) return false;
+      }
+
+      return true;
+    }).reverse();
+  }, [orders, filterEmployee, dateMode, customFrom, customTo, search]);
+
+  const totalRevenue = filtered.reduce((s: number, o: any) => s + (o.total || 0), 0);
+
+  // Derive unique employees from orders for the dropdown
+  const employeeOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    orders.forEach((o: any) => {
+      if (o.employeeId && o.employeeName) map.set(o.employeeId, o.employeeName);
+    });
+    // Also add from employees prop
+    (employees || []).forEach((e: any) => map.set(e.id, e.name));
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [orders, employees]);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      {/* Filters row */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search orders..." className="pl-9" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Zoek order, klant, medewerker..." className="pl-9 h-11 rounded-xl" />
         </div>
-        <Badge variant="secondary">{orders.length} orders</Badge>
+
+        {/* Employee filter */}
+        <select
+          value={filterEmployee}
+          onChange={(e) => setFilterEmployee(e.target.value)}
+          className="h-11 min-w-[160px] rounded-xl border border-white/80 bg-white/70 backdrop-blur-lg px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-200"
+        >
+          <option value="all">Alle medewerkers</option>
+          {employeeOptions.map(([id, name]) => (
+            <option key={id} value={id}>{name}</option>
+          ))}
+        </select>
+
+        {/* Date mode pills */}
+        <div className="flex items-center gap-1 rounded-xl border border-white/80 bg-white/70 backdrop-blur-lg p-1 shadow-sm">
+          {([["all", "Alles"], ["today", "Vandaag"], ["week", "Week"], ["custom", "Custom"]] as const).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setDateMode(key)}
+              className={clsx(
+                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all",
+                dateMode === key
+                  ? "bg-gradient-to-b from-violet-500 to-indigo-500 text-white shadow-md"
+                  : "text-slate-600 hover:bg-white/80"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Custom date inputs */}
+        {dateMode === "custom" && (
+          <div className="flex items-center gap-1.5">
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-11 rounded-xl w-[140px] text-xs" />
+            <span className="text-xs text-slate-400">→</span>
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-11 rounded-xl w-[140px] text-xs" />
+          </div>
+        )}
+
+        {/* Summary badges */}
+        <div className="flex items-center gap-2 ml-auto">
+          <Badge variant="secondary" className="rounded-lg">{filtered.length} orders</Badge>
+          <Badge className="rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0">{euro(totalRevenue)}</Badge>
+        </div>
       </div>
+
+      {/* Orders list */}
       <Card className="rounded-2xl">
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="text-center text-muted-foreground py-12">No orders found.</div>
+            <div className="text-center text-muted-foreground py-12">Geen orders gevonden.</div>
           ) : (
             <div className="divide-y">
-              {filtered.map((order) => (
+              {filtered.map((order: any) => (
                 <div key={order.id} className="flex items-center justify-between p-4 hover:bg-neutral-50 transition cursor-pointer" onClick={() => setReceiptOrder(order)}>
                   <div className="flex items-center gap-4">
                     <div>
@@ -2349,6 +2442,9 @@ function ActivityView({ orders }: any) {
                       <div className="text-sm">{order.customerName || "Walk-in"}</div>
                       <div className="text-xs text-muted-foreground">{order.items.length} item{order.items.length !== 1 ? "s" : ""}</div>
                     </div>
+                    {order.employeeName && (
+                      <Badge variant="outline" className="text-[10px] rounded-full">{order.employeeName.split(" ")[0]}</Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className="capitalize text-xs">{order.method}</Badge>
@@ -5704,7 +5800,7 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
-            {active === "activity" && <ActivityView orders={orders} />}
+            {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
             {(active === "inventory" || active === "intake") && (
