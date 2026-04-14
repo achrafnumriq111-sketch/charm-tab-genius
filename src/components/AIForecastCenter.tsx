@@ -290,12 +290,16 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             )}
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {daily.slice(0, 10).map((w, i) => (
+            {daily.slice(0, 10).map((w, i) => {
+              const isToday = w.date === new Date().toISOString().slice(0, 10);
+              return (
               <div key={i} className={cn(
                 "flex flex-col items-center min-w-[60px] rounded-xl px-2 py-2 border text-center touch-manipulation",
-                w.sunny ? "bg-amber-50/50 border-amber-200/50" : w.isRain ? "bg-blue-50/50 border-blue-200/50" : "bg-slate-50/50 border-slate-200/50"
+                isToday
+                  ? "bg-primary/10 border-primary ring-2 ring-primary/30"
+                  : w.sunny ? "bg-amber-50/50 border-amber-200/50" : w.isRain ? "bg-blue-50/50 border-blue-200/50" : "bg-slate-50/50 border-slate-200/50"
               )}>
-                <span className="text-[10px] font-medium text-muted-foreground">{w.dayLabel}</span>
+                <span className={cn("text-[10px] font-medium", isToday ? "text-primary font-bold" : "text-muted-foreground")}>{isToday ? "Vandaag" : w.dayLabel}</span>
                 <span className="text-lg leading-none my-0.5">{w.icon}</span>
                 <span className="text-xs font-bold">{w.avgTempC}°</span>
                 <span className="text-[9px] text-muted-foreground">{w.minTempC}°/{w.maxTempC}°</span>
@@ -308,7 +312,8 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
                   <span className="text-[8px] text-muted-foreground">~</span>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
           {/* Hourly mini-strip for today */}
           {hourly.length > 0 && (
