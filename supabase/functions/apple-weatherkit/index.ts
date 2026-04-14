@@ -360,6 +360,24 @@ function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Convert a UTC Date to Amsterdam local date/time components */
+function toAmsterdam(utcDate: Date): { dateStr: string; hour: number; dayOfWeek: number } {
+  // Use Intl to get Amsterdam local time parts
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "numeric", hour12: false, weekday: "short",
+  }).formatToParts(utcDate);
+
+  const get = (type: string) => parts.find(p => p.type === type)?.value || "";
+  const dateStr = `${get("year")}-${get("month")}-${get("day")}`;
+  const hour = parseInt(get("hour")) || 0;
+  const weekdayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const dayOfWeek = weekdayMap[get("weekday")] ?? utcDate.getDay();
+
+  return { dateStr, hour, dayOfWeek };
+}
+
 // ─── Main handler ────────────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
