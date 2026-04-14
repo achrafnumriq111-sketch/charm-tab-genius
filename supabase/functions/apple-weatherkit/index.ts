@@ -63,7 +63,21 @@ async function generateWeatherKitJWT(): Promise<string> {
     throw new Error("Apple WeatherKit credentials not configured");
   }
 
-  const privateKey = await jose.importPKCS8(privateKeyPem, "ES256");
+  // Reconstruct PEM format: secrets storage may flatten newlines
+  let pem = privateKeyPem.trim();
+  // If newlines were replaced by spaces or literal \n, fix them
+  if (!pem.includes("\n")) {
+    pem = pem
+      .replace(/-----BEGIN PRIVATE KEY-----\s*/, "-----BEGIN PRIVATE KEY-----\n")
+      .replace(/\s*-----END PRIVATE KEY-----/, "\n-----END PRIVATE KEY-----")
+      .replace(/-----BEGIN PRIVATE KEY-----\n(.+)\n-----END PRIVATE KEY-----/, (_, body) => {
+        const cleaned = body.replace(/\s+/g, "");
+        const lines = cleaned.match(/.{1,64}/g) || [];
+        return `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----`;
+      });
+  }
+
+  const privateKey = await jose.importPKCS8(pem, "ES256");
 
   const now = Math.floor(Date.now() / 1000);
   const jwt = await new jose.SignJWT({})
