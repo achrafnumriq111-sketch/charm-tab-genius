@@ -87,7 +87,7 @@ interface HourlyFact {
 export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void }) {
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("7d");
-  const [daily, setDaily] = useState<NormalizedDailyWeather[]>(getFallbackDaily);
+  const [daily, setDaily] = useState<NormalizedDailyWeather[]>([]);
   const [hourly, setHourly] = useState<NormalizedHourlyWeather[]>([]);
   const [currentWeather, setCurrentWeather] = useState<NormalizedCurrentWeather | null>(null);
   const [weatherSource, setWeatherSource] = useState<"live" | "fallback">("fallback");
