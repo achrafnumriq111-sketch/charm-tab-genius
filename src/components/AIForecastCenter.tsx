@@ -74,7 +74,10 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         if (fnErr || !data?.success) throw new Error(data?.error || "WeatherKit fetch failed");
 
         if (data.daily?.length) {
-          setDaily(data.daily);
+          // Filter to today onwards (API may include yesterday)
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const filtered = data.daily.filter((d: any) => d.date >= todayStr);
+          setDaily(filtered.length > 0 ? filtered : data.daily);
           setWeatherSource("live");
         }
         if (data.hourly?.length) setHourly(data.hourly);
@@ -312,7 +315,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             <div className="mt-2 pt-2 border-t border-border/50">
               <span className="text-[10px] font-medium text-muted-foreground mb-1 block">Vandaag per uur</span>
               <div className="flex gap-1 overflow-x-auto pb-1">
-                {hourly.filter(h => h.date === daily[0]?.date && h.localHour >= 8 && h.localHour <= 20).map((h, i) => (
+                {hourly.filter(h => h.date === new Date().toISOString().slice(0, 10) && h.localHour >= 8 && h.localHour <= 20).map((h, i) => (
                   <div key={i} className="flex flex-col items-center min-w-[36px] text-center">
                     <span className="text-[9px] text-muted-foreground">{h.localHour}:00</span>
                     <span className="text-xs">{h.icon}</span>

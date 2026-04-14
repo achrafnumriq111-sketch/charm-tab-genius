@@ -149,10 +149,12 @@ function normalizeHourly(raw: any): any[] {
   if (!raw?.forecastHourly?.hours) return [];
   return raw.forecastHourly.hours.map((h: any) => {
     const dt = new Date(h.forecastStart);
+    // Convert to Amsterdam local time (CET/CEST)
+    const ams = toAmsterdam(dt);
     return {
       datetime: h.forecastStart,
-      localHour: dt.getHours(),
-      date: toDateStr(dt),
+      localHour: ams.hour,
+      date: ams.dateStr,
       conditionCode: h.conditionCode,
       conditionLabel: getLabel(h.conditionCode),
       icon: getIcon(h.conditionCode),
@@ -177,15 +179,21 @@ function normalizeDaily(raw: any): any[] {
 
   return raw.forecastDaily.days.map((d: any) => {
     const dt = new Date(d.forecastStart);
-    const dayOfWeek = dt.getDay();
+    const ams = toAmsterdam(dt);
+    const dayOfWeek = ams.dayOfWeek;
     const condCode = d.conditionCode;
     const sunny = isSunnyCode(condCode);
     const isRain = isRainCode(condCode);
     const isStorm = isStormCode(condCode);
     const avgTemp = round1(((d.temperatureMax ?? 0) + (d.temperatureMin ?? 0)) / 2);
 
+    // WeatherKit daily: daytimeForecast has cloudCover, restOfDayForecast etc.
+    const dtForecast = d.daytimeForecast || {};
+    const cloudCover = round1(((dtForecast.cloudCover ?? d.cloudCover ?? 0)) * 100);
+    const humidity = round1(((dtForecast.humidity ?? d.humidity ?? 0)) * 100);
+
     return {
-      date: toDateStr(dt),
+      date: ams.dateStr,
       dayLabel: DAY_NAMES[dayOfWeek],
       dayOfWeek,
       conditionCode: condCode,
@@ -195,11 +203,11 @@ function normalizeDaily(raw: any): any[] {
       maxTempC: round1(d.temperatureMax),
       avgTempC: avgTemp,
       precipitationChance: round1((d.precipitationChance ?? 0) * 100),
-      humidity: round1((d.humidity ?? 0) * 100),
+      humidity,
       windSpeed: round1(d.windSpeedMax ?? d.windSpeedAvg ?? 0),
-      cloudCover: round1((d.cloudCover ?? 0) * 100),
-      pressure: round1(d.pressure ?? 0),
-      visibility: round1(d.visibility ?? 0),
+      cloudCover,
+      pressure: round1(dtForecast.pressure ?? d.pressure ?? 0),
+      visibility: round1(dtForecast.visibility ?? d.visibility ?? 0),
       uvIndex: d.maxUvIndex ?? d.uvIndex ?? 0,
       sunrise: d.sunrise,
       sunset: d.sunset,
@@ -350,6 +358,24 @@ function round1(n: number): number {
 }
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Convert a UTC Date to Amsterdam local date/time components */
+function toAmsterdam(utcDate: Date): { dateStr: string; hour: number; dayOfWeek: number } {
+  // Use Intl to get Amsterdam local time parts
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "numeric", hour12: false, weekday: "short",
+  }).formatToParts(utcDate);
+
+  const get = (type: string) => parts.find(p => p.type === type)?.value || "";
+  const dateStr = `${get("year")}-${get("month")}-${get("day")}`;
+  const hour = parseInt(get("hour")) || 0;
+  const weekdayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const dayOfWeek = weekdayMap[get("weekday")] ?? utcDate.getDay();
+
+  return { dateStr, hour, dayOfWeek };
 }
 
 // ─── Main handler ────────────────────────────────────────────────────────────
