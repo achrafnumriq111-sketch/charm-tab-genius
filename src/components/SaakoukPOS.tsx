@@ -5470,6 +5470,7 @@ export default function SaakoukPOS() {
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers();
+  const upsellEngine = useUpsellEngine(products);
   const [tables, setTables] = useState(() => {
     const saved = localStorage.getItem("saakouk_tables");
     return saved ? JSON.parse(saved) : initialTables;
