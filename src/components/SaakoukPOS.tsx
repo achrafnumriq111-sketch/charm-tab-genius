@@ -5827,6 +5827,7 @@ export default function SaakoukPOS() {
 
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
+    multilocatie: "Multi-Locatie Overzicht",
     pos: "Point of Sale",
     prepstation: "Prepstation",
     cashclose: "Kassa Afsluiting",
