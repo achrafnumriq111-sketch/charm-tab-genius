@@ -951,12 +951,20 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     setTicket((prev) => ({ ...prev, cart: typeof updater === "function" ? updater(prev.cart) : updater }));
   }
 
-  function addLine(item) {
+  function addLine(item, triggerProduct?: any) {
     setCart((prev) => {
       const existing = prev.find((x) => x.productId === item.productId && JSON.stringify(x.modifiers) === JSON.stringify(item.modifiers) && (x.notes || "") === (item.notes || ""));
       if (!existing) return [...prev, item];
       return prev.map((x) => (x.lineId === existing.lineId ? { ...x, qty: x.qty + item.qty } : x));
     });
+    // Check for upsell after adding
+    if (triggerProduct) {
+      const suggestion = upsell.getSuggestion(triggerProduct, [...cart, item]);
+      if (suggestion) {
+        upsell.trackImpression(suggestion.rule.id);
+        setUpsellSuggestion(suggestion);
+      }
+    }
   }
 
   function quickAdd(product) {
@@ -965,8 +973,33 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       addLog?.("product_selected", `Product geselecteerd met modifiers: ${product.name}`);
       return;
     }
-    addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] });
+    const item = { lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] };
+    addLine(item, product);
     addLog?.("item_added_to_cart", `Product toegevoegd aan ticket: ${product.name} (${euro(product.price)})`);
+  }
+
+  function handleUpsellAccept() {
+    if (!upsellSuggestion) return;
+    const sp = upsellSuggestion.suggestedProduct;
+    addLine({
+      lineId: `${sp.id}-${Date.now()}`,
+      productId: sp.id,
+      name: sp.name,
+      price: upsellSuggestion.price,
+      costPrice: sp.costPrice || 0,
+      qty: 1,
+      notes: "",
+      modifiers: [],
+    });
+    upsell.trackConversion(upsellSuggestion.rule.id);
+    addLog?.("upsell_accepted", `Upsell geaccepteerd: ${sp.name}`);
+    setUpsellSuggestion(null);
+  }
+
+  function handleUpsellDismiss() {
+    if (!upsellSuggestion) return;
+    upsell.dismiss(upsellSuggestion.rule.id);
+    setUpsellSuggestion(null);
   }
 
   function updateQty(lineId, delta) {
