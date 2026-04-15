@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
+import { useModifiers } from "@/hooks/useModifiers";
+import ModifiersView from "@/components/ModifiersView";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -251,7 +253,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
-    
+    { key: "modifiers", label: "Mods", icon: Zap, adminOnly: true, ownerOnly: false },
     { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
     { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true },
@@ -5425,6 +5427,7 @@ export default function SaakoukPOS() {
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
+  const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers();
   const [tables, setTables] = useState(() => {
     const saved = localStorage.getItem("saakouk_tables");
     return saved ? JSON.parse(saved) : initialTables;
@@ -5498,6 +5501,15 @@ export default function SaakoukPOS() {
     const interval = setInterval(checkLowStock, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Enrich products with DB modifier groups (fallback to hardcoded)
+  const enrichedProducts = useMemo(() => {
+    if (modifierGroups.length === 0) return products;
+    return products.map((p) => {
+      const dbGroups = getGroupsForProduct(p.id);
+      return dbGroups.length > 0 ? { ...p, modifierGroups: dbGroups } : p;
+    });
+  }, [products, modifierGroups, modifierLinks, getGroupsForProduct]);
 
   // Load saved transactions from database
   useEffect(() => {
@@ -5861,7 +5873,7 @@ export default function SaakoukPOS() {
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={products} reservations={reservations} customers={customers} />}
+            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-full bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
@@ -5870,7 +5882,7 @@ export default function SaakoukPOS() {
                 </TabsList>
                 <TabsContent value="counter">
                   <CounterView
-                    products={products} tables={tables} features={features} customers={customers}
+                    products={enrichedProducts} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
                     passkitConfig={passkitConfig} onToast={setToast} addLog={addLog}
@@ -5887,7 +5899,8 @@ export default function SaakoukPOS() {
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
             {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} />}
             {(active === "inventory" || active === "intake") && (
               <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">
@@ -5911,12 +5924,12 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
-            {active === "costing" && <CostingView products={products} orders={orders} onToast={setToast} />}
+            {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} />}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
-            {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
+            {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
             {active === "cashaudit" && <CashAuditView />}

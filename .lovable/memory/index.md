@@ -9,7 +9,6 @@
 - Operations: "Anti-fuzz" strict logic. Ticket/cart state lifted to root.
 - Business Hours: Mon-Thu 10-22, Fri-Sat 10-00, Sun 12-00.
 - Customers: Name, Email, Phone strictly mandatory for all new entries.
-- Auth: PIN-based login (6-digit), server-side bcrypt, 30min auto-logout, rate limiting.
 
 ## Memories
 - [Layout Design](mem://ui/layout-design) — Compact icon-centric sidebar, wrapping POS categories
@@ -32,4 +31,4 @@
 - [QR Ordering](mem://features/qr-ordering) — Auto-accept, Kanban board, and mandatory customer data
 - [Activity Logs](mem://features/activity-logs) — Audit logs and multi-criteria order history filtering
 - [Prep Station KDS](mem://features/prep-station-kds) — Kitchen display routing, live timers, and statuses
-- [Login System](mem://auth/login-system) — Secure PIN login, server-side auth, rate limiting, audit trail
+- [Modifiers System](mem://features/modifiers-system) — DB-driven modifier groups, options, product assignment, admin CRUD
