@@ -5267,21 +5267,75 @@ function CashAuditView() {
   const [closings, setClosings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any | null>(null);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [noteEmployee, setNoteEmployee] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase.from("cash_closings").select("*").order("created_at", { ascending: false }).limit(200);
-      if (data) setClosings(data);
-      setLoading(false);
-    }
-    load();
-  }, []);
+  async function loadClosings() {
+    const { data } = await supabase.from("cash_closings").select("*").order("created_at", { ascending: false }).limit(200);
+    if (data) setClosings(data);
+    setLoading(false);
+  }
+
+  async function loadNotes(closingId: string) {
+    const { data } = await supabase.from("cash_audit_notes").select("*").eq("cash_closing_id", closingId).order("created_at", { ascending: false });
+    if (data) setNotes(data);
+  }
+
+  useEffect(() => { loadClosings(); }, []);
+  useEffect(() => { if (selected) loadNotes(selected.id); }, [selected]);
+
+  async function handleAction(actionType: string, statusUpdate: string, label: string) {
+    if (!selected) return;
+    setSaving(true);
+    // Update status on cash_closings
+    await supabase.from("cash_closings").update({ status: statusUpdate }).eq("id", selected.id);
+    // Add automatic note
+    const autoNote = actionType === "goedgekeurd" ? `Afsluiting goedgekeurd en afgehandeld.`
+      : actionType === "geescaleerd" ? `Afsluiting geëscaleerd voor verder onderzoek.`
+      : `Verschil geaccepteerd als verklaard.`;
+    await supabase.from("cash_audit_notes").insert({
+      cash_closing_id: selected.id,
+      employee_name: noteEmployee || "Owner",
+      note_text: autoNote,
+      action_type: actionType,
+    });
+    setSelected({ ...selected, status: statusUpdate });
+    await loadNotes(selected.id);
+    await loadClosings();
+    setSaving(false);
+  }
+
+  async function addNote() {
+    if (!selected || !noteText.trim()) return;
+    setSaving(true);
+    await supabase.from("cash_audit_notes").insert({
+      cash_closing_id: selected.id,
+      employee_name: noteEmployee || "Owner",
+      note_text: noteText.trim(),
+      action_type: "notitie",
+    });
+    setNoteText("");
+    await loadNotes(selected.id);
+    setSaving(false);
+  }
 
   function statusBadge(status: string, diff: number) {
+    if (status === "goedgekeurd") return <Badge className="bg-green-100 text-green-800 text-[10px]">Afgehandeld</Badge>;
+    if (status === "geescaleerd") return <Badge className="bg-purple-100 text-purple-800 text-[10px]">Geëscaleerd</Badge>;
+    if (status === "geaccepteerd") return <Badge className="bg-blue-100 text-blue-800 text-[10px]">Geaccepteerd</Badge>;
     const absDiff = Math.abs(diff);
     if (absDiff <= 2) return <Badge className="bg-green-100 text-green-800 text-[10px]">Correct</Badge>;
     if (absDiff <= 10) return <Badge className="bg-orange-100 text-orange-800 text-[10px]">Klein verschil</Badge>;
-    return <Badge className="bg-red-100 text-red-800 text-[10px] cursor-pointer hover:bg-red-200 transition-colors">Onderzoeken</Badge>;
+    return <Badge className="bg-red-100 text-red-800 text-[10px]">Onderzoeken</Badge>;
+  }
+
+  function actionIcon(type: string) {
+    if (type === "goedgekeurd") return "✅";
+    if (type === "geescaleerd") return "🚨";
+    if (type === "geaccepteerd") return "📋";
+    return "📝";
   }
 
   if (loading) return <div className="py-20 text-center text-muted-foreground">Laden...</div>;
@@ -5291,12 +5345,11 @@ function CashAuditView() {
     const c = selected;
     const absDiff = Math.abs(c.difference);
     const severityColor = absDiff <= 2 ? "text-green-700" : absDiff <= 10 ? "text-orange-600" : "text-red-600";
-    const severityLabel = absDiff <= 2 ? "Correct" : absDiff <= 10 ? "Klein verschil" : "Onderzoeken";
-    const severityBg = absDiff <= 2 ? "bg-green-50 border-green-200" : absDiff <= 10 ? "bg-orange-50 border-orange-200" : "bg-red-50 border-red-200";
+    const isResolved = ["goedgekeurd", "geescaleerd", "geaccepteerd"].includes(c.status);
 
     return (
       <div className="space-y-4">
-        <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => { setSelected(null); setNotes([]); setNoteText(""); }} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Terug naar overzicht
         </button>
 
@@ -5307,9 +5360,7 @@ function CashAuditView() {
               {new Date(c.closing_date).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             </p>
           </div>
-          <Badge className={clsx("text-xs", absDiff <= 2 ? "bg-green-100 text-green-800" : absDiff <= 10 ? "bg-orange-100 text-orange-800" : "bg-red-100 text-red-800")}>
-            {severityLabel}
-          </Badge>
+          {statusBadge(c.status, c.difference)}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -5324,7 +5375,7 @@ function CashAuditView() {
             </CardContent>
           </Card>
 
-          <Card className={clsx("rounded-xl border", severityBg)}>
+          <Card className={clsx("rounded-xl border", absDiff <= 2 ? "bg-green-50 border-green-200" : absDiff <= 10 ? "bg-orange-50 border-orange-200" : "bg-red-50 border-red-200")}>
             <CardContent className="p-4 space-y-3">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Verschil analyse</p>
               <p className={clsx("text-2xl font-bold", severityColor)}>
@@ -5381,7 +5432,7 @@ function CashAuditView() {
           </CardContent>
         </Card>
 
-        {absDiff > 10 && (
+        {absDiff > 10 && !isResolved && (
           <Card className="rounded-xl border-red-200 bg-red-50/50">
             <CardContent className="p-4">
               <p className="text-xs font-medium text-red-800 uppercase tracking-wide mb-2">Mogelijke oorzaken</p>
@@ -5395,6 +5446,86 @@ function CashAuditView() {
             </CardContent>
           </Card>
         )}
+
+        {/* Action buttons */}
+        {!isResolved && (
+          <Card className="rounded-xl">
+            <CardContent className="p-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Acties</p>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  disabled={saving}
+                  onClick={() => handleAction("goedgekeurd", "goedgekeurd", "Goedkeuren")}
+                  className="px-3 py-2 text-sm rounded-lg bg-green-100 text-green-800 hover:bg-green-200 transition-colors font-medium"
+                >
+                  ✅ Goedkeuren
+                </button>
+                <button
+                  disabled={saving}
+                  onClick={() => handleAction("geaccepteerd", "geaccepteerd", "Accepteren")}
+                  className="px-3 py-2 text-sm rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors font-medium"
+                >
+                  📋 Verschil accepteren
+                </button>
+                <button
+                  disabled={saving}
+                  onClick={() => handleAction("geescaleerd", "geescaleerd", "Escaleren")}
+                  className="px-3 py-2 text-sm rounded-lg bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors font-medium"
+                >
+                  🚨 Escaleren
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Notes section */}
+        <Card className="rounded-xl">
+          <CardContent className="p-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Notities</p>
+            
+            <div className="flex gap-2 mb-3">
+              <input
+                value={noteEmployee}
+                onChange={(e) => setNoteEmployee(e.target.value)}
+                placeholder="Jouw naam"
+                className="px-3 py-2 text-sm rounded-lg border border-border bg-background w-36"
+              />
+              <input
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder="Schrijf een notitie..."
+                className="px-3 py-2 text-sm rounded-lg border border-border bg-background flex-1"
+                onKeyDown={(e) => e.key === "Enter" && addNote()}
+              />
+              <button
+                disabled={saving || !noteText.trim()}
+                onClick={addNote}
+                className="px-3 py-2 text-sm rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity font-medium disabled:opacity-40"
+              >
+                Toevoegen
+              </button>
+            </div>
+
+            {notes.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">Nog geen notities.</p>
+            ) : (
+              <div className="space-y-2 max-h-60 overflow-auto">
+                {notes.map((n) => (
+                  <div key={n.id} className="flex gap-2 text-sm py-2 border-b border-border/40 last:border-0">
+                    <span className="shrink-0">{actionIcon(n.action_type)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p>{n.note_text}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {n.employee_name} · {new Date(n.created_at).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }

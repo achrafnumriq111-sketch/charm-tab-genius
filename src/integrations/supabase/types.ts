@@ -128,6 +128,41 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_audit_notes: {
+        Row: {
+          action_type: string
+          cash_closing_id: string
+          created_at: string
+          employee_name: string
+          id: string
+          note_text: string
+        }
+        Insert: {
+          action_type?: string
+          cash_closing_id: string
+          created_at?: string
+          employee_name: string
+          id?: string
+          note_text: string
+        }
+        Update: {
+          action_type?: string
+          cash_closing_id?: string
+          created_at?: string
+          employee_name?: string
+          id?: string
+          note_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_audit_notes_cash_closing_id_fkey"
+            columns: ["cash_closing_id"]
+            isOneToOne: false
+            referencedRelation: "cash_closings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_closings: {
         Row: {
           closing_date: string
