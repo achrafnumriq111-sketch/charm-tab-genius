@@ -636,6 +636,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
         difference_pct: Math.round(diffPct * 100) / 100,
         adjustment_reason: reasons[item.id] || null,
         counted_by: employeeName,
+        ...(locationId ? { location_id: locationId } : {}),
       });
 
       if (diff !== 0) {
@@ -646,6 +647,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
           source: "monthly_count",
           employee_name: employeeName,
           notes: reasons[item.id] || `Telling verschil: ${diff}`,
+          ...(locationId ? { location_id: locationId } : {}),
         });
       }
 
@@ -666,10 +668,10 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
     setSaving(false);
 
     // Reload
-    const [invRes, histRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").order("category, item_name"),
-      supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200),
-    ]);
+    let invQ = supabase.from("inventory_items").select("*").order("category, item_name");
+    let histQ = supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200);
+    if (locationId) { invQ = invQ.eq("location_id", locationId); histQ = histQ.eq("location_id", locationId); }
+    const [invRes, histRes] = await Promise.all([invQ, histQ]);
     if (invRes.data) setInventoryItems(invRes.data);
     if (histRes.data) setHistory(histRes.data);
   }
