@@ -1984,6 +1984,44 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
         </div>
       )}
 
+      {/* 7-Day Waste Trend */}
+      {isOwner && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Waste trend (7 dagen)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const days: { label: string; cost: number; qty: number }[] = [];
+              for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const ds = d.toDateString();
+                const dayMoves = movements.filter(m => new Date(m.created_at).toDateString() === ds);
+                const cost = dayMoves.reduce((s, m) => {
+                  const item = items.find(it => it.id === m.inventory_item_id);
+                  return s + Number(m.quantity) * (item?.cost_per_unit || 0);
+                }, 0);
+                days.push({ label: d.toLocaleDateString("nl-NL", { weekday: "short" }), cost, qty: dayMoves.reduce((s, m) => s + Number(m.quantity), 0) });
+              }
+              const maxCost = Math.max(...days.map(d => d.cost), 1);
+              return (
+                <div className="flex items-end gap-1 h-32">
+                  {days.map((d, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="text-[10px] text-muted-foreground font-mono">{euro(d.cost)}</div>
+                      <div className="w-full bg-destructive/20 rounded-t-lg relative" style={{ height: `${Math.max((d.cost / maxCost) * 80, 4)}px` }}>
+                        <div className="absolute inset-0 bg-destructive/60 rounded-t-lg" />
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">{d.label}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Analytics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Top Wasted Items */}
