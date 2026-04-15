@@ -25,7 +25,7 @@ function clsx(...parts: any[]) {
 
 // ─── INVENTORY MASTER VIEW ───────────────────────────────────────────────────
 
-export function InventoryView({ onToast, addLog, currentRole }: any) {
+export function InventoryView({ onToast, addLog, currentRole, locationId }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -39,10 +39,12 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
   });
 
   const loadItems = useCallback(async () => {
-    const { data } = await supabase.from("inventory_items").select("*").order("item_name");
+    let q = supabase.from("inventory_items").select("*").order("item_name");
+    if (locationId) q = q.eq("location_id", locationId);
+    const { data } = await q;
     if (data) setItems(data);
     setLoading(false);
-  }, []);
+  }, [locationId]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -56,7 +58,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
   const totalValue = items.reduce((s, i) => s + i.current_stock * i.cost_per_unit, 0);
 
   async function saveItem() {
-    const payload = {
+    const payload: any = {
       item_name: form.item_name,
       sku: form.sku || null,
       category: form.category as any,
@@ -68,6 +70,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
       supplier: form.supplier || null,
       location: form.location || "main",
     };
+    if (!editItem && locationId) payload.location_id = locationId;
     if (editItem) {
       await supabase.from("inventory_items").update(payload).eq("id", editItem.id);
       onToast?.(`${form.item_name} bijgewerkt`);
@@ -251,7 +254,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
 
 // ─── RECIPE BUILDER VIEW ─────────────────────────────────────────────────────
 
-export function RecipeBuilderView({ products, onToast, addLog }: any) {
+export function RecipeBuilderView({ products, onToast, addLog, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
@@ -261,16 +264,16 @@ export function RecipeBuilderView({ products, onToast, addLog }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, recRes] = await Promise.all([
-        supabase.from("inventory_items").select("*").order("item_name"),
-        supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name"),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*").order("item_name");
+      let recQ = supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name");
+      if (locationId) { invQ = invQ.eq("location_id", locationId); recQ = recQ.eq("location_id", locationId); }
+      const [invRes, recRes] = await Promise.all([invQ, recQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (recRes.data) setRecipes(recRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   const productRecipes = useMemo(() => recipes.filter(r => r.product_id === selectedProduct), [recipes, selectedProduct]);
 
@@ -296,13 +299,16 @@ export function RecipeBuilderView({ products, onToast, addLog }: any) {
       unit: newLine.unit,
       is_optional: newLine.is_optional,
       waste_factor_pct: parseFloat(newLine.waste_factor_pct) || 0,
+      ...(locationId ? { location_id: locationId } : {}),
     });
     onToast?.("Recept ingredient toegevoegd");
     addLog?.("recipe_updated", `Ingredient toegevoegd aan ${prod?.name}`);
     setAddingLine(false);
     setNewLine({ inventory_item_id: "", quantity: "0", unit: "gram", is_optional: false, waste_factor_pct: "0" });
     // Reload recipes
-    const { data } = await supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name");
+    let recQ = supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name");
+    if (locationId) recQ = recQ.eq("location_id", locationId);
+    const { data } = await recQ;
     if (data) setRecipes(data);
   }
 
@@ -440,7 +446,7 @@ export function RecipeBuilderView({ products, onToast, addLog }: any) {
 
 // ─── STOCK INTAKE VIEW ───────────────────────────────────────────────────────
 
-export function StockIntakeView({ onToast, addLog, employeeName }: any) {
+export function StockIntakeView({ onToast, addLog, employeeName, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [intakes, setIntakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -451,16 +457,16 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, intRes] = await Promise.all([
-        supabase.from("inventory_items").select("*").order("item_name"),
-        supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*").order("item_name");
+      let intQ = supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100);
+      if (locationId) { invQ = invQ.eq("location_id", locationId); intQ = intQ.eq("location_id", locationId); }
+      const [invRes, intRes] = await Promise.all([invQ, intQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (intRes.data) setIntakes(intRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   async function submitIntake() {
     if (!form.inventory_item_id || !form.quantity) return;
@@ -477,6 +483,7 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
       invoice_reference: form.invoice_reference || null,
       location: form.location,
       employee_name: employeeName || null,
+      ...(locationId ? { location_id: locationId } : {}),
     });
 
     // Update inventory stock + cost
@@ -497,6 +504,7 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
       source: "delivery",
       employee_name: employeeName,
       notes: form.invoice_reference ? `Factuur: ${form.invoice_reference}` : null,
+      ...(locationId ? { location_id: locationId } : {}),
     });
 
     onToast?.(`${qty} ${form.unit} ontvangen`);
@@ -504,10 +512,10 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
     setForm({ inventory_item_id: "", supplier: "", quantity: "", unit: "pieces", purchase_price: "", invoice_reference: "", location: "main" });
 
     // Reload
-    const [invRes, intRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").order("item_name"),
-      supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100),
-    ]);
+    let invQ2 = supabase.from("inventory_items").select("*").order("item_name");
+    let intQ2 = supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100);
+    if (locationId) { invQ2 = invQ2.eq("location_id", locationId); intQ2 = intQ2.eq("location_id", locationId); }
+    const [invRes, intRes] = await Promise.all([invQ2, intQ2]);
     if (invRes.data) setInventoryItems(invRes.data);
     if (intRes.data) setIntakes(intRes.data);
   }
@@ -585,7 +593,7 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
 
 // ─── MONTHLY COUNT VIEW ──────────────────────────────────────────────────────
 
-export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
+export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
@@ -596,16 +604,16 @@ export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, histRes] = await Promise.all([
-        supabase.from("inventory_items").select("*").order("category, item_name"),
-        supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*").order("category, item_name");
+      let histQ = supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200);
+      if (locationId) { invQ = invQ.eq("location_id", locationId); histQ = histQ.eq("location_id", locationId); }
+      const [invRes, histRes] = await Promise.all([invQ, histQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (histRes.data) setHistory(histRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   async function submitCount() {
     setSaving(true);
@@ -628,6 +636,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
         difference_pct: Math.round(diffPct * 100) / 100,
         adjustment_reason: reasons[item.id] || null,
         counted_by: employeeName,
+        ...(locationId ? { location_id: locationId } : {}),
       });
 
       if (diff !== 0) {
@@ -638,6 +647,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
           source: "monthly_count",
           employee_name: employeeName,
           notes: reasons[item.id] || `Telling verschil: ${diff}`,
+          ...(locationId ? { location_id: locationId } : {}),
         });
       }
 
@@ -658,10 +668,10 @@ export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
     setSaving(false);
 
     // Reload
-    const [invRes, histRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").order("category, item_name"),
-      supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200),
-    ]);
+    let invQ = supabase.from("inventory_items").select("*").order("category, item_name");
+    let histQ = supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200);
+    if (locationId) { invQ = invQ.eq("location_id", locationId); histQ = histQ.eq("location_id", locationId); }
+    const [invRes, histRes] = await Promise.all([invQ, histQ]);
     if (invRes.data) setInventoryItems(invRes.data);
     if (histRes.data) setHistory(histRes.data);
   }
@@ -775,7 +785,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
 
 // ─── COSTING & MARGINS VIEW (Owner only) ─────────────────────────────────────
 
-export function CostingView({ products, orders, onToast }: any) {
+export function CostingView({ products, orders, onToast, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [marginTargets, setMarginTargets] = useState<any[]>([]);
@@ -786,18 +796,18 @@ export function CostingView({ products, orders, onToast }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, recRes, mtRes] = await Promise.all([
-        supabase.from("inventory_items").select("*"),
-        supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)"),
-        supabase.from("margin_targets").select("*"),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*");
+      let recQ = supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)");
+      let mtQ = supabase.from("margin_targets").select("*");
+      if (locationId) { invQ = invQ.eq("location_id", locationId); recQ = recQ.eq("location_id", locationId); mtQ = mtQ.eq("location_id", locationId); }
+      const [invRes, recRes, mtRes] = await Promise.all([invQ, recQ, mtQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (recRes.data) setRecipes(recRes.data);
       if (mtRes.data) setMarginTargets(mtRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   const productData = useMemo(() => {
     return products.map((p: any) => {
@@ -1239,9 +1249,8 @@ export function AIForecastView({ onToast }: any) {
 
 // ─── STOCK DEDUCTION ENGINE (called on order complete) ───────────────────────
 
-export async function deductStockForOrder(orderItems: any[], employeeName?: string, orderId?: string) {
+export async function deductStockForOrder(orderItems: any[], employeeName?: string, orderId?: string, locationId?: string) {
   try {
-    // Fetch recipes for all products in the order
     const productIds = [...new Set(orderItems.map(i => i.productId))];
     const { data: recipes } = await supabase.from("product_recipes").select("*, inventory_items(id, current_stock)").in("product_id", productIds);
     if (!recipes || recipes.length === 0) return;
@@ -1253,11 +1262,9 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
         const invItem = recipe.inventory_items;
         if (!invItem) continue;
 
-        // Update stock
         const newStock = Math.max(0, (invItem.current_stock || 0) - deductQty);
         await supabase.from("inventory_items").update({ current_stock: newStock }).eq("id", recipe.inventory_item_id);
 
-        // Log movement
         await supabase.from("stock_movements").insert({
           inventory_item_id: recipe.inventory_item_id,
           movement_type: "sale_deduction" as any,
@@ -1266,6 +1273,7 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
           source: "pos",
           employee_name: employeeName || null,
           order_id: orderId || null,
+          ...(locationId ? { location_id: locationId } : {}),
         });
       }
     }
@@ -1276,7 +1284,7 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
 
 // ─── STOCK RESTORE ENGINE (called on refund) ────────────────────────────────
 
-export async function restoreStockForRefund(orderItems: any[], employeeName?: string, orderId?: string) {
+export async function restoreStockForRefund(orderItems: any[], employeeName?: string, orderId?: string, locationId?: string) {
   try {
     const productIds = [...new Set(orderItems.map(i => i.productId))];
     const { data: recipes } = await supabase.from("product_recipes").select("*, inventory_items(id, current_stock)").in("product_id", productIds);
@@ -1300,6 +1308,7 @@ export async function restoreStockForRefund(orderItems: any[], employeeName?: st
           source: "refund",
           employee_name: employeeName || null,
           order_id: orderId || null,
+          ...(locationId ? { location_id: locationId } : {}),
         });
       }
     }
@@ -1310,7 +1319,7 @@ export async function restoreStockForRefund(orderItems: any[], employeeName?: st
 
 // ─── DYNAMIC STOCK VIEW ─────────────────────────────────────────────────────
 
-export function DynamicStockView({ onToast, addLog, currentRole, employeeName }: any) {
+export function DynamicStockView({ onToast, addLog, currentRole, employeeName, locationId }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [allInventory, setAllInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1329,16 +1338,16 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
 
   async function loadItems() {
     setLoading(true);
-    const [dynRes, allRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").eq("is_dynamic", true).order("item_name"),
-      supabase.from("inventory_items").select("id, item_name, unit_type").order("item_name"),
-    ]);
+    let dynQ = supabase.from("inventory_items").select("*").eq("is_dynamic", true).order("item_name");
+    let allQ = supabase.from("inventory_items").select("id, item_name, unit_type").order("item_name");
+    if (locationId) { dynQ = dynQ.eq("location_id", locationId); allQ = allQ.eq("location_id", locationId); }
+    const [dynRes, allRes] = await Promise.all([dynQ, allQ]);
     setItems(dynRes.data || []);
     setAllInventory(allRes.data || []);
     setLoading(false);
   }
 
-  useEffect(() => { loadItems(); }, []);
+  useEffect(() => { loadItems(); }, [locationId]);
 
   async function createDynamicItem() {
     if (!form.item_name.trim()) return;
@@ -1353,6 +1362,7 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
       supplier: form.supplier || null,
       ai_forecast_enabled: form.ai_forecast_enabled,
       is_dynamic: true,
+      ...(locationId ? { location_id: locationId } : {}),
     });
     if (error) { onToast?.("Fout bij aanmaken: " + error.message); return; }
     onToast?.(`${form.item_name} aangemaakt als dynamic stock`);
@@ -1372,6 +1382,7 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
       source: "dynamic_refill",
       employee_name: employeeName || null,
       notes: `Quick refill +${amount} ${item.unit_type}`,
+      ...(locationId ? { location_id: locationId } : {}),
     });
     addLog?.("dynamic_refill", `${item.item_name} bijgevuld: +${amount} ${item.unit_type}`);
     onToast?.(`${item.item_name} +${amount} ${item.unit_type}`);
@@ -1696,7 +1707,7 @@ const WASTE_REASONS = [
   { value: "other", label: "Anders" },
 ];
 
-export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }: any) {
+export function WasteLoggingView({ onToast, addLog, currentRole, employeeName, locationId }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1709,14 +1720,14 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
   const isOwner = currentRole === "owner";
 
   const loadData = useCallback(async () => {
-    const [itemsRes, movesRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").order("item_name"),
-      supabase.from("stock_movements").select("*").eq("movement_type", "waste").order("created_at", { ascending: false }).limit(500),
-    ]);
+    let itemsQ = supabase.from("inventory_items").select("*").order("item_name");
+    let movesQ = supabase.from("stock_movements").select("*").eq("movement_type", "waste").order("created_at", { ascending: false }).limit(500);
+    if (locationId) { itemsQ = itemsQ.eq("location_id", locationId); movesQ = movesQ.eq("location_id", locationId); }
+    const [itemsRes, movesRes] = await Promise.all([itemsQ, movesQ]);
     if (itemsRes.data) setItems(itemsRes.data);
     if (movesRes.data) setMovements(movesRes.data);
     setLoading(false);
-  }, []);
+  }, [locationId]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -1800,6 +1811,7 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
       notes: form.notes || null,
       employee_name: employeeName,
       source: "waste_log",
+      ...(locationId ? { location_id: locationId } : {}),
     });
 
     // Deduct from stock
