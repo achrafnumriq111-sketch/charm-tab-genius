@@ -1,0 +1,35 @@
+# Project Memory
+
+## Core
+- SAAKOUK POS for matcha specialty shop (Amsterdam, NL).
+- iPad/tablet optimized: 44px hit targets, viewport-fit=cover, responsive grid.
+- Stack: Supabase (RLS anon access for PIN auth), Edge Functions, PassKit.
+- AI BI powered exclusively by Apple WeatherKit (Europe/Amsterdam timezone).
+- UI: 3D luxury pastel, glassmorphism, Framer Motion.
+- Operations: "Anti-fuzz" strict logic. Ticket/cart state lifted to root.
+- Business Hours: Mon-Thu 10-22, Fri-Sat 10-00, Sun 12-00.
+- Customers: Name, Email, Phone strictly mandatory for all new entries.
+- Auth: PIN-based login (6-digit), server-side bcrypt, 30min auto-logout, rate limiting.
+
+## Memories
+- [Layout Design](mem://ui/layout-design) — Compact icon-centric sidebar, wrapping POS categories
+- [State Management](mem://architecture/state-management) — Ticket/cart state keyed by table ID or walk-in
+- [Order Attribution](mem://architecture/order-attribution) — Orders permanently stamped with active employee ID
+- [Loyalty System](mem://features/loyalty-passkit) — PassKit integration and program ID
+- [Transaction Persistence](mem://database/transaction-persistence) — POS sales storage, JSONB line items
+- [Split Payments](mem://features/split-payments) — Split by method or person, independent calculation
+- [Visual Floor Plan](mem://features/visual-floor-plan) — 2D editor, tables, statuses, virtual tables (Uber Eats)
+- [Cash Closing System](mem://features/cash-closing-system) — Blind count, 4-eyes PIN verification, Owner Audit
+- [Hardware Integration](mem://features/hardware-integration) — Epson ESC/POS cash drawer control via WebUSB
+- [Profitability Costing](mem://features/profitability-costing) — Dynamic cost, Menu Engineering Matrix, simulation
+- [VAT Configuration](mem://features/vat-configuration) — Dual-layer 9% food/drinks and 21% retail/other
+- [Database RLS](mem://database/rls-policies) — Anonymous access patterns for QR and POS transactions
+- [AI Weather Forecasting](mem://features/ai-weather-forecasting) — Apple WeatherKit BI engine and data sync
+- [Inventory System](mem://features/inventory-system) — Master stock, dynamic perishables, waste, and counts
+- [RBAC System](mem://auth/rbac-system) — 6-digit PIN login, team roles, and module navigation
+- [Product Management](mem://features/product-management) — Creation, deletion, and owner notifications
+- [Analytics Dashboard](mem://features/analytics-dashboard) — Reporting, KPIs, heatmaps, and accounting
+- [QR Ordering](mem://features/qr-ordering) — Auto-accept, Kanban board, and mandatory customer data
+- [Activity Logs](mem://features/activity-logs) — Audit logs and multi-criteria order history filtering
+- [Prep Station KDS](mem://features/prep-station-kds) — Kitchen display routing, live timers, and statuses
+- [Login System](mem://auth/login-system) — Secure PIN login, server-side auth, rate limiting, audit trail
