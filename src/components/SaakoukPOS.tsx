@@ -5719,17 +5719,14 @@ export default function SaakoukPOS() {
 
   function handleLogout() {
     addLog("logout", `${loggedInEmployee?.name} uitgelogd`);
-    setLoggedInEmployee(null);
+    authLogout();
     setActive("pos");
     setSectionPicked(false);
   }
 
-  // Show login if not logged in
+  // If not authenticated, ProtectedRoute handles redirect to /login
   if (!loggedInEmployee) {
-    return <LoginScreen employees={employees} onLogin={(emp) => {
-      setLoggedInEmployee(emp);
-      setActivityLogs((prev) => [{ id: generateId(), action: "login", details: `${emp.name} ingelogd (${emp.role})`, employeeId: emp.id, employeeName: emp.name, employeeRole: emp.role, timestamp: new Date() }, ...prev]);
-    }} />;
+    return null;
   }
 
   // Show section picker after login
