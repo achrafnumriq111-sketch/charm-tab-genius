@@ -5546,21 +5546,23 @@ export default function SaakoukPOS() {
     }, ...prev]);
   }, [loggedInEmployee]);
 
-  // Load employees from database
+  // Load employees from database (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function loadEmployees() {
-      const { data } = await supabase.from("employees").select("id, full_name, role, is_active").eq("is_active", true);
+      const { data } = await supabase.from("employees").select("id, full_name, role, is_active, location_id").eq("is_active", true).eq("location_id", locationId);
       if (data) {
         setEmployees(data.map((e: any) => ({ id: e.id, name: e.full_name, role: e.role })));
       }
     }
     loadEmployees();
-  }, []);
+  }, [locationId]);
 
-  // Poll low-stock items every 30s
+  // Poll low-stock items every 30s (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function checkLowStock() {
-      const { data } = await supabase.from("inventory_items").select("id, item_name, current_stock, minimum_stock, unit_type, category");
+      const { data } = await supabase.from("inventory_items").select("id, item_name, current_stock, minimum_stock, unit_type, category").eq("location_id", locationId);
       if (data) {
         const low = data.filter((i: any) => i.current_stock <= i.minimum_stock && i.minimum_stock > 0);
         setLowStockItems(low);
@@ -5569,7 +5571,7 @@ export default function SaakoukPOS() {
     checkLowStock();
     const interval = setInterval(checkLowStock, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [locationId]);
 
   // Enrich products with DB modifier groups (fallback to hardcoded)
   const enrichedProducts = useMemo(() => {
@@ -5580,10 +5582,11 @@ export default function SaakoukPOS() {
     });
   }, [products, modifierGroups, modifierLinks, getGroupsForProduct]);
 
-  // Load saved transactions from database
+  // Load saved transactions from database (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function loadTransactions() {
-      const { data } = await supabase.from("pos_transactions").select("*").order("created_at", { ascending: false }).limit(500);
+      const { data } = await supabase.from("pos_transactions").select("*").eq("location_id", locationId).order("created_at", { ascending: false }).limit(500);
       if (data) {
         const mapped = data.map((t: any) => ({
           id: t.order_id,
@@ -5612,12 +5615,13 @@ export default function SaakoukPOS() {
       setDbLoaded(true);
     }
     loadTransactions();
-  }, []);
+  }, [locationId]);
 
-  // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
+  // Fetch all active QR orders (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function fetchQrOrders() {
-      const { data } = await supabase.from("qr_orders").select("*").in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
+      const { data } = await supabase.from("qr_orders").select("*").eq("location_id", locationId).in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
       if (data) setQrOrders(data);
     }
     fetchQrOrders();
@@ -5630,7 +5634,7 @@ export default function SaakoukPOS() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [locationId]);
 
   // Auto-accept: new "pending" orders get moved to "preparing" automatically
   useEffect(() => {
