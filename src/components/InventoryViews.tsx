@@ -593,7 +593,7 @@ export function StockIntakeView({ onToast, addLog, employeeName, locationId }: a
 
 // ─── MONTHLY COUNT VIEW ──────────────────────────────────────────────────────
 
-export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
+export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [reasons, setReasons] = useState<Record<string, string>>({});
@@ -604,16 +604,16 @@ export function MonthlyCountView({ onToast, addLog, employeeName }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, histRes] = await Promise.all([
-        supabase.from("inventory_items").select("*").order("category, item_name"),
-        supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*").order("category, item_name");
+      let histQ = supabase.from("stock_counts").select("*").order("created_at", { ascending: false }).limit(200);
+      if (locationId) { invQ = invQ.eq("location_id", locationId); histQ = histQ.eq("location_id", locationId); }
+      const [invRes, histRes] = await Promise.all([invQ, histQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (histRes.data) setHistory(histRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   async function submitCount() {
     setSaving(true);
