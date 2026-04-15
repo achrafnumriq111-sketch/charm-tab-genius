@@ -245,7 +245,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string }) {
+function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void }) {
   const isAdmin = role === "owner" || role === "manager";
   const isOwner = role === "owner";
   const allSections = [
