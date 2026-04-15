@@ -13,13 +13,28 @@ Deno.serve(async (req) => {
   try {
     const { full_name, pin, setup_secret } = await req.json();
 
-    // Validate setup secret - prevents unauthorized access
-    const expectedSecret = Deno.env.get("POS_SETUP_SECRET");
-    if (!expectedSecret || setup_secret !== expectedSecret) {
-      return new Response(JSON.stringify({ error: "Niet geautoriseerd" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceRoleKey);
+
+    // Check if any owner exists — if not, allow first-time setup without secret
+    const { data: existingOwners } = await admin
+      .from("employees")
+      .select("id")
+      .eq("role", "owner")
+      .limit(1);
+
+    const isFirstSetup = !existingOwners || existingOwners.length === 0;
+
+    if (!isFirstSetup) {
+      // After first owner exists, require setup secret
+      const expectedSecret = Deno.env.get("POS_SETUP_SECRET");
+      if (!expectedSecret || setup_secret !== expectedSecret) {
+        return new Response(JSON.stringify({ error: "Niet geautoriseerd" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Validate inputs
