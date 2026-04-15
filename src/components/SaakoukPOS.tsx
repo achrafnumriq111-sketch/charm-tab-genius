@@ -5924,7 +5924,7 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
-            {active === "costing" && <CostingView products={products} orders={orders} onToast={setToast} />}
+            {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} />}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
