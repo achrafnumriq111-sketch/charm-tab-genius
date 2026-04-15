@@ -8,6 +8,8 @@ import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMe
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { useModifiers } from "@/hooks/useModifiers";
 import ModifiersView from "@/components/ModifiersView";
+import UpsellPrompt from "@/components/UpsellPrompt";
+import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
