@@ -251,6 +251,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
   const isOwner = role === "owner";
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
+    { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
     { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
     { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
