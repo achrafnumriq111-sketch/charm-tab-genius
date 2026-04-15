@@ -166,22 +166,8 @@ const initialGiftCards: any[] = [];
 
 const initialReservations: any[] = [];
 
-// ─── EMPLOYEES ───────────────────────────────────────────────────────────────
-
-const initialEmployees = [
-  { id: "e1", name: "Solaiman Aakouk", email: "saakoukstore@gmail.com", role: "owner", pin: "" },
-  { id: "e2", name: "Badr El Messaoudi", email: "BadrElMessaoudi3@gmail.com", role: "sales", pin: "" },
-  { id: "e3", name: "Kaan Ikiz", email: "kaan-ikiz@hotmail.com", role: "sales", pin: "" },
-  { id: "e4", name: "Inez Ikiz", email: "inez-ikiz@hotmail.com", role: "sales", pin: "" },
-  { id: "e5", name: "Daniel Jie Sam Foek", email: "danielantoinesu@gmail.com", role: "sales", pin: "" },
-  { id: "e6", name: "Djemaro Dalloesingh", email: "djemaro@gmail.com", role: "sales", pin: "" },
-  { id: "e7", name: "Achraf Idrissi", email: "Acidrissi@icloud.com", role: "owner", pin: "" },
-  { id: "e8", name: "Anouar Azif", email: "anouar_azif@outlook.com", role: "sales", pin: "" },
-  { id: "e9", name: "Rayan Azzimachi", email: "rayanazzimachi@gmail.com", role: "sales", pin: "" },
-  { id: "e10", name: "Othman Ami", email: "othmanami16@hotmail.com", role: "sales", pin: "" },
-  { id: "e11", name: "Ezra Belkacem", email: "ezrabelkacem@hotmail.com", role: "sales", pin: "" },
-  { id: "e12", name: "Ibrahim Aakouk", email: "ibrahimaakouk@gmail.com", role: "manager", pin: "" },
-];
+// ─── EMPLOYEES (loaded from database) ────────────────────────────────────────
+// No more hardcoded employee list — employees are fetched from the database
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
