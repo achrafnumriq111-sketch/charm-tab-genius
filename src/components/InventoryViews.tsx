@@ -785,7 +785,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
 
 // ─── COSTING & MARGINS VIEW (Owner only) ─────────────────────────────────────
 
-export function CostingView({ products, orders, onToast }: any) {
+export function CostingView({ products, orders, onToast, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [marginTargets, setMarginTargets] = useState<any[]>([]);
@@ -796,18 +796,18 @@ export function CostingView({ products, orders, onToast }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, recRes, mtRes] = await Promise.all([
-        supabase.from("inventory_items").select("*"),
-        supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)"),
-        supabase.from("margin_targets").select("*"),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*");
+      let recQ = supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)");
+      let mtQ = supabase.from("margin_targets").select("*");
+      if (locationId) { invQ = invQ.eq("location_id", locationId); recQ = recQ.eq("location_id", locationId); mtQ = mtQ.eq("location_id", locationId); }
+      const [invRes, recRes, mtRes] = await Promise.all([invQ, recQ, mtQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (recRes.data) setRecipes(recRes.data);
       if (mtRes.data) setMarginTargets(mtRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   const productData = useMemo(() => {
     return products.map((p: any) => {
