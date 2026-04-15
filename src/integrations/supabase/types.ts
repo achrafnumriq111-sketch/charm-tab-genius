@@ -223,6 +223,48 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          created_at: string
+          failed_login_attempts: number
+          full_name: string
+          id: string
+          is_active: boolean
+          last_login_at: string | null
+          locked_until: string | null
+          role: Database["public"]["Enums"]["employee_role"]
+          updated_at: string
+          user_id: string | null
+          username_normalized: string
+        }
+        Insert: {
+          created_at?: string
+          failed_login_attempts?: number
+          full_name: string
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          locked_until?: string | null
+          role?: Database["public"]["Enums"]["employee_role"]
+          updated_at?: string
+          user_id?: string | null
+          username_normalized: string
+        }
+        Update: {
+          created_at?: string
+          failed_login_attempts?: number
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          locked_until?: string | null
+          role?: Database["public"]["Enums"]["employee_role"]
+          updated_at?: string
+          user_id?: string | null
+          username_normalized?: string
+        }
+        Relationships: []
+      }
       forecast_learning_metrics: {
         Row: {
           absolute_error: number | null
@@ -333,6 +375,47 @@ export type Database = {
           waste_percentage?: number
         }
         Relationships: []
+      }
+      login_audit_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          employee_id: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          username_attempted: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          employee_id?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          username_attempted?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          employee_id?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          username_attempted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_audit_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       margin_targets: {
         Row: {
@@ -893,9 +976,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_employee_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["employee_role"]
+      }
     }
     Enums: {
+      employee_role: "owner" | "manager" | "cashier" | "staff"
       inventory_category:
         | "ingredient"
         | "packaging"
@@ -1037,6 +1124,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      employee_role: ["owner", "manager", "cashier", "staff"],
       inventory_category: [
         "ingredient",
         "packaging",
