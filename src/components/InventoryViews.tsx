@@ -25,7 +25,7 @@ function clsx(...parts: any[]) {
 
 // ─── INVENTORY MASTER VIEW ───────────────────────────────────────────────────
 
-export function InventoryView({ onToast, addLog, currentRole }: any) {
+export function InventoryView({ onToast, addLog, currentRole, locationId }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -39,10 +39,12 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
   });
 
   const loadItems = useCallback(async () => {
-    const { data } = await supabase.from("inventory_items").select("*").order("item_name");
+    let q = supabase.from("inventory_items").select("*").order("item_name");
+    if (locationId) q = q.eq("location_id", locationId);
+    const { data } = await q;
     if (data) setItems(data);
     setLoading(false);
-  }, []);
+  }, [locationId]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
 
@@ -56,7 +58,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
   const totalValue = items.reduce((s, i) => s + i.current_stock * i.cost_per_unit, 0);
 
   async function saveItem() {
-    const payload = {
+    const payload: any = {
       item_name: form.item_name,
       sku: form.sku || null,
       category: form.category as any,
@@ -68,6 +70,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
       supplier: form.supplier || null,
       location: form.location || "main",
     };
+    if (!editItem && locationId) payload.location_id = locationId;
     if (editItem) {
       await supabase.from("inventory_items").update(payload).eq("id", editItem.id);
       onToast?.(`${form.item_name} bijgewerkt`);
@@ -251,7 +254,7 @@ export function InventoryView({ onToast, addLog, currentRole }: any) {
 
 // ─── RECIPE BUILDER VIEW ─────────────────────────────────────────────────────
 
-export function RecipeBuilderView({ products, onToast, addLog }: any) {
+export function RecipeBuilderView({ products, onToast, addLog, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>("");
@@ -261,16 +264,16 @@ export function RecipeBuilderView({ products, onToast, addLog }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, recRes] = await Promise.all([
-        supabase.from("inventory_items").select("*").order("item_name"),
-        supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name"),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*").order("item_name");
+      let recQ = supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name");
+      if (locationId) { invQ = invQ.eq("location_id", locationId); recQ = recQ.eq("location_id", locationId); }
+      const [invRes, recRes] = await Promise.all([invQ, recQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (recRes.data) setRecipes(recRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   const productRecipes = useMemo(() => recipes.filter(r => r.product_id === selectedProduct), [recipes, selectedProduct]);
 
@@ -296,13 +299,16 @@ export function RecipeBuilderView({ products, onToast, addLog }: any) {
       unit: newLine.unit,
       is_optional: newLine.is_optional,
       waste_factor_pct: parseFloat(newLine.waste_factor_pct) || 0,
+      ...(locationId ? { location_id: locationId } : {}),
     });
     onToast?.("Recept ingredient toegevoegd");
     addLog?.("recipe_updated", `Ingredient toegevoegd aan ${prod?.name}`);
     setAddingLine(false);
     setNewLine({ inventory_item_id: "", quantity: "0", unit: "gram", is_optional: false, waste_factor_pct: "0" });
     // Reload recipes
-    const { data } = await supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name");
+    let recQ = supabase.from("product_recipes").select("*, inventory_items(item_name, unit_type, cost_per_unit)").order("product_name");
+    if (locationId) recQ = recQ.eq("location_id", locationId);
+    const { data } = await recQ;
     if (data) setRecipes(data);
   }
 
@@ -440,7 +446,7 @@ export function RecipeBuilderView({ products, onToast, addLog }: any) {
 
 // ─── STOCK INTAKE VIEW ───────────────────────────────────────────────────────
 
-export function StockIntakeView({ onToast, addLog, employeeName }: any) {
+export function StockIntakeView({ onToast, addLog, employeeName, locationId }: any) {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [intakes, setIntakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -451,16 +457,16 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
 
   useEffect(() => {
     async function load() {
-      const [invRes, intRes] = await Promise.all([
-        supabase.from("inventory_items").select("*").order("item_name"),
-        supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100),
-      ]);
+      let invQ = supabase.from("inventory_items").select("*").order("item_name");
+      let intQ = supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100);
+      if (locationId) { invQ = invQ.eq("location_id", locationId); intQ = intQ.eq("location_id", locationId); }
+      const [invRes, intRes] = await Promise.all([invQ, intQ]);
       if (invRes.data) setInventoryItems(invRes.data);
       if (intRes.data) setIntakes(intRes.data);
       setLoading(false);
     }
     load();
-  }, []);
+  }, [locationId]);
 
   async function submitIntake() {
     if (!form.inventory_item_id || !form.quantity) return;
@@ -477,6 +483,7 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
       invoice_reference: form.invoice_reference || null,
       location: form.location,
       employee_name: employeeName || null,
+      ...(locationId ? { location_id: locationId } : {}),
     });
 
     // Update inventory stock + cost
@@ -497,6 +504,7 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
       source: "delivery",
       employee_name: employeeName,
       notes: form.invoice_reference ? `Factuur: ${form.invoice_reference}` : null,
+      ...(locationId ? { location_id: locationId } : {}),
     });
 
     onToast?.(`${qty} ${form.unit} ontvangen`);
@@ -504,10 +512,10 @@ export function StockIntakeView({ onToast, addLog, employeeName }: any) {
     setForm({ inventory_item_id: "", supplier: "", quantity: "", unit: "pieces", purchase_price: "", invoice_reference: "", location: "main" });
 
     // Reload
-    const [invRes, intRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").order("item_name"),
-      supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100),
-    ]);
+    let invQ2 = supabase.from("inventory_items").select("*").order("item_name");
+    let intQ2 = supabase.from("stock_intakes").select("*, inventory_items(item_name, unit_type)").order("created_at", { ascending: false }).limit(100);
+    if (locationId) { invQ2 = invQ2.eq("location_id", locationId); intQ2 = intQ2.eq("location_id", locationId); }
+    const [invRes, intRes] = await Promise.all([invQ2, intQ2]);
     if (invRes.data) setInventoryItems(invRes.data);
     if (intRes.data) setIntakes(intRes.data);
   }
