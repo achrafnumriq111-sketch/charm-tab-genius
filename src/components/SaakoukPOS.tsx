@@ -5266,6 +5266,7 @@ function CashCloseView({ onOpen }: { onOpen: () => void }) {
 function CashAuditView() {
   const [closings, setClosings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<any | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -5280,10 +5281,123 @@ function CashAuditView() {
     const absDiff = Math.abs(diff);
     if (absDiff <= 2) return <Badge className="bg-green-100 text-green-800 text-[10px]">Correct</Badge>;
     if (absDiff <= 10) return <Badge className="bg-orange-100 text-orange-800 text-[10px]">Klein verschil</Badge>;
-    return <Badge className="bg-red-100 text-red-800 text-[10px]">Onderzoeken</Badge>;
+    return <Badge className="bg-red-100 text-red-800 text-[10px] cursor-pointer hover:bg-red-200 transition-colors">Onderzoeken</Badge>;
   }
 
   if (loading) return <div className="py-20 text-center text-muted-foreground">Laden...</div>;
+
+  // Detail view for investigation
+  if (selected) {
+    const c = selected;
+    const absDiff = Math.abs(c.difference);
+    const severityColor = absDiff <= 2 ? "text-green-700" : absDiff <= 10 ? "text-orange-600" : "text-red-600";
+    const severityLabel = absDiff <= 2 ? "Correct" : absDiff <= 10 ? "Klein verschil" : "Onderzoeken";
+    const severityBg = absDiff <= 2 ? "bg-green-50 border-green-200" : absDiff <= 10 ? "bg-orange-50 border-orange-200" : "bg-red-50 border-red-200";
+
+    return (
+      <div className="space-y-4">
+        <button onClick={() => setSelected(null)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          ← Terug naar overzicht
+        </button>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold">Afsluiting onderzoek</h2>
+            <p className="text-sm text-muted-foreground">
+              {new Date(c.closing_date).toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+          <Badge className={clsx("text-xs", absDiff <= 2 ? "bg-green-100 text-green-800" : absDiff <= 10 ? "bg-orange-100 text-orange-800" : "bg-red-100 text-red-800")}>
+            {severityLabel}
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="rounded-xl">
+            <CardContent className="p-4 space-y-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Medewerkers</p>
+              <div className="space-y-1">
+                <p className="text-sm"><span className="text-muted-foreground">Geteld door:</span> <span className="font-medium">{c.primary_employee_name}</span></p>
+                <p className="text-sm"><span className="text-muted-foreground">2e controle:</span> <span className="font-medium">{c.second_checker_name}</span></p>
+              </div>
+              <p className="text-xs text-muted-foreground">Enveloppe code: <span className="font-mono">{c.envelope_code}</span></p>
+            </CardContent>
+          </Card>
+
+          <Card className={clsx("rounded-xl border", severityBg)}>
+            <CardContent className="p-4 space-y-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Verschil analyse</p>
+              <p className={clsx("text-2xl font-bold", severityColor)}>
+                {c.difference >= 0 ? "+" : ""}{euro(c.difference)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {absDiff <= 2 ? "Verschil valt binnen acceptabele marge (≤ €2)." :
+                 absDiff <= 10 ? "Klein verschil — mogelijk afrondingsverschillen of wisselfouten." :
+                 "Significant verschil — vereist nader onderzoek."}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="rounded-xl">
+          <CardContent className="p-4">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Kassaberekening</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Geteld bedrag</span>
+                <span className="font-medium">{euro(c.counted_cash)}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Float (wisselgeld)</span>
+                <span>– {euro(c.float_amount)}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Bonnen / uitgaven</span>
+                <span>– {euro(c.expense_receipts)}</span>
+              </div>
+              {c.expense_note && (
+                <div className="flex justify-between py-1.5 border-b border-border/50">
+                  <span className="text-muted-foreground">Notitie uitgaven</span>
+                  <span className="text-right max-w-[60%]">{c.expense_note}</span>
+                </div>
+              )}
+              <div className="flex justify-between py-1.5 border-b border-border/50 font-bold">
+                <span>Enveloppe bedrag</span>
+                <span>{euro(c.envelope_amount)}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Verwachte cash omzet</span>
+                <span>{euro(c.expected_cash_revenue)}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-border/50">
+                <span className="text-muted-foreground">Verwachte enveloppe</span>
+                <span>{euro(c.expected_envelope)}</span>
+              </div>
+              <div className={clsx("flex justify-between py-2 font-bold text-base", severityColor)}>
+                <span>Verschil</span>
+                <span>{c.difference >= 0 ? "+" : ""}{euro(c.difference)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {absDiff > 10 && (
+          <Card className="rounded-xl border-red-200 bg-red-50/50">
+            <CardContent className="p-4">
+              <p className="text-xs font-medium text-red-800 uppercase tracking-wide mb-2">Mogelijke oorzaken</p>
+              <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                {c.difference > 0 && <li>Er zit meer geld in de kassa dan verwacht — mogelijk niet-geregistreerde contante verkoop.</li>}
+                {c.difference < 0 && <li>Er zit minder geld in de kassa dan verwacht — mogelijk fouten bij wisselgeld of ontbrekende transacties.</li>}
+                <li>Controleer of alle bonnen correct zijn ingevoerd.</li>
+                <li>Controleer of het wisselgeld (float) klopt met het beginbedrag.</li>
+                <li>Vergelijk met de pinbetalingen van deze dag.</li>
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -5319,7 +5433,7 @@ function CashAuditView() {
                   <tr><td colSpan={11} className="p-8 text-center text-muted-foreground">Geen afsluitingen gevonden</td></tr>
                 )}
                 {closings.map((c) => (
-                  <tr key={c.id} className="border-b hover:bg-neutral-50">
+                  <tr key={c.id} className="border-b hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => setSelected(c)}>
                     <td className="px-3 py-2 whitespace-nowrap">{new Date(c.closing_date).toLocaleDateString("nl-NL")}</td>
                     <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">{c.envelope_code}</td>
                     <td className="px-3 py-2">{c.primary_employee_name}</td>
