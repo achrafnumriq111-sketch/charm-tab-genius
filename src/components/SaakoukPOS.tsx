@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation_ } from "@/contexts/LocationContext";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { useModifiers } from "@/hooks/useModifiers";
@@ -28,7 +29,7 @@ import {
   ChefHat, Printer, Edit, Eye, DollarSign, TrendingUp,
   UserPlus, MapPin, FileText, Mail, Lock,
   Shield, Zap, Bell, LogOut, Star,
-  ChevronRight, ChevronLeft, Banknote,
+  ChevronRight, ChevronLeft, Banknote, Building2,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
   ClipboardCheck, BarChart3,
 } from "lucide-react";
