@@ -13,6 +13,7 @@ import UpsellPrompt from "@/components/UpsellPrompt";
 import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
 import UpsellRulesView from "@/components/UpsellRulesView";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
+import MultiLocationDashboard from "@/components/MultiLocationDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -250,6 +251,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
   const isOwner = role === "owner";
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
+    { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true },
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
     { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
     { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
@@ -4267,6 +4269,7 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, 
 
 const sectionPickerItems = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true, color: "from-violet-400 to-indigo-400" },
+  { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true, color: "from-sky-400 to-blue-400" },
   { key: "pos", label: "Point of Sale", icon: ShoppingCart, adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
   { key: "prepstation", label: "Prepstation", icon: ChefHat, adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
   { key: "cashclose", label: "Kassa Afsluiting", icon: Lock, adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
@@ -5825,6 +5828,7 @@ export default function SaakoukPOS() {
 
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
+    multilocatie: "Multi-Locatie Overzicht",
     pos: "Point of Sale",
     prepstation: "Prepstation",
     cashclose: "Kassa Afsluiting",
@@ -5948,6 +5952,7 @@ export default function SaakoukPOS() {
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
             {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />}
+            {active === "multilocatie" && <MultiLocationDashboard />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-full bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
