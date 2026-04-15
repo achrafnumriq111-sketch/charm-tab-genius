@@ -4322,14 +4322,14 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
 
 // ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
 
-function EmployeesView({ employees, setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
+function EmployeesView({ employees = [], setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
 
   function openEdit(emp: any) {
     setEditingId(emp.id);
-    setForm({ name: emp.name, email: emp.email, role: emp.role, pin: emp.pin });
+    setForm({ name: emp.name, email: emp.email || "", role: emp.role, pin: "" });
   }
 
   function openAdd() {
@@ -4384,7 +4384,7 @@ function EmployeesView({ employees, setEmployees, currentRole }: { employees: an
                   </div>
                   <div>
                     <div className="font-semibold text-sm">{emp.name}</div>
-                    <div className="text-xs text-muted-foreground">{emp.email}</div>
+                    <div className="text-xs text-muted-foreground">{emp.email || ""}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -4395,7 +4395,7 @@ function EmployeesView({ employees, setEmployees, currentRole }: { employees: an
               <div className="flex items-center justify-between mt-3">
                 <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{roleLabels[emp.role] || emp.role}</Badge>
                 <span className="text-xs text-muted-foreground font-mono">
-                  {isOwner ? (emp.pin ? `PIN: ${emp.pin}` : "⚠️ Geen PIN") : "PIN: ••••••"}
+                  PIN: ••••••
                 </span>
               </div>
             </CardContent>
