@@ -5873,7 +5873,7 @@ export default function SaakoukPOS() {
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={products} reservations={reservations} customers={customers} />}
+            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
                 <TabsList className="rounded-full bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
@@ -5882,7 +5882,7 @@ export default function SaakoukPOS() {
                 </TabsList>
                 <TabsContent value="counter">
                   <CounterView
-                    products={products} tables={tables} features={features} customers={customers}
+                    products={enrichedProducts} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
                     passkitConfig={passkitConfig} onToast={setToast} addLog={addLog}
@@ -5899,7 +5899,8 @@ export default function SaakoukPOS() {
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
             {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={products} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} />}
             {(active === "inventory" || active === "intake") && (
               <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">
@@ -5928,7 +5929,7 @@ export default function SaakoukPOS() {
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
-            {active === "sales" && <SalesView orders={orders} products={products} employees={employees} />}
+            {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
             {active === "cashaudit" && <CashAuditView />}
