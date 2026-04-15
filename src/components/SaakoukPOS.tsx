@@ -51,7 +51,7 @@ import {
 
 const SECTIONS = ["Signature Drinks", "Specials", "Cold Drinks", "Hot Drinks", "Sweets"];
 
-// ─── MOCK DATA ───────────────────────────────────────────────────────────────
+// ─── PRODUCT & MODIFIER CONFIG ───────────────────────────────────────────────
 
 const milkGroup = {
   id: "milk", name: "Milk", required: false, multiple: false,
@@ -159,24 +159,11 @@ const initialZones = [
   { id: "zone-terras", name: "Terras" },
 ];
 
-const initialCustomers = [
-  { id: "c1", name: "Sarah de Vries", email: "sarah@example.com", phone: "+31612345678", loyaltyId: "LYL-001", points: 245, visits: 32, totalSpent: 412.5, lastVisit: "2026-03-17", provider: "passkit" },
-  { id: "c2", name: "Mohammed Al-Rashid", email: "mo@example.com", phone: "+31687654321", loyaltyId: "LYL-002", points: 180, visits: 24, totalSpent: 298.0, lastVisit: "2026-03-16", provider: "piggy" },
-  { id: "c3", name: "Emma Bakker", email: "emma.b@example.com", phone: "+31698765432", loyaltyId: "LYL-003", points: 520, visits: 56, totalSpent: 687.25, lastVisit: "2026-03-18", provider: "leat" },
-  { id: "c4", name: "Lucas Jansen", email: "lucas.j@example.com", phone: "+31654321098", loyaltyId: "", points: 0, visits: 3, totalSpent: 34.5, lastVisit: "2026-03-10", provider: "none" },
-];
+const initialCustomers: any[] = [];
 
-const initialGiftCards = [
-  { id: "gc-1", code: "SAAK-2026-A1B2", balance: 25.0, initialValue: 25.0, status: "active", issuedAt: "2026-03-01", customerName: "Sarah de Vries" },
-  { id: "gc-2", code: "SAAK-2026-C3D4", balance: 10.0, initialValue: 50.0, status: "active", issuedAt: "2026-02-14", customerName: "Gift buyer" },
-  { id: "gc-3", code: "SAAK-2026-E5F6", balance: 0, initialValue: 15.0, status: "redeemed", issuedAt: "2026-01-20", customerName: "Emma Bakker" },
-];
+const initialGiftCards: any[] = [];
 
-const initialReservations = [
-  { id: "r1", name: "Van Dijk family", date: "2026-03-18", time: "14:00", guests: 4, table: "T1", phone: "+31612345000", notes: "Birthday", status: "confirmed" },
-  { id: "r2", name: "Karim", date: "2026-03-18", time: "16:30", guests: 2, table: "3", phone: "+31687650000", notes: "", status: "confirmed" },
-  { id: "r3", name: "Office meetup", date: "2026-03-19", time: "10:00", guests: 6, table: "T2", phone: "+31698760000", notes: "Need power outlets", status: "pending" },
-];
+const initialReservations: any[] = [];
 
 // ─── EMPLOYEES ───────────────────────────────────────────────────────────────
 
@@ -2502,7 +2489,15 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
         <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-2" />New reservation</Button>
       </div>
       <div className="grid grid-cols-1 gap-3">
-        {reservations.map((r) => (
+        {reservations.length === 0 ? (
+          <Card className="rounded-2xl">
+            <CardContent className="p-8 text-center">
+              <CalendarDays className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <div className="font-medium text-muted-foreground">Geen reserveringen</div>
+              <div className="text-xs text-muted-foreground mt-1">Maak een nieuwe reservering aan om te beginnen.</div>
+            </CardContent>
+          </Card>
+        ) : reservations.map((r) => (
           <Card key={r.id} className="rounded-2xl">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -2894,7 +2889,17 @@ function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
         <Button onClick={() => setShowAdd(true)}><UserPlus className="h-4 w-4 mr-2" />Add customer</Button>
       </div>
       <div className="grid grid-cols-1 gap-3">
-        {filtered.map((c) => (
+        {filtered.length === 0 && customers.length === 0 ? (
+          <Card className="rounded-2xl">
+            <CardContent className="p-8 text-center">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <div className="font-medium text-muted-foreground">Nog geen klanten</div>
+              <div className="text-xs text-muted-foreground mt-1">Voeg je eerste klant toe om te beginnen.</div>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-4 text-center">Geen resultaten gevonden</div>
+        ) : filtered.map((c) => (
           <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => { setSelected(c); addLog?.("customer_viewed", `Klant bekeken: ${c.name}`); }}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -3002,7 +3007,15 @@ function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
         <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-2" />Issue card</Button>
       </div>
       <div className="grid grid-cols-1 gap-3">
-        {giftCards.map((gc) => (
+        {giftCards.length === 0 ? (
+          <Card className="rounded-2xl">
+            <CardContent className="p-8 text-center">
+              <Gift className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <div className="font-medium text-muted-foreground">Nog geen cadeaukaarten</div>
+              <div className="text-xs text-muted-foreground mt-1">Geef je eerste cadeaukaart uit om te beginnen.</div>
+            </CardContent>
+          </Card>
+        ) : giftCards.map((gc) => (
           <Card key={gc.id} className="rounded-2xl">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
