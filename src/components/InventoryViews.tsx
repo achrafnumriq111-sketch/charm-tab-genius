@@ -1320,7 +1320,7 @@ export async function restoreStockForRefund(orderItems: any[], employeeName?: st
 
 // ─── DYNAMIC STOCK VIEW ─────────────────────────────────────────────────────
 
-export function DynamicStockView({ onToast, addLog, currentRole, employeeName }: any) {
+export function DynamicStockView({ onToast, addLog, currentRole, employeeName, locationId }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [allInventory, setAllInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1339,16 +1339,16 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
 
   async function loadItems() {
     setLoading(true);
-    const [dynRes, allRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").eq("is_dynamic", true).order("item_name"),
-      supabase.from("inventory_items").select("id, item_name, unit_type").order("item_name"),
-    ]);
+    let dynQ = supabase.from("inventory_items").select("*").eq("is_dynamic", true).order("item_name");
+    let allQ = supabase.from("inventory_items").select("id, item_name, unit_type").order("item_name");
+    if (locationId) { dynQ = dynQ.eq("location_id", locationId); allQ = allQ.eq("location_id", locationId); }
+    const [dynRes, allRes] = await Promise.all([dynQ, allQ]);
     setItems(dynRes.data || []);
     setAllInventory(allRes.data || []);
     setLoading(false);
   }
 
-  useEffect(() => { loadItems(); }, []);
+  useEffect(() => { loadItems(); }, [locationId]);
 
   async function createDynamicItem() {
     if (!form.item_name.trim()) return;
@@ -1363,6 +1363,7 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
       supplier: form.supplier || null,
       ai_forecast_enabled: form.ai_forecast_enabled,
       is_dynamic: true,
+      ...(locationId ? { location_id: locationId } : {}),
     });
     if (error) { onToast?.("Fout bij aanmaken: " + error.message); return; }
     onToast?.(`${form.item_name} aangemaakt als dynamic stock`);
@@ -1382,6 +1383,7 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
       source: "dynamic_refill",
       employee_name: employeeName || null,
       notes: `Quick refill +${amount} ${item.unit_type}`,
+      ...(locationId ? { location_id: locationId } : {}),
     });
     addLog?.("dynamic_refill", `${item.item_name} bijgevuld: +${amount} ${item.unit_type}`);
     onToast?.(`${item.item_name} +${amount} ${item.unit_type}`);
