@@ -5474,6 +5474,17 @@ export default function SaakoukPOS() {
     }, ...prev]);
   }, [loggedInEmployee]);
 
+  // Load employees from database
+  useEffect(() => {
+    async function loadEmployees() {
+      const { data } = await supabase.from("employees").select("id, full_name, role, is_active").eq("is_active", true);
+      if (data) {
+        setEmployees(data.map((e: any) => ({ id: e.id, name: e.full_name, role: e.role })));
+      }
+    }
+    loadEmployees();
+  }, []);
+
   // Poll low-stock items every 30s
   useEffect(() => {
     async function checkLowStock() {
