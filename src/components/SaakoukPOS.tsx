@@ -5727,6 +5727,7 @@ export default function SaakoukPOS() {
         gift_card_id: stamped.giftCardId || null,
         status: stamped.status || 'completed',
         source: 'pos',
+        location_id: locationId,
       } as any);
       if (error) console.error("Failed to save transaction:", error);
     } catch (err) {
