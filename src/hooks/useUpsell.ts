@@ -43,7 +43,7 @@ function isInTimeWindow(from: string | null, until: string | null): boolean {
   return true;
 }
 
-export function useUpsellEngine(products: any[]) {
+export function useUpsellEngine(products: any[], locationId?: string | null) {
   const [rules, setRules] = useState<UpsellRule[]>([]);
   const [loading, setLoading] = useState(true);
   const dismissedThisSession = useRef<Set<string>>(new Set());
@@ -51,14 +51,16 @@ export function useUpsellEngine(products: any[]) {
   const lastPromptTime = useRef<number>(0);
 
   const fetchRules = useCallback(async () => {
-    const { data } = await supabase
+    let query = supabase
       .from("upsell_rules")
       .select("*")
       .eq("is_active", true)
       .order("priority");
+    if (locationId) query = query.eq("location_id", locationId);
+    const { data } = await query;
     setRules((data || []) as UpsellRule[]);
     setLoading(false);
-  }, []);
+  }, [locationId]);
 
   useEffect(() => {
     fetchRules();
