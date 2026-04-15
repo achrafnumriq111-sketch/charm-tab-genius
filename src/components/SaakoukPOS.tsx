@@ -5974,8 +5974,8 @@ export default function SaakoukPOS() {
             {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
-            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} />}
-            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />}
+            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} locationId={locationId} />}
+            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />}
             {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
             {(active === "inventory" || active === "intake") && (
               <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
@@ -5986,16 +5986,16 @@ export default function SaakoukPOS() {
                   <TabsTrigger value="waste">Verspilling</TabsTrigger>
                 </TabsList>
                 <TabsContent value="voorraad">
-                  <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />
+                  <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} />
                 </TabsContent>
                 <TabsContent value="dynamic">
-                  <DynamicStockView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />
+                  <DynamicStockView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
                 <TabsContent value="intake">
-                  <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />
+                  <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
                 <TabsContent value="waste">
-                  <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />
+                  <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
               </Tabs>
             )}
