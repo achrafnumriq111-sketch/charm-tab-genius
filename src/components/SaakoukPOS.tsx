@@ -5863,7 +5863,7 @@ export default function SaakoukPOS() {
         <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
           <div>
             <h1 className="text-base font-semibold tracking-[-0.02em] text-slate-900 leading-tight">{titles[active] || "Saakouk"}</h1>
-            <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}</div>
+            <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}{activeLocation ? ` · ${activeLocation.name}` : ""}</div>
           </div>
           <div className="flex items-center gap-2">
             {/* QR Orders indicator */}
