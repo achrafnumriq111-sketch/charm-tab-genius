@@ -13,6 +13,7 @@ import UpsellPrompt from "@/components/UpsellPrompt";
 import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
 import UpsellRulesView from "@/components/UpsellRulesView";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
+import MultiLocationDashboard from "@/components/MultiLocationDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
