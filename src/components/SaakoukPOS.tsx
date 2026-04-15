@@ -292,6 +292,28 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
           </motion.div>
           <span className="text-[8px] text-slate-500 truncate w-full text-center">{employeeName.split(" ")[0]}</span>
         </div>
+        {/* Location selector (owner sees dropdown, staff sees label) */}
+        {activeLocation && (
+          <div className="px-1.5 py-1.5 border-b border-white/50">
+            {role === "owner" && locations.length > 1 ? (
+              <select
+                value={activeLocation.id}
+                onChange={(e) => onLocationChange(e.target.value)}
+                className="w-full text-[8px] bg-white/60 border border-white/70 rounded-xl px-1 py-1.5 text-center font-medium text-slate-700 truncate appearance-none cursor-pointer"
+                title="Selecteer locatie"
+              >
+                {locations.map((l: any) => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="flex flex-col items-center gap-0.5" title={activeLocation.name}>
+                <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                <span className="text-[7px] text-slate-500 truncate w-full text-center leading-tight">{activeLocation.city || activeLocation.name}</span>
+              </div>
+            )}
+          </div>
+        )}
         <ScrollArea className="flex-1 py-2 px-1.5">
           <div className="space-y-1 flex flex-col items-center">
             {sections.map((item) => {
