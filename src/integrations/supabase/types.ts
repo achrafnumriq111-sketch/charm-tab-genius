@@ -27,6 +27,7 @@ export type Database = {
           is_holiday: boolean | null
           labor_cost: number | null
           labor_hours: number | null
+          location_id: string | null
           month: number
           omzet: number
           orders_count: number
@@ -48,6 +49,7 @@ export type Database = {
           is_holiday?: boolean | null
           labor_cost?: number | null
           labor_hours?: number | null
+          location_id?: string | null
           month?: number
           omzet?: number
           orders_count?: number
@@ -69,6 +71,7 @@ export type Database = {
           is_holiday?: boolean | null
           labor_cost?: number | null
           labor_hours?: number | null
+          location_id?: string | null
           month?: number
           omzet?: number
           orders_count?: number
@@ -78,7 +81,15 @@ export type Database = {
           week_number?: number
           weekday?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_daily_facts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_hourly_facts: {
         Row: {
@@ -90,6 +101,7 @@ export type Database = {
           is_weekend: boolean | null
           labor_cost: number | null
           local_hour: number
+          location_id: string | null
           omzet: number
           orders_count: number
           staff_count: number | null
@@ -105,6 +117,7 @@ export type Database = {
           is_weekend?: boolean | null
           labor_cost?: number | null
           local_hour: number
+          location_id?: string | null
           omzet?: number
           orders_count?: number
           staff_count?: number | null
@@ -120,13 +133,22 @@ export type Database = {
           is_weekend?: boolean | null
           labor_cost?: number | null
           local_hour?: number
+          location_id?: string | null
           omzet?: number
           orders_count?: number
           staff_count?: number | null
           updated_at?: string
           weekday?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "business_hourly_facts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cash_audit_notes: {
         Row: {
@@ -135,6 +157,7 @@ export type Database = {
           created_at: string
           employee_name: string
           id: string
+          location_id: string | null
           note_text: string
         }
         Insert: {
@@ -143,6 +166,7 @@ export type Database = {
           created_at?: string
           employee_name: string
           id?: string
+          location_id?: string | null
           note_text: string
         }
         Update: {
@@ -151,6 +175,7 @@ export type Database = {
           created_at?: string
           employee_name?: string
           id?: string
+          location_id?: string | null
           note_text?: string
         }
         Relationships: [
@@ -159,6 +184,13 @@ export type Database = {
             columns: ["cash_closing_id"]
             isOneToOne: false
             referencedRelation: "cash_closings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_audit_notes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -177,6 +209,7 @@ export type Database = {
           expense_receipts: number
           float_amount: number
           id: string
+          location_id: string | null
           primary_employee_id: string
           primary_employee_name: string
           second_checker_id: string
@@ -196,6 +229,7 @@ export type Database = {
           expense_receipts?: number
           float_amount?: number
           id?: string
+          location_id?: string | null
           primary_employee_id: string
           primary_employee_name: string
           second_checker_id: string
@@ -215,13 +249,22 @@ export type Database = {
           expense_receipts?: number
           float_amount?: number
           id?: string
+          location_id?: string | null
           primary_employee_id?: string
           primary_employee_name?: string
           second_checker_id?: string
           second_checker_name?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cash_closings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employees: {
         Row: {
@@ -231,6 +274,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_login_at: string | null
+          location_id: string | null
           locked_until: string | null
           role: Database["public"]["Enums"]["employee_role"]
           updated_at: string
@@ -244,6 +288,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login_at?: string | null
+          location_id?: string | null
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
           updated_at?: string
@@ -257,13 +302,22 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login_at?: string | null
+          location_id?: string | null
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
           updated_at?: string
           user_id?: string | null
           username_normalized?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       forecast_learning_metrics: {
         Row: {
@@ -275,6 +329,7 @@ export type Database = {
           forecast_date: string
           forecast_target: string
           id: string
+          location_id: string | null
           model_scope: string
           percent_error: number | null
           predicted_value: number
@@ -288,6 +343,7 @@ export type Database = {
           forecast_date: string
           forecast_target?: string
           id?: string
+          location_id?: string | null
           model_scope?: string
           percent_error?: number | null
           predicted_value?: number
@@ -301,11 +357,20 @@ export type Database = {
           forecast_date?: string
           forecast_target?: string
           id?: string
+          location_id?: string | null
           model_scope?: string
           percent_error?: number | null
           predicted_value?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "forecast_learning_metrics_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_items: {
         Row: {
@@ -321,6 +386,7 @@ export type Database = {
           last_count_date: string | null
           last_delivery_date: string | null
           location: string | null
+          location_id: string | null
           minimum_stock: number
           recommended_threshold: number
           reorder_level: number
@@ -343,6 +409,7 @@ export type Database = {
           last_count_date?: string | null
           last_delivery_date?: string | null
           location?: string | null
+          location_id?: string | null
           minimum_stock?: number
           recommended_threshold?: number
           reorder_level?: number
@@ -365,6 +432,7 @@ export type Database = {
           last_count_date?: string | null
           last_delivery_date?: string | null
           location?: string | null
+          location_id?: string | null
           minimum_stock?: number
           recommended_threshold?: number
           reorder_level?: number
@@ -373,6 +441,50 @@ export type Database = {
           unit_type?: string
           updated_at?: string
           waste_percentage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          name: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          city?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          timezone?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -384,6 +496,7 @@ export type Database = {
           event_type: string
           id: string
           ip_address: string | null
+          location_id: string | null
           user_agent: string | null
           username_attempted: string | null
         }
@@ -394,6 +507,7 @@ export type Database = {
           event_type: string
           id?: string
           ip_address?: string | null
+          location_id?: string | null
           user_agent?: string | null
           username_attempted?: string | null
         }
@@ -404,6 +518,7 @@ export type Database = {
           event_type?: string
           id?: string
           ip_address?: string | null
+          location_id?: string | null
           user_agent?: string | null
           username_attempted?: string | null
         }
@@ -415,6 +530,13 @@ export type Database = {
             referencedRelation: "employees"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "login_audit_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       margin_targets: {
@@ -422,6 +544,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          location_id: string | null
           target_margin_pct: number
           updated_at: string
         }
@@ -429,6 +552,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
+          location_id?: string | null
           target_margin_pct?: number
           updated_at?: string
         }
@@ -436,10 +560,19 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          location_id?: string | null
           target_margin_pct?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "margin_targets_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       modifier_groups: {
         Row: {
@@ -481,7 +614,15 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "modifier_groups_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       modifiers: {
         Row: {
@@ -546,6 +687,7 @@ export type Database = {
           gift_card_id: string | null
           id: string
           items: Json
+          location_id: string | null
           loyalty_id: string | null
           loyalty_provider: string | null
           order_id: string
@@ -569,6 +711,7 @@ export type Database = {
           gift_card_id?: string | null
           id?: string
           items?: Json
+          location_id?: string | null
           loyalty_id?: string | null
           loyalty_provider?: string | null
           order_id: string
@@ -592,6 +735,7 @@ export type Database = {
           gift_card_id?: string | null
           id?: string
           items?: Json
+          location_id?: string | null
           loyalty_id?: string | null
           loyalty_provider?: string | null
           order_id?: string
@@ -603,13 +747,22 @@ export type Database = {
           tip?: number
           total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pos_transactions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_costs: {
         Row: {
           buying_price: number
           created_at: string | null
           id: string
+          location_id: string | null
           product_name: string
           selling_price: number | null
           updated_at: string | null
@@ -618,6 +771,7 @@ export type Database = {
           buying_price?: number
           created_at?: string | null
           id?: string
+          location_id?: string | null
           product_name: string
           selling_price?: number | null
           updated_at?: string | null
@@ -626,32 +780,51 @@ export type Database = {
           buying_price?: number
           created_at?: string | null
           id?: string
+          location_id?: string | null
           product_name?: string
           selling_price?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "product_costs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_modifier_groups: {
         Row: {
           created_at: string
           id: string
+          location_id: string | null
           modifier_group_id: string
           product_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          location_id?: string | null
           modifier_group_id: string
           product_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          location_id?: string | null
           modifier_group_id?: string
           product_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "product_modifier_groups_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_modifier_groups_modifier_group_id_fkey"
             columns: ["modifier_group_id"]
@@ -667,6 +840,7 @@ export type Database = {
           id: string
           inventory_item_id: string
           is_optional: boolean
+          location_id: string | null
           product_id: string
           product_name: string
           quantity: number
@@ -679,6 +853,7 @@ export type Database = {
           id?: string
           inventory_item_id: string
           is_optional?: boolean
+          location_id?: string | null
           product_id: string
           product_name: string
           quantity?: number
@@ -691,6 +866,7 @@ export type Database = {
           id?: string
           inventory_item_id?: string
           is_optional?: boolean
+          location_id?: string | null
           product_id?: string
           product_name?: string
           quantity?: number
@@ -706,6 +882,13 @@ export type Database = {
             referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_recipes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       qr_orders: {
@@ -716,6 +899,7 @@ export type Database = {
           customer_phone: string
           id: string
           items: Json
+          location_id: string | null
           status: string
           table_id: string
           total: number
@@ -727,6 +911,7 @@ export type Database = {
           customer_phone?: string
           id?: string
           items?: Json
+          location_id?: string | null
           status?: string
           table_id: string
           total?: number
@@ -738,11 +923,20 @@ export type Database = {
           customer_phone?: string
           id?: string
           items?: Json
+          location_id?: string | null
           status?: string
           table_id?: string
           total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qr_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_counts: {
         Row: {
@@ -754,6 +948,7 @@ export type Database = {
           difference_pct: number
           id: string
           inventory_item_id: string
+          location_id: string | null
           physical_count: number
           system_stock: number
         }
@@ -766,6 +961,7 @@ export type Database = {
           difference_pct?: number
           id?: string
           inventory_item_id: string
+          location_id?: string | null
           physical_count?: number
           system_stock?: number
         }
@@ -778,6 +974,7 @@ export type Database = {
           difference_pct?: number
           id?: string
           inventory_item_id?: string
+          location_id?: string | null
           physical_count?: number
           system_stock?: number
         }
@@ -787,6 +984,13 @@ export type Database = {
             columns: ["inventory_item_id"]
             isOneToOne: false
             referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -800,6 +1004,7 @@ export type Database = {
           inventory_item_id: string
           invoice_reference: string | null
           location: string | null
+          location_id: string | null
           purchase_price: number
           quantity: number
           supplier: string | null
@@ -813,6 +1018,7 @@ export type Database = {
           inventory_item_id: string
           invoice_reference?: string | null
           location?: string | null
+          location_id?: string | null
           purchase_price?: number
           quantity?: number
           supplier?: string | null
@@ -826,6 +1032,7 @@ export type Database = {
           inventory_item_id?: string
           invoice_reference?: string | null
           location?: string | null
+          location_id?: string | null
           purchase_price?: number
           quantity?: number
           supplier?: string | null
@@ -839,6 +1046,13 @@ export type Database = {
             referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_intakes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stock_movements: {
@@ -848,6 +1062,7 @@ export type Database = {
           employee_name: string | null
           id: string
           inventory_item_id: string
+          location_id: string | null
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes: string | null
           order_id: string | null
@@ -862,6 +1077,7 @@ export type Database = {
           employee_name?: string | null
           id?: string
           inventory_item_id: string
+          location_id?: string | null
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
           order_id?: string | null
@@ -876,6 +1092,7 @@ export type Database = {
           employee_name?: string | null
           id?: string
           inventory_item_id?: string
+          location_id?: string | null
           movement_type?: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
           order_id?: string | null
@@ -890,6 +1107,13 @@ export type Database = {
             columns: ["inventory_item_id"]
             isOneToOne: false
             referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -949,7 +1173,15 @@ export type Database = {
           trigger_product_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "upsell_rules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weather_business_correlations: {
         Row: {
@@ -960,6 +1192,7 @@ export type Database = {
           created_at: string
           id: string
           last_updated: string
+          location_id: string | null
           metadata: Json | null
           pattern_key: string
           sample_size: number
@@ -974,6 +1207,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_updated?: string
+          location_id?: string | null
           metadata?: Json | null
           pattern_key: string
           sample_size?: number
@@ -988,13 +1222,22 @@ export type Database = {
           created_at?: string
           id?: string
           last_updated?: string
+          location_id?: string | null
           metadata?: Json | null
           pattern_key?: string
           sample_size?: number
           scope?: string
           uplift_percent?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weather_business_correlations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weather_daily_observations: {
         Row: {
@@ -1009,6 +1252,7 @@ export type Database = {
           is_rain: boolean | null
           is_severe: boolean | null
           is_storm: boolean | null
+          location_id: string | null
           location_key: string
           max_temp_c: number | null
           min_temp_c: number | null
@@ -1035,6 +1279,7 @@ export type Database = {
           is_rain?: boolean | null
           is_severe?: boolean | null
           is_storm?: boolean | null
+          location_id?: string | null
           location_key?: string
           max_temp_c?: number | null
           min_temp_c?: number | null
@@ -1061,6 +1306,7 @@ export type Database = {
           is_rain?: boolean | null
           is_severe?: boolean | null
           is_storm?: boolean | null
+          location_id?: string | null
           location_key?: string
           max_temp_c?: number | null
           min_temp_c?: number | null
@@ -1075,7 +1321,15 @@ export type Database = {
           visibility?: number | null
           wind_speed?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weather_daily_observations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weather_hourly_observations: {
         Row: {
@@ -1090,6 +1344,7 @@ export type Database = {
           id: string
           is_daylight: boolean | null
           local_hour: number
+          location_id: string | null
           location_key: string
           precipitation_chance: number | null
           precipitation_intensity: number | null
@@ -1113,6 +1368,7 @@ export type Database = {
           id?: string
           is_daylight?: boolean | null
           local_hour: number
+          location_id?: string | null
           location_key?: string
           precipitation_chance?: number | null
           precipitation_intensity?: number | null
@@ -1136,6 +1392,7 @@ export type Database = {
           id?: string
           is_daylight?: boolean | null
           local_hour?: number
+          location_id?: string | null
           location_key?: string
           precipitation_chance?: number | null
           precipitation_intensity?: number | null
@@ -1147,13 +1404,22 @@ export type Database = {
           visibility?: number | null
           wind_speed?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weather_hourly_observations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_employee_location_id: { Args: { _user_id: string }; Returns: string }
       get_employee_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["employee_role"]
