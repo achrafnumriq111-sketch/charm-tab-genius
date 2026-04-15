@@ -927,6 +927,8 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [scanValue, setScanValue] = useState("");
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+  const [upsellSuggestion, setUpsellSuggestion] = useState<UpsellSuggestion | null>(null);
+  const upsell = useUpsellEngine(allProducts);
 
   const cart = ticket.cart;
   const selectedDiscount = ticket.selectedDiscount;
