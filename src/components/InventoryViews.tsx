@@ -1682,8 +1682,12 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
 const WASTE_REASONS = [
   { value: "expired", label: "Over datum / Expired" },
   { value: "damaged", label: "Beschadigd / Damaged" },
+  { value: "spilled", label: "Gemorst / Spilled" },
+  { value: "overproduction", label: "Overproductie" },
+  { value: "returned", label: "Retour / Returned" },
+  { value: "broken", label: "Kapot / Broken" },
   { value: "complaint_remake", label: "Klacht / Remake" },
-  { value: "dropped_spilled", label: "Gevallen / Gemorst" },
+  { value: "dropped_spilled", label: "Gevallen" },
   { value: "prep_mistake", label: "Bereidingsfout" },
   { value: "end_of_day", label: "Einde dag weggooi" },
   { value: "unknown_shrinkage", label: "Onbekend verlies" },
@@ -1817,7 +1821,7 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
   return (
     <div className="space-y-4">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="border-destructive/20 bg-destructive/5">
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground">Verspilling vandaag</div>
@@ -1845,6 +1849,21 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
             <div className="text-2xl font-bold">{filteredMovements.length}</div>
           </CardContent>
         </Card>
+        {isOwner && (
+          <Card className="border-amber-300/30 bg-amber-50/50 dark:bg-amber-950/20">
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Waste %</div>
+              <div className="text-2xl font-bold text-amber-600">
+                {(() => {
+                  const totalStockValue = items.reduce((s, i) => s + i.current_stock * i.cost_per_unit, 0);
+                  const pct = totalStockValue > 0 ? ((totalWasteCost / (totalStockValue + totalWasteCost)) * 100) : 0;
+                  return `${pct.toFixed(1)}%`;
+                })()}
+              </div>
+              <div className="text-xs text-muted-foreground">van voorraadwaarde</div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Smart Alerts */}

@@ -258,6 +258,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "modifiers", label: "Mods", icon: Zap, adminOnly: true, ownerOnly: false },
     { key: "upsell", label: "Upsell", icon: Sparkles, adminOnly: true, ownerOnly: false },
+    { key: "waste", label: "Waste", icon: Trash2, adminOnly: true, ownerOnly: false },
     { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
     { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true },
