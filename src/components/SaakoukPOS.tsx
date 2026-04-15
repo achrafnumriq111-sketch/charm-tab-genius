@@ -5502,6 +5502,15 @@ export default function SaakoukPOS() {
     return () => clearInterval(interval);
   }, []);
 
+  // Enrich products with DB modifier groups (fallback to hardcoded)
+  const enrichedProducts = useMemo(() => {
+    if (modifierGroups.length === 0) return products;
+    return products.map((p) => {
+      const dbGroups = getGroupsForProduct(p.id);
+      return dbGroups.length > 0 ? { ...p, modifierGroups: dbGroups } : p;
+    });
+  }, [products, modifierGroups, modifierLinks, getGroupsForProduct]);
+
   // Load saved transactions from database
   useEffect(() => {
     async function loadTransactions() {
