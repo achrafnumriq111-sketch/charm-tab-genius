@@ -3007,7 +3007,15 @@ function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
         <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-2" />Issue card</Button>
       </div>
       <div className="grid grid-cols-1 gap-3">
-        {giftCards.map((gc) => (
+        {giftCards.length === 0 ? (
+          <Card className="rounded-2xl">
+            <CardContent className="p-8 text-center">
+              <Gift className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <div className="font-medium text-muted-foreground">Nog geen cadeaukaarten</div>
+              <div className="text-xs text-muted-foreground mt-1">Geef je eerste cadeaukaart uit om te beginnen.</div>
+            </CardContent>
+          </Card>
+        ) : giftCards.map((gc) => (
           <Card key={gc.id} className="rounded-2xl">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
