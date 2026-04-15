@@ -1291,8 +1291,11 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 
       {/* Modifier picker modal */}
       <Modal open={!!selectedProduct} onClose={() => setSelectedProduct(null)}>
-        {selectedProduct && <ModifierPicker product={selectedProduct} onAdd={addLine} onClose={() => setSelectedProduct(null)} />}
+        {selectedProduct && <ModifierPicker product={selectedProduct} onAdd={(item) => addLine(item, selectedProduct)} onClose={() => setSelectedProduct(null)} />}
       </Modal>
+
+      {/* Upsell prompt */}
+      <UpsellPrompt suggestion={upsellSuggestion} onAccept={handleUpsellAccept} onDismiss={handleUpsellDismiss} />
 
       {/* Payment modal */}
       <PaymentModal open={paymentOpen} onClose={() => setPaymentOpen(false)} total={total} onComplete={handlePaymentComplete} method={paymentMethod} features={features} giftCards={giftCards} onRedeemGiftCard={onRedeemGiftCard} />
