@@ -258,6 +258,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "modifiers", label: "Mods", icon: Zap, adminOnly: true, ownerOnly: false },
     { key: "upsell", label: "Upsell", icon: Sparkles, adminOnly: true, ownerOnly: false },
+    { key: "waste", label: "Waste", icon: Trash2, adminOnly: true, ownerOnly: false },
     { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
     { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true },
@@ -5944,6 +5945,7 @@ export default function SaakoukPOS() {
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
             {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} />}
+            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />}
             {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
             {(active === "inventory" || active === "intake") && (
               <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">

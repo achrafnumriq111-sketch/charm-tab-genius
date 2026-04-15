@@ -1682,8 +1682,12 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName }:
 const WASTE_REASONS = [
   { value: "expired", label: "Over datum / Expired" },
   { value: "damaged", label: "Beschadigd / Damaged" },
+  { value: "spilled", label: "Gemorst / Spilled" },
+  { value: "overproduction", label: "Overproductie" },
+  { value: "returned", label: "Retour / Returned" },
+  { value: "broken", label: "Kapot / Broken" },
   { value: "complaint_remake", label: "Klacht / Remake" },
-  { value: "dropped_spilled", label: "Gevallen / Gemorst" },
+  { value: "dropped_spilled", label: "Gevallen" },
   { value: "prep_mistake", label: "Bereidingsfout" },
   { value: "end_of_day", label: "Einde dag weggooi" },
   { value: "unknown_shrinkage", label: "Onbekend verlies" },
@@ -1817,7 +1821,7 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
   return (
     <div className="space-y-4">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="border-destructive/20 bg-destructive/5">
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground">Verspilling vandaag</div>
@@ -1845,6 +1849,21 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
             <div className="text-2xl font-bold">{filteredMovements.length}</div>
           </CardContent>
         </Card>
+        {isOwner && (
+          <Card className="border-amber-300/30 bg-amber-50/50 dark:bg-amber-950/20">
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Waste %</div>
+              <div className="text-2xl font-bold text-amber-600">
+                {(() => {
+                  const totalStockValue = items.reduce((s, i) => s + i.current_stock * i.cost_per_unit, 0);
+                  const pct = totalStockValue > 0 ? ((totalWasteCost / (totalStockValue + totalWasteCost)) * 100) : 0;
+                  return `${pct.toFixed(1)}%`;
+                })()}
+              </div>
+              <div className="text-xs text-muted-foreground">van voorraadwaarde</div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Smart Alerts */}
@@ -1963,6 +1982,44 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* 7-Day Waste Trend */}
+      {isOwner && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Waste trend (7 dagen)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const days: { label: string; cost: number; qty: number }[] = [];
+              for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                const ds = d.toDateString();
+                const dayMoves = movements.filter(m => new Date(m.created_at).toDateString() === ds);
+                const cost = dayMoves.reduce((s, m) => {
+                  const item = items.find(it => it.id === m.inventory_item_id);
+                  return s + Number(m.quantity) * (item?.cost_per_unit || 0);
+                }, 0);
+                days.push({ label: d.toLocaleDateString("nl-NL", { weekday: "short" }), cost, qty: dayMoves.reduce((s, m) => s + Number(m.quantity), 0) });
+              }
+              const maxCost = Math.max(...days.map(d => d.cost), 1);
+              return (
+                <div className="flex items-end gap-1 h-32">
+                  {days.map((d, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div className="text-[10px] text-muted-foreground font-mono">{euro(d.cost)}</div>
+                      <div className="w-full bg-destructive/20 rounded-t-lg relative" style={{ height: `${Math.max((d.cost / maxCost) * 80, 4)}px` }}>
+                        <div className="absolute inset-0 bg-destructive/60 rounded-t-lg" />
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">{d.label}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
       )}
 
       {/* Analytics Grid */}
