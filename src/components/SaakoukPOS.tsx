@@ -5420,7 +5420,8 @@ function CashAuditView() {
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function SaakoukPOS() {
-  const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
+  const { employee: authEmployee, logout: authLogout } = useAuth();
+  const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
@@ -5434,7 +5435,7 @@ export default function SaakoukPOS() {
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
   const [reservations, setReservations] = useState(initialReservations);
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [toast, setToast] = useState("");
   const [features, setFeatures] = useState({
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
