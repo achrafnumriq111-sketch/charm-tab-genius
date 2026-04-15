@@ -1249,9 +1249,8 @@ export function AIForecastView({ onToast }: any) {
 
 // ─── STOCK DEDUCTION ENGINE (called on order complete) ───────────────────────
 
-export async function deductStockForOrder(orderItems: any[], employeeName?: string, orderId?: string) {
+export async function deductStockForOrder(orderItems: any[], employeeName?: string, orderId?: string, locationId?: string) {
   try {
-    // Fetch recipes for all products in the order
     const productIds = [...new Set(orderItems.map(i => i.productId))];
     const { data: recipes } = await supabase.from("product_recipes").select("*, inventory_items(id, current_stock)").in("product_id", productIds);
     if (!recipes || recipes.length === 0) return;
@@ -1263,11 +1262,9 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
         const invItem = recipe.inventory_items;
         if (!invItem) continue;
 
-        // Update stock
         const newStock = Math.max(0, (invItem.current_stock || 0) - deductQty);
         await supabase.from("inventory_items").update({ current_stock: newStock }).eq("id", recipe.inventory_item_id);
 
-        // Log movement
         await supabase.from("stock_movements").insert({
           inventory_item_id: recipe.inventory_item_id,
           movement_type: "sale_deduction" as any,
@@ -1276,6 +1273,7 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
           source: "pos",
           employee_name: employeeName || null,
           order_id: orderId || null,
+          ...(locationId ? { location_id: locationId } : {}),
         });
       }
     }
@@ -1286,7 +1284,7 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
 
 // ─── STOCK RESTORE ENGINE (called on refund) ────────────────────────────────
 
-export async function restoreStockForRefund(orderItems: any[], employeeName?: string, orderId?: string) {
+export async function restoreStockForRefund(orderItems: any[], employeeName?: string, orderId?: string, locationId?: string) {
   try {
     const productIds = [...new Set(orderItems.map(i => i.productId))];
     const { data: recipes } = await supabase.from("product_recipes").select("*, inventory_items(id, current_stock)").in("product_id", productIds);
@@ -1310,6 +1308,7 @@ export async function restoreStockForRefund(orderItems: any[], employeeName?: st
           source: "refund",
           employee_name: employeeName || null,
           order_id: orderId || null,
+          ...(locationId ? { location_id: locationId } : {}),
         });
       }
     }
