@@ -2889,7 +2889,17 @@ function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
         <Button onClick={() => setShowAdd(true)}><UserPlus className="h-4 w-4 mr-2" />Add customer</Button>
       </div>
       <div className="grid grid-cols-1 gap-3">
-        {filtered.map((c) => (
+        {filtered.length === 0 && customers.length === 0 ? (
+          <Card className="rounded-2xl">
+            <CardContent className="p-8 text-center">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+              <div className="font-medium text-muted-foreground">Nog geen klanten</div>
+              <div className="text-xs text-muted-foreground mt-1">Voeg je eerste klant toe om te beginnen.</div>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-4 text-center">Geen resultaten gevonden</div>
+        ) : filtered.map((c) => (
           <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => { setSelected(c); addLog?.("customer_viewed", `Klant bekeken: ${c.name}`); }}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
