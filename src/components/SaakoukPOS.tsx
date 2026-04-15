@@ -4269,6 +4269,7 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, 
 
 const sectionPickerItems = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true, color: "from-violet-400 to-indigo-400" },
+  { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true, color: "from-sky-400 to-blue-400" },
   { key: "pos", label: "Point of Sale", icon: ShoppingCart, adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
   { key: "prepstation", label: "Prepstation", icon: ChefHat, adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
   { key: "cashclose", label: "Kassa Afsluiting", icon: Lock, adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
