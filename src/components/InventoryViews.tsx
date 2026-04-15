@@ -1708,7 +1708,7 @@ const WASTE_REASONS = [
   { value: "other", label: "Anders" },
 ];
 
-export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }: any) {
+export function WasteLoggingView({ onToast, addLog, currentRole, employeeName, locationId }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1721,14 +1721,14 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName }:
   const isOwner = currentRole === "owner";
 
   const loadData = useCallback(async () => {
-    const [itemsRes, movesRes] = await Promise.all([
-      supabase.from("inventory_items").select("*").order("item_name"),
-      supabase.from("stock_movements").select("*").eq("movement_type", "waste").order("created_at", { ascending: false }).limit(500),
-    ]);
+    let itemsQ = supabase.from("inventory_items").select("*").order("item_name");
+    let movesQ = supabase.from("stock_movements").select("*").eq("movement_type", "waste").order("created_at", { ascending: false }).limit(500);
+    if (locationId) { itemsQ = itemsQ.eq("location_id", locationId); movesQ = movesQ.eq("location_id", locationId); }
+    const [itemsRes, movesRes] = await Promise.all([itemsQ, movesQ]);
     if (itemsRes.data) setItems(itemsRes.data);
     if (movesRes.data) setMovements(movesRes.data);
     setLoading(false);
-  }, []);
+  }, [locationId]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
