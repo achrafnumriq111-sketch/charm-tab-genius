@@ -1812,6 +1812,7 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName, l
       notes: form.notes || null,
       employee_name: employeeName,
       source: "waste_log",
+      ...(locationId ? { location_id: locationId } : {}),
     });
 
     // Deduct from stock
