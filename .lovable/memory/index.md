@@ -32,3 +32,4 @@
 - [Activity Logs](mem://features/activity-logs) — Audit logs and multi-criteria order history filtering
 - [Prep Station KDS](mem://features/prep-station-kds) — Kitchen display routing, live timers, and statuses
 - [Modifiers System](mem://features/modifiers-system) — DB-driven modifier groups, options, product assignment, admin CRUD
+- [Upsell Engine](mem://features/upsell-engine) — Smart rule-based upsell prompts with time windows and conversion tracking

@@ -8,6 +8,9 @@ import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMe
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { useModifiers } from "@/hooks/useModifiers";
 import ModifiersView from "@/components/ModifiersView";
+import UpsellPrompt from "@/components/UpsellPrompt";
+import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
+import UpsellRulesView from "@/components/UpsellRulesView";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -254,6 +257,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "modifiers", label: "Mods", icon: Zap, adminOnly: true, ownerOnly: false },
+    { key: "upsell", label: "Upsell", icon: Sparkles, adminOnly: true, ownerOnly: false },
     { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
     { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true },
@@ -925,6 +929,8 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [scanValue, setScanValue] = useState("");
   const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+  const [upsellSuggestion, setUpsellSuggestion] = useState<UpsellSuggestion | null>(null);
+  const upsell = useUpsellEngine(allProducts);
 
   const cart = ticket.cart;
   const selectedDiscount = ticket.selectedDiscount;
@@ -947,12 +953,20 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
     setTicket((prev) => ({ ...prev, cart: typeof updater === "function" ? updater(prev.cart) : updater }));
   }
 
-  function addLine(item) {
+  function addLine(item, triggerProduct?: any) {
     setCart((prev) => {
       const existing = prev.find((x) => x.productId === item.productId && JSON.stringify(x.modifiers) === JSON.stringify(item.modifiers) && (x.notes || "") === (item.notes || ""));
       if (!existing) return [...prev, item];
       return prev.map((x) => (x.lineId === existing.lineId ? { ...x, qty: x.qty + item.qty } : x));
     });
+    // Check for upsell after adding
+    if (triggerProduct) {
+      const suggestion = upsell.getSuggestion(triggerProduct, [...cart, item]);
+      if (suggestion) {
+        upsell.trackImpression(suggestion.rule.id);
+        setUpsellSuggestion(suggestion);
+      }
+    }
   }
 
   function quickAdd(product) {
@@ -961,8 +975,33 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
       addLog?.("product_selected", `Product geselecteerd met modifiers: ${product.name}`);
       return;
     }
-    addLine({ lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] });
+    const item = { lineId: `${product.id}-${Date.now()}`, productId: product.id, name: product.name, price: product.price, costPrice: product.costPrice || 0, qty: 1, notes: "", modifiers: [] };
+    addLine(item, product);
     addLog?.("item_added_to_cart", `Product toegevoegd aan ticket: ${product.name} (${euro(product.price)})`);
+  }
+
+  function handleUpsellAccept() {
+    if (!upsellSuggestion) return;
+    const sp = upsellSuggestion.suggestedProduct;
+    addLine({
+      lineId: `${sp.id}-${Date.now()}`,
+      productId: sp.id,
+      name: sp.name,
+      price: upsellSuggestion.price,
+      costPrice: sp.costPrice || 0,
+      qty: 1,
+      notes: "",
+      modifiers: [],
+    });
+    upsell.trackConversion(upsellSuggestion.rule.id);
+    addLog?.("upsell_accepted", `Upsell geaccepteerd: ${sp.name}`);
+    setUpsellSuggestion(null);
+  }
+
+  function handleUpsellDismiss() {
+    if (!upsellSuggestion) return;
+    upsell.dismiss(upsellSuggestion.rule.id);
+    setUpsellSuggestion(null);
   }
 
   function updateQty(lineId, delta) {
@@ -1254,8 +1293,11 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 
       {/* Modifier picker modal */}
       <Modal open={!!selectedProduct} onClose={() => setSelectedProduct(null)}>
-        {selectedProduct && <ModifierPicker product={selectedProduct} onAdd={addLine} onClose={() => setSelectedProduct(null)} />}
+        {selectedProduct && <ModifierPicker product={selectedProduct} onAdd={(item) => addLine(item, selectedProduct)} onClose={() => setSelectedProduct(null)} />}
       </Modal>
+
+      {/* Upsell prompt */}
+      <UpsellPrompt suggestion={upsellSuggestion} onAccept={handleUpsellAccept} onDismiss={handleUpsellDismiss} />
 
       {/* Payment modal */}
       <PaymentModal open={paymentOpen} onClose={() => setPaymentOpen(false)} total={total} onComplete={handlePaymentComplete} method={paymentMethod} features={features} giftCards={giftCards} onRedeemGiftCard={onRedeemGiftCard} />
@@ -5428,6 +5470,7 @@ export default function SaakoukPOS() {
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers();
+  const upsellEngine = useUpsellEngine(products);
   const [tables, setTables] = useState(() => {
     const saved = localStorage.getItem("saakouk_tables");
     return saved ? JSON.parse(saved) : initialTables;
@@ -5901,6 +5944,7 @@ export default function SaakoukPOS() {
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
             {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} />}
+            {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
             {(active === "inventory" || active === "intake") && (
               <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">

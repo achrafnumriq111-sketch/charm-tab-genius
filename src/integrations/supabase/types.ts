@@ -894,6 +894,63 @@ export type Database = {
           },
         ]
       }
+      upsell_rules: {
+        Row: {
+          active_from: string | null
+          active_until: string | null
+          conversion_count: number
+          created_at: string
+          extra_price_override: number | null
+          id: string
+          impression_count: number
+          is_active: boolean
+          location_id: string | null
+          priority: number
+          prompt_text_nl: string
+          suggested_product_id: string
+          suggestion_type: string
+          trigger_category: string | null
+          trigger_product_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_from?: string | null
+          active_until?: string | null
+          conversion_count?: number
+          created_at?: string
+          extra_price_override?: number | null
+          id?: string
+          impression_count?: number
+          is_active?: boolean
+          location_id?: string | null
+          priority?: number
+          prompt_text_nl?: string
+          suggested_product_id: string
+          suggestion_type?: string
+          trigger_category?: string | null
+          trigger_product_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_from?: string | null
+          active_until?: string | null
+          conversion_count?: number
+          created_at?: string
+          extra_price_override?: number | null
+          id?: string
+          impression_count?: number
+          is_active?: boolean
+          location_id?: string | null
+          priority?: number
+          prompt_text_nl?: string
+          suggested_product_id?: string
+          suggestion_type?: string
+          trigger_category?: string | null
+          trigger_product_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       weather_business_correlations: {
         Row: {
           avg_omzet: number | null
