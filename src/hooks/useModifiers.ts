@@ -53,17 +53,23 @@ export function toLegacyGroup(group: ModifierGroup) {
   };
 }
 
-export function useModifiers() {
+export function useModifiers(locationId?: string | null) {
   const [groups, setGroups] = useState<ModifierGroup[]>([]);
   const [links, setLinks] = useState<ProductModifierLink[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
+    let groupsQuery = supabase.from("modifier_groups").select("*").order("display_order");
+    let linksQuery = supabase.from("product_modifier_groups").select("*");
+    if (locationId) {
+      groupsQuery = groupsQuery.eq("location_id", locationId);
+      linksQuery = linksQuery.eq("location_id", locationId);
+    }
     const [groupsRes, modifiersRes, linksRes] = await Promise.all([
-      supabase.from("modifier_groups").select("*").order("display_order"),
+      groupsQuery,
       supabase.from("modifiers").select("*").order("display_order"),
-      supabase.from("product_modifier_groups").select("*"),
+      linksQuery,
     ]);
 
     const rawGroups = (groupsRes.data || []) as any[];
@@ -78,7 +84,7 @@ export function useModifiers() {
     setGroups(merged);
     setLinks(rawLinks);
     setLoading(false);
-  }, []);
+  }, [locationId]);
 
   useEffect(() => {
     fetchAll();

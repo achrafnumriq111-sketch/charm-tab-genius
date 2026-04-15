@@ -200,6 +200,7 @@ export default function ModifiersView({
   onRefetch,
   onToast,
   addLog,
+  locationId,
 }: {
   groups: ModifierGroup[];
   links: any[];
@@ -207,6 +208,7 @@ export default function ModifiersView({
   onRefetch: () => void;
   onToast: (msg: string) => void;
   addLog?: (action: string, details: string) => void;
+  locationId?: string | null;
 }) {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [editingGroup, setEditingGroup] = useState<string | null>(null);

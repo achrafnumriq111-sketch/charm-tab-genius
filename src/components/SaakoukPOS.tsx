@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation_ } from "@/contexts/LocationContext";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { useModifiers } from "@/hooks/useModifiers";
@@ -28,7 +29,7 @@ import {
   ChefHat, Printer, Edit, Eye, DollarSign, TrendingUp,
   UserPlus, MapPin, FileText, Mail, Lock,
   Shield, Zap, Bell, LogOut, Star,
-  ChevronRight, ChevronLeft, Banknote,
+  ChevronRight, ChevronLeft, Banknote, Building2,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
   ClipboardCheck, BarChart3,
 } from "lucide-react";
@@ -244,7 +245,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string }) {
+function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void }) {
   const isAdmin = role === "owner" || role === "manager";
   const isOwner = role === "owner";
   const allSections = [
@@ -291,6 +292,28 @@ function Sidebar({ active, setActive, role, onLogout, employeeName }: { active: 
           </motion.div>
           <span className="text-[8px] text-slate-500 truncate w-full text-center">{employeeName.split(" ")[0]}</span>
         </div>
+        {/* Location selector (owner sees dropdown, staff sees label) */}
+        {activeLocation && (
+          <div className="px-1.5 py-1.5 border-b border-white/50">
+            {role === "owner" && locations.length > 1 ? (
+              <select
+                value={activeLocation.id}
+                onChange={(e) => onLocationChange(e.target.value)}
+                className="w-full text-[8px] bg-white/60 border border-white/70 rounded-xl px-1 py-1.5 text-center font-medium text-slate-700 truncate appearance-none cursor-pointer"
+                title="Selecteer locatie"
+              >
+                {locations.map((l: any) => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div className="flex flex-col items-center gap-0.5" title={activeLocation.name}>
+                <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                <span className="text-[7px] text-slate-500 truncate w-full text-center leading-tight">{activeLocation.city || activeLocation.name}</span>
+              </div>
+            )}
+          </div>
+        )}
         <ScrollArea className="flex-1 py-2 px-1.5">
           <div className="space-y-1 flex flex-col items-center">
             {sections.map((item) => {
@@ -5466,12 +5489,14 @@ function CashAuditView() {
 
 export default function SaakoukPOS() {
   const { employee: authEmployee, logout: authLogout } = useAuth();
+  const { locations, activeLocation, setActiveLocationId } = useLocation_();
+  const locationId = activeLocation?.id || null;
   const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
-  const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers();
-  const upsellEngine = useUpsellEngine(products);
+  const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers(locationId);
+  const upsellEngine = useUpsellEngine(products, locationId);
   const [tables, setTables] = useState(() => {
     const saved = localStorage.getItem("saakouk_tables");
     return saved ? JSON.parse(saved) : initialTables;
@@ -5521,21 +5546,23 @@ export default function SaakoukPOS() {
     }, ...prev]);
   }, [loggedInEmployee]);
 
-  // Load employees from database
+  // Load employees from database (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function loadEmployees() {
-      const { data } = await supabase.from("employees").select("id, full_name, role, is_active").eq("is_active", true);
+      const { data } = await supabase.from("employees").select("id, full_name, role, is_active, location_id").eq("is_active", true).eq("location_id", locationId);
       if (data) {
         setEmployees(data.map((e: any) => ({ id: e.id, name: e.full_name, role: e.role })));
       }
     }
     loadEmployees();
-  }, []);
+  }, [locationId]);
 
-  // Poll low-stock items every 30s
+  // Poll low-stock items every 30s (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function checkLowStock() {
-      const { data } = await supabase.from("inventory_items").select("id, item_name, current_stock, minimum_stock, unit_type, category");
+      const { data } = await supabase.from("inventory_items").select("id, item_name, current_stock, minimum_stock, unit_type, category").eq("location_id", locationId);
       if (data) {
         const low = data.filter((i: any) => i.current_stock <= i.minimum_stock && i.minimum_stock > 0);
         setLowStockItems(low);
@@ -5544,7 +5571,7 @@ export default function SaakoukPOS() {
     checkLowStock();
     const interval = setInterval(checkLowStock, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [locationId]);
 
   // Enrich products with DB modifier groups (fallback to hardcoded)
   const enrichedProducts = useMemo(() => {
@@ -5555,10 +5582,11 @@ export default function SaakoukPOS() {
     });
   }, [products, modifierGroups, modifierLinks, getGroupsForProduct]);
 
-  // Load saved transactions from database
+  // Load saved transactions from database (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function loadTransactions() {
-      const { data } = await supabase.from("pos_transactions").select("*").order("created_at", { ascending: false }).limit(500);
+      const { data } = await supabase.from("pos_transactions").select("*").eq("location_id", locationId).order("created_at", { ascending: false }).limit(500);
       if (data) {
         const mapped = data.map((t: any) => ({
           id: t.order_id,
@@ -5587,12 +5615,13 @@ export default function SaakoukPOS() {
       setDbLoaded(true);
     }
     loadTransactions();
-  }, []);
+  }, [locationId]);
 
-  // Fetch all active QR orders (pending, preparing, ready) and subscribe to real-time
+  // Fetch all active QR orders (location-scoped)
   useEffect(() => {
+    if (!locationId) return;
     async function fetchQrOrders() {
-      const { data } = await supabase.from("qr_orders").select("*").in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
+      const { data } = await supabase.from("qr_orders").select("*").eq("location_id", locationId).in("status", ["pending", "preparing", "ready"]).order("created_at", { ascending: true });
       if (data) setQrOrders(data);
     }
     fetchQrOrders();
@@ -5605,7 +5634,7 @@ export default function SaakoukPOS() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [locationId]);
 
   // Auto-accept: new "pending" orders get moved to "preparing" automatically
   useEffect(() => {
@@ -5698,6 +5727,7 @@ export default function SaakoukPOS() {
         gift_card_id: stamped.giftCardId || null,
         status: stamped.status || 'completed',
         source: 'pos',
+        location_id: locationId,
       } as any);
       if (error) console.error("Failed to save transaction:", error);
     } catch (err) {
@@ -5827,13 +5857,13 @@ export default function SaakoukPOS() {
         <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.35),transparent_70%)] blur-3xl" />
       </div>
 
-      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} />
+      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Glass top bar */}
         <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
           <div>
             <h1 className="text-base font-semibold tracking-[-0.02em] text-slate-900 leading-tight">{titles[active] || "Saakouk"}</h1>
-            <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}</div>
+            <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}{activeLocation ? ` · ${activeLocation.name}` : ""}</div>
           </div>
           <div className="flex items-center gap-2">
             {/* QR Orders indicator */}
@@ -5944,8 +5974,8 @@ export default function SaakoukPOS() {
             {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
             {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
-            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} />}
-            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />}
+            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} locationId={locationId} />}
+            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />}
             {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
             {(active === "inventory" || active === "intake") && (
               <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
@@ -5956,16 +5986,16 @@ export default function SaakoukPOS() {
                   <TabsTrigger value="waste">Verspilling</TabsTrigger>
                 </TabsList>
                 <TabsContent value="voorraad">
-                  <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} />
+                  <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} />
                 </TabsContent>
                 <TabsContent value="dynamic">
-                  <DynamicStockView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />
+                  <DynamicStockView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
                 <TabsContent value="intake">
-                  <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />
+                  <StockIntakeView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
                 <TabsContent value="waste">
-                  <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} />
+                  <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
               </Tabs>
             )}
