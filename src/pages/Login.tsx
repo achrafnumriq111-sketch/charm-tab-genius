@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Eye, EyeOff, Loader2, Lock } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -48,147 +49,213 @@ const Login = () => {
   };
 
   const handlePinChange = (val: string) => {
-    // Only allow digits, max 6
     const cleaned = val.replace(/\D/g, "").slice(0, 6);
     setPin(cleaned);
     setError("");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: "linear-gradient(145deg, #0c0c0e 0%, #141418 40%, #1a1a20 100%)" }}>
-      <div className="w-full max-w-md">
-        {/* Logo / Brand */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-            style={{ background: "linear-gradient(135deg, #b8860b, #d4a543)" }}>
-            <Lock className="w-8 h-8 text-black/80" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#e8e8ec" }}>
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background:
+          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
+          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+          "radial-gradient(ellipse at 50% 80%, rgba(199,230,255,0.2), transparent 50%), " +
+          "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-sm"
+      >
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+            style={{
+              background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))",
+              border: "1px solid rgba(255,255,255,0.6)",
+              boxShadow: "0 8px 32px rgba(172,155,255,0.2), inset 0 1px 1px rgba(255,255,255,0.8)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <span className="text-xl font-bold" style={{ color: "#5a5a72" }}>S</span>
+          </motion.div>
+          <h1 className="text-lg font-semibold tracking-tight" style={{ color: "#2a2a3a" }}>
             SAAKOUK
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#6b6b78" }}>
+          <p className="text-xs mt-0.5" style={{ color: "#9b9bab" }}>
             Point of Sale
           </p>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-2"
-              style={{ color: "#6b6b78" }}>
-              Gebruikersnaam
-            </label>
-            <input
-              ref={usernameRef}
-              type="text"
-              value={username}
-              onChange={(e) => { setUsername(e.target.value); setError(""); }}
-              placeholder="Gebruikersnaam"
-              autoComplete="username"
-              disabled={loading}
-              className="w-full h-14 px-4 rounded-xl text-base outline-none transition-all duration-200"
-              style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "#e8e8ec",
-              }}
-              onFocus={(e) => e.currentTarget.style.borderColor = "rgba(184,134,11,0.5)"}
-              onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"}
-            />
-          </div>
-
-          {/* PIN */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest mb-2"
-              style={{ color: "#6b6b78" }}>
-              Wachtwoord
-            </label>
-            <div className="relative">
-              <input
-                type={showPin ? "text" : "password"}
-                value={pin}
-                onChange={(e) => handlePinChange(e.target.value)}
-                placeholder="••••••"
-                inputMode="numeric"
-                pattern="\d{6}"
-                maxLength={6}
-                autoComplete="current-password"
-                disabled={loading}
-                className="w-full h-14 px-4 pr-12 rounded-xl text-base outline-none transition-all duration-200"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "#e8e8ec",
-                  letterSpacing: showPin ? "normal" : "0.3em",
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = "rgba(184,134,11,0.5)"}
-                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPin(!showPin)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-1"
-                style={{ color: "#6b6b78" }}
-                tabIndex={-1}
+        {/* Glass Card */}
+        <div
+          className="rounded-2xl p-6"
+          style={{
+            background:
+              "radial-gradient(circle at top left, rgba(205,216,255,0.24), transparent 38%), " +
+              "radial-gradient(circle at top right, rgba(255,206,236,0.18), transparent 42%), " +
+              "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
+            border: "1px solid rgba(255,255,255,0.72)",
+            boxShadow:
+              "inset 0 1px 1px rgba(255,255,255,0.85), 0 22px 90px rgba(160,175,219,0.16)",
+            backdropFilter: "blur(14px)",
+          }}
+        >
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Username */}
+            <div>
+              <label
+                className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5"
+                style={{ color: "#8b8b9e" }}
               >
-                {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+                Gebruikersnaam
+              </label>
+              <input
+                ref={usernameRef}
+                type="text"
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                placeholder="Voornaam Achternaam"
+                autoComplete="username"
+                disabled={loading}
+                className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all duration-200"
+                style={{
+                  background: "rgba(255,255,255,0.5)",
+                  border: "1px solid rgba(0,0,0,0.06)",
+                  color: "#2a2a3a",
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(172,155,255,0.5)";
+                  e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(172,155,255,0.12)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
+                  e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04)";
+                }}
+              />
             </div>
-          </div>
 
-          {/* Remember me */}
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <div
-              className="w-5 h-5 rounded flex items-center justify-center transition-all"
-              style={{
-                background: rememberMe ? "linear-gradient(135deg, #b8860b, #d4a543)" : "rgba(255,255,255,0.06)",
-                border: rememberMe ? "none" : "1px solid rgba(255,255,255,0.12)",
-              }}
-              onClick={() => setRememberMe(!rememberMe)}
-            >
-              {rememberMe && (
-                <svg className="w-3 h-3 text-black" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
+            {/* PIN */}
+            <div>
+              <label
+                className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5"
+                style={{ color: "#8b8b9e" }}
+              >
+                Wachtwoord
+              </label>
+              <div className="relative">
+                <input
+                  type={showPin ? "text" : "password"}
+                  value={pin}
+                  onChange={(e) => handlePinChange(e.target.value)}
+                  placeholder="••••••"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  autoComplete="current-password"
+                  disabled={loading}
+                  className="w-full h-12 px-4 pr-11 rounded-xl text-sm outline-none transition-all duration-200"
+                  style={{
+                    background: "rgba(255,255,255,0.5)",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                    color: "#2a2a3a",
+                    boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                    letterSpacing: showPin ? "normal" : "0.25em",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(172,155,255,0.5)";
+                    e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(172,155,255,0.12)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
+                    e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04)";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors hover:bg-black/5"
+                  style={{ color: "#9b9bab" }}
+                  tabIndex={-1}
+                >
+                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
-            <span className="text-sm" style={{ color: "#8b8b98" }}
-              onClick={() => setRememberMe(!rememberMe)}>
-              Onthoud mij
-            </span>
-          </label>
 
-          {/* Error */}
-          {error && (
-            <div className="px-4 py-3 rounded-xl text-sm" style={{
-              background: "rgba(239,68,68,0.1)",
-              border: "1px solid rgba(239,68,68,0.2)",
-              color: "#f87171",
-            }}>
-              {error}
-            </div>
-          )}
+            {/* Remember me */}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <div
+                className="w-4 h-4 rounded flex items-center justify-center transition-all"
+                style={{
+                  background: rememberMe
+                    ? "linear-gradient(135deg, rgba(172,155,255,0.8), rgba(140,120,220,0.9))"
+                    : "rgba(255,255,255,0.5)",
+                  border: rememberMe ? "none" : "1px solid rgba(0,0,0,0.1)",
+                  boxShadow: rememberMe ? "0 2px 8px rgba(172,155,255,0.3)" : "none",
+                }}
+                onClick={() => setRememberMe(!rememberMe)}
+              >
+                {rememberMe && (
+                  <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <span
+                className="text-xs"
+                style={{ color: "#8b8b9e" }}
+                onClick={() => setRememberMe(!rememberMe)}
+              >
+                Onthoud mij
+              </span>
+            </label>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading || !username.trim() || pin.length !== 6}
-            className="w-full h-14 rounded-xl text-base font-semibold transition-all duration-200 disabled:opacity-40"
-            style={{
-              background: "linear-gradient(135deg, #b8860b, #c4973a)",
-              color: "#1a1a20",
-            }}
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-            ) : (
-              "Inloggen"
+            {/* Error */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="px-3 py-2.5 rounded-xl text-xs"
+                style={{
+                  background: "rgba(239,68,68,0.08)",
+                  border: "1px solid rgba(239,68,68,0.15)",
+                  color: "#dc2626",
+                }}
+              >
+                {error}
+              </motion.div>
             )}
-          </button>
-        </form>
-      </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading || !username.trim() || pin.length !== 6}
+              className="w-full h-12 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-35"
+              style={{
+                background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
+                color: "#fff",
+                boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+              }}
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+              ) : (
+                "Inloggen"
+              )}
+            </button>
+          </form>
+        </div>
+      </motion.div>
     </div>
   );
 };
