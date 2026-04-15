@@ -5735,7 +5735,7 @@ export default function SaakoukPOS() {
     }
 
     // Auto-deduct stock based on product recipes
-    deductStockForOrder(stamped.items, stamped.employeeName, stamped.id);
+    deductStockForOrder(stamped.items, stamped.employeeName, stamped.id, locationId);
     if (order.customerId) {
       setCustomers((prev) => prev.map((c) =>
         c.id === order.customerId
@@ -5999,8 +5999,8 @@ export default function SaakoukPOS() {
                 </TabsContent>
               </Tabs>
             )}
-            {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} />}
-            {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} />}
+            {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />}
+            {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} locationId={locationId} />}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
