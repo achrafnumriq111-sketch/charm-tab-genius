@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { DayPicker } from "react-day-picker";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
@@ -165,22 +166,8 @@ const initialGiftCards: any[] = [];
 
 const initialReservations: any[] = [];
 
-// ─── EMPLOYEES ───────────────────────────────────────────────────────────────
-
-const initialEmployees = [
-  { id: "e1", name: "Solaiman Aakouk", email: "saakoukstore@gmail.com", role: "owner", pin: "" },
-  { id: "e2", name: "Badr El Messaoudi", email: "BadrElMessaoudi3@gmail.com", role: "sales", pin: "" },
-  { id: "e3", name: "Kaan Ikiz", email: "kaan-ikiz@hotmail.com", role: "sales", pin: "" },
-  { id: "e4", name: "Inez Ikiz", email: "inez-ikiz@hotmail.com", role: "sales", pin: "" },
-  { id: "e5", name: "Daniel Jie Sam Foek", email: "danielantoinesu@gmail.com", role: "sales", pin: "" },
-  { id: "e6", name: "Djemaro Dalloesingh", email: "djemaro@gmail.com", role: "sales", pin: "" },
-  { id: "e7", name: "Achraf Idrissi", email: "Acidrissi@icloud.com", role: "owner", pin: "" },
-  { id: "e8", name: "Anouar Azif", email: "anouar_azif@outlook.com", role: "sales", pin: "" },
-  { id: "e9", name: "Rayan Azzimachi", email: "rayanazzimachi@gmail.com", role: "sales", pin: "" },
-  { id: "e10", name: "Othman Ami", email: "othmanami16@hotmail.com", role: "sales", pin: "" },
-  { id: "e11", name: "Ezra Belkacem", email: "ezrabelkacem@hotmail.com", role: "sales", pin: "" },
-  { id: "e12", name: "Ibrahim Aakouk", email: "ibrahimaakouk@gmail.com", role: "manager", pin: "" },
-];
+// ─── EMPLOYEES (loaded from database) ────────────────────────────────────────
+// No more hardcoded employee list — employees are fetched from the database
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -4206,179 +4193,7 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, 
   );
 }
 
-// ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
-
-
-const loginCardVariants = {
-  hidden: { opacity: 0, y: 28, scale: 0.96 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      delay: i * 0.05,
-      duration: 0.65,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-    },
-  }),
-};
-
-function LoginScreen({ employees, onLogin }: { employees: any[]; onLogin: (emp: any) => void }) {
-  return (
-    <div className="relative h-dvh overflow-hidden bg-[#f6f8ff] text-slate-900 select-none">
-      {/* Background glow */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.55),transparent_70%)] blur-3xl" />
-        <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.45),transparent_70%)] blur-3xl" />
-        <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.55),transparent_70%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbfcff_0%,#f3f6ff_48%,#eef2ff_100%)]" />
-
-        {/* soft ribbons */}
-        <motion.div
-          animate={{ x: [0, 20, 0], y: [0, -10, 0], rotate: [8, 10, 8] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-[-8%] top-[18%] h-24 w-[58%] rounded-full bg-[linear-gradient(90deg,rgba(192,206,255,0.18),rgba(244,197,255,0.35),rgba(255,255,255,0.08))] blur-2xl"
-        />
-        <motion.div
-          animate={{ x: [0, -18, 0], y: [0, 14, 0], rotate: [-7, -9, -7] }}
-          transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute right-[-12%] top-[58%] h-20 w-[54%] rounded-full bg-[linear-gradient(90deg,rgba(255,212,242,0.20),rgba(213,198,255,0.30),rgba(194,225,255,0.12))] blur-2xl"
-        />
-      </div>
-
-      {/* floating deco orbs */}
-      <motion.div
-        animate={{ y: [0, -18, 0], rotate: [0, 10, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute left-[7%] top-[16%] h-28 w-28 rounded-full border border-white/60 bg-[radial-gradient(circle_at_30%_30%,#ffffff,#d8cfff_55%,#a78bfa_100%)] opacity-75 shadow-[0_25px_60px_rgba(146,124,255,0.24)] blur-[1px]"
-      />
-      <motion.div
-        animate={{ y: [0, 20, 0], rotate: [0, -12, 0] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-[12%] right-[9%] h-36 w-36 rounded-full border border-white/70 bg-[radial-gradient(circle_at_35%_35%,#ffffff,#ffd5f0_55%,#f472b6_100%)] opacity-70 shadow-[0_30px_70px_rgba(244,114,182,0.22)]"
-      />
-
-      <main className="relative z-10 flex h-full items-center justify-center px-6 py-10 overflow-y-auto">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 18 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="relative w-full max-w-[760px]"
-          style={{ perspective: "1800px" }}
-        >
-          {/* main luxury panel */}
-          <div className="relative overflow-hidden rounded-[36px] border border-white/70 bg-white/55 shadow-[0_30px_120px_rgba(162,178,226,0.22)] backdrop-blur-2xl">
-            {/* top sheen */}
-            <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0))]" />
-
-            {/* inner gradient wash */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(204,215,255,0.28),transparent_36%),radial-gradient(circle_at_top_right,rgba(255,204,236,0.24),transparent_36%),radial-gradient(circle_at_bottom,rgba(218,209,255,0.18),transparent_42%)]" />
-
-            {/* soft border highlight */}
-            <div className="pointer-events-none absolute inset-[1px] rounded-[35px] border border-white/60" />
-
-            <div className="relative px-8 pb-8 pt-12 sm:px-12 sm:pb-12 sm:pt-14">
-              {/* header */}
-              <motion.div
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08, duration: 0.6 }}
-                className="mb-10 text-center"
-              >
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-4 py-1.5 text-xs font-medium tracking-[0.24em] text-slate-500 shadow-[0_10px_30px_rgba(173,184,230,0.16)] backdrop-blur-xl">
-                  <span className="h-2 w-2 rounded-full bg-violet-300 shadow-[0_0_12px_rgba(196,181,253,0.9)]" />
-                  SELECT USER
-                </div>
-
-                <h1 className="text-4xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-5xl">
-                  saakouk
-                </h1>
-                <p className="mt-3 text-sm text-slate-500 sm:text-base">
-                  Tik op je naam om te beginnen
-                </p>
-              </motion.div>
-
-              {/* users grid */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {employees.map((emp: any, index: number) => (
-                  <motion.button
-                    key={emp.id}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    variants={loginCardVariants}
-                    whileHover={{
-                      y: -6,
-                      rotateX: 4,
-                      rotateY: index % 2 === 0 ? -4 : 4,
-                      scale: 1.015,
-                    }}
-                    whileTap={{ scale: 0.985 }}
-                    onClick={() => onLogin(emp)}
-                    className="group relative text-left touch-manipulation"
-                    style={{ transformStyle: "preserve-3d" }}
-                  >
-                    {/* hover glow */}
-                    <div className="absolute -inset-[2px] rounded-[24px] bg-[linear-gradient(135deg,rgba(196,181,253,0.45),rgba(255,192,230,0.40),rgba(191,219,254,0.40))] opacity-0 blur-md transition duration-500 group-hover:opacity-100" />
-
-                    <div className="relative flex min-h-[92px] items-center gap-4 overflow-hidden rounded-[22px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,249,255,0.88))] px-4 py-4 shadow-[0_18px_50px_rgba(163,177,219,0.14)] backdrop-blur-xl transition duration-500 group-hover:shadow-[0_26px_70px_rgba(170,148,255,0.20)]">
-                      {/* inner shine */}
-                      <div className="absolute inset-x-0 top-0 h-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0))]" />
-
-                      {/* corner gradient */}
-                      <div className="absolute right-0 top-0 h-20 w-24 bg-[radial-gradient(circle_at_top_right,rgba(255,206,236,0.32),transparent_65%)]" />
-
-                      <motion.div
-                        whileHover={{ scale: 1.06, rotate: -4 }}
-                        className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/80 bg-[radial-gradient(circle_at_30%_30%,#ffffff,#f1ecff_45%,#ddd6fe_72%,#fbcfe8_100%)] text-sm font-semibold text-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_10px_30px_rgba(172,155,255,0.18)]"
-                      >
-                        {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
-                      </motion.div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[17px] font-semibold tracking-[-0.02em] text-slate-900">
-                          {emp.name}
-                        </div>
-                        <div className="mt-1 text-sm text-slate-500 capitalize">
-                          {emp.role}
-                        </div>
-                      </div>
-
-                      <motion.div
-                        initial={{ opacity: 0.55, x: -4 }}
-                        whileHover={{ opacity: 1, x: 0 }}
-                        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white/70 text-slate-400 shadow-[0_8px_24px_rgba(148,163,184,0.12)]"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </motion.div>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* floating decorative cards behind */}
-          <motion.div
-            animate={{ y: [0, -12, 0], rotate: [-8, -6, -8] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -left-16 top-20 hidden h-44 w-44 rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(229,236,255,0.38))] shadow-[0_25px_80px_rgba(180,190,230,0.18)] backdrop-blur-2xl lg:block"
-          >
-            <div className="absolute inset-5 rounded-[22px] bg-[linear-gradient(135deg,rgba(193,205,255,0.55),rgba(245,214,255,0.45),rgba(255,255,255,0.28))]" />
-          </motion.div>
-
-          <motion.div
-            animate={{ y: [0, 10, 0], rotate: [10, 12, 10] }}
-            transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -right-14 bottom-14 hidden h-40 w-40 rounded-[28px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,230,241,0.34))] shadow-[0_25px_80px_rgba(236,151,192,0.14)] backdrop-blur-2xl lg:block"
-          >
-            <div className="absolute inset-5 rounded-[22px] bg-[linear-gradient(135deg,rgba(255,214,236,0.55),rgba(215,205,255,0.48),rgba(255,255,255,0.28))]" />
-          </motion.div>
-        </motion.div>
-      </main>
-    </div>
-  );
-}
+// LoginScreen removed — authentication is now handled by AuthContext + /login page
 
 // ─── SECTION PICKER SCREEN ──────────────────────────────────────────────────
 
@@ -5605,7 +5420,8 @@ function CashAuditView() {
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function SaakoukPOS() {
-  const [loggedInEmployee, setLoggedInEmployee] = useState<any>(null);
+  const { employee: authEmployee, logout: authLogout } = useAuth();
+  const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
   const [products, setProducts] = useState(initialProducts);
@@ -5619,7 +5435,7 @@ export default function SaakoukPOS() {
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
   const [reservations, setReservations] = useState(initialReservations);
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState<any[]>([]);
   const [toast, setToast] = useState("");
   const [features, setFeatures] = useState({
     tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
@@ -5657,6 +5473,17 @@ export default function SaakoukPOS() {
       timestamp: new Date(),
     }, ...prev]);
   }, [loggedInEmployee]);
+
+  // Load employees from database
+  useEffect(() => {
+    async function loadEmployees() {
+      const { data } = await supabase.from("employees").select("id, full_name, role, is_active").eq("is_active", true);
+      if (data) {
+        setEmployees(data.map((e: any) => ({ id: e.id, name: e.full_name, role: e.role })));
+      }
+    }
+    loadEmployees();
+  }, []);
 
   // Poll low-stock items every 30s
   useEffect(() => {
@@ -5892,17 +5719,14 @@ export default function SaakoukPOS() {
 
   function handleLogout() {
     addLog("logout", `${loggedInEmployee?.name} uitgelogd`);
-    setLoggedInEmployee(null);
+    authLogout();
     setActive("pos");
     setSectionPicked(false);
   }
 
-  // Show login if not logged in
+  // If not authenticated, ProtectedRoute handles redirect to /login
   if (!loggedInEmployee) {
-    return <LoginScreen employees={employees} onLogin={(emp) => {
-      setLoggedInEmployee(emp);
-      setActivityLogs((prev) => [{ id: generateId(), action: "login", details: `${emp.name} ingelogd (${emp.role})`, employeeId: emp.id, employeeName: emp.name, employeeRole: emp.role, timestamp: new Date() }, ...prev]);
-    }} />;
+    return null;
   }
 
   // Show section picker after login
