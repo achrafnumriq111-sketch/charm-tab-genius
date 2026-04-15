@@ -15,3 +15,6 @@ type: feature
 - Route protection: ProtectedRoute component, redirect to /login if unauthenticated
 - employees table: full_name, username_normalized (unique CI), role enum (owner/manager/cashier/staff)
 - RLS: owners manage employees, authenticated read, service role for edge functions
+- SaakoukPOS uses useAuth() — no in-app employee picker. Auth employee auto-mapped to loggedInEmployee.
+- Employee list loaded from database, not hardcoded.
+- HIBP leaked password protection enabled.
