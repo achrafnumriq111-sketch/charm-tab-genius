@@ -4322,14 +4322,14 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
 
 // ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
 
-function EmployeesView({ employees, setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
+function EmployeesView({ employees = [], setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
 
   function openEdit(emp: any) {
     setEditingId(emp.id);
-    setForm({ name: emp.name, email: emp.email, role: emp.role, pin: emp.pin });
+    setForm({ name: emp.name, email: emp.email || "", role: emp.role, pin: "" });
   }
 
   function openAdd() {
