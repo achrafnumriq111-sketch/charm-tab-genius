@@ -110,21 +110,22 @@ export function useUpsellEngine(products: any[]) {
   /** Track impression (shown to user) */
   const trackImpression = useCallback(async (ruleId: string) => {
     shownThisSession.current.add(ruleId);
-    await supabase.rpc("increment_upsell_impression" as any, { rule_id: ruleId }).catch(() => {
-      // Fallback: direct update
-      supabase.from("upsell_rules").update({
-        impression_count: (rules.find((r) => r.id === ruleId)?.impression_count ?? 0) + 1,
+    const current = rules.find((r) => r.id === ruleId);
+    if (current) {
+      await supabase.from("upsell_rules").update({
+        impression_count: current.impression_count + 1,
       } as any).eq("id", ruleId);
-    });
+    }
   }, [rules]);
 
   /** Track conversion (accepted) */
   const trackConversion = useCallback(async (ruleId: string) => {
-    await supabase.rpc("increment_upsell_conversion" as any, { rule_id: ruleId }).catch(() => {
-      supabase.from("upsell_rules").update({
-        conversion_count: (rules.find((r) => r.id === ruleId)?.conversion_count ?? 0) + 1,
+    const current = rules.find((r) => r.id === ruleId);
+    if (current) {
+      await supabase.from("upsell_rules").update({
+        conversion_count: current.conversion_count + 1,
       } as any).eq("id", ruleId);
-    });
+    }
   }, [rules]);
 
   /** Dismiss rule for this session */
