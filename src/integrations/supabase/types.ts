@@ -441,6 +441,98 @@ export type Database = {
         }
         Relationships: []
       }
+      modifier_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_required: boolean
+          location_id: string | null
+          max_select: number
+          min_select: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          location_id?: string | null
+          max_select?: number
+          min_select?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          location_id?: string | null
+          max_select?: number
+          min_select?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      modifiers: {
+        Row: {
+          cost_price: number
+          created_at: string
+          display_order: number
+          extra_price: number
+          group_id: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          stock_sensitive: boolean
+          updated_at: string
+        }
+        Insert: {
+          cost_price?: number
+          created_at?: string
+          display_order?: number
+          extra_price?: number
+          group_id: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          stock_sensitive?: boolean
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          display_order?: number
+          extra_price?: number
+          group_id?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          stock_sensitive?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modifiers_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pos_transactions: {
         Row: {
           created_at: string
@@ -539,6 +631,35 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      product_modifier_groups: {
+        Row: {
+          created_at: string
+          id: string
+          modifier_group_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modifier_group_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modifier_group_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_modifier_groups_modifier_group_id_fkey"
+            columns: ["modifier_group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_recipes: {
         Row: {
