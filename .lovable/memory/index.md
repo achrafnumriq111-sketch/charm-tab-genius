@@ -10,6 +10,7 @@
 - Business Hours: Mon-Thu 10-22, Fri-Sat 10-00, Sun 12-00.
 - Customers: Name, Email, Phone strictly mandatory for all new entries.
 - Multi-tenant: tenants → locations → employees. Subdomain per tenant.
+- Platform admin: separate role via platform_admins table, /admin panel.
 
 ## Memories
 - [SaaS Tenant Model](mem://features/saas-tenant-model) — Tenants table, self-service onboarding, subdomain routing
