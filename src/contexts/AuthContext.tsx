@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface Employee {
   id: string;
   full_name: string;
   role: string;
+  location_id?: string;
 }
 
 interface AuthContextType {
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout>>();
+  const { slug } = useTenant();
 
   const clearSession = useCallback(() => {
     setEmployee(null);
@@ -81,6 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, pin: string, rememberMe: boolean): Promise<{ error?: string }> => {
     try {
+      const body: Record<string, string> = { username, pin };
+      // Pass tenant slug for tenant-scoped login
+      if (slug) body.tenant_slug = slug;
+
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pos-login`,
         {
@@ -89,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ username, pin }),
+          body: JSON.stringify(body),
         }
       );
 
@@ -116,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       return { error: "Verbinding mislukt. Probeer het opnieuw." };
     }
-  }, []);
+  }, [slug]);
 
   return (
     <AuthContext.Provider value={{ employee, isAuthenticated: !!employee, isLoading, login, logout }}>
