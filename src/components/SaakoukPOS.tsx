@@ -5717,7 +5717,7 @@ function CashAuditView() {
 
 export default function SaakoukPOS() {
   const { employee: authEmployee, logout: authLogout } = useAuth();
-  const { locations, activeLocation, setActiveLocationId } = useLocation_();
+  const { locations, activeLocation, setActiveLocationId, isPlatformAdmin, allTenants, selectedTenantId, selectTenant, clearTenantSelection, tenantUnlocked, unlockTenant } = useLocation_();
   const locationId = activeLocation?.id || null;
   const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
