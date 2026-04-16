@@ -4512,11 +4512,10 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
         <div className="p-6 space-y-4">
           <h3 className="text-lg font-bold">{editingId ? "Medewerker bewerken" : "Nieuwe medewerker"}</h3>
           <div className="space-y-3">
-            <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
-            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
+            <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" disabled={!!editingId} /></div>
             <div>
               <Label>Rol</Label>
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner}>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner || !!editingId}>
                 <option value="owner">Owner</option>
                 <option value="manager">Manager</option>
                 <option value="cashier">Cashier</option>
@@ -4524,7 +4523,7 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
               </select>
               {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
             </div>
-            <div><Label>PIN (6 cijfers)</Label><Input type="password" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="••••••" className="mt-1 font-mono" /></div>
+            <div><Label>{editingId ? "Nieuwe PIN (6 cijfers)" : "PIN (6 cijfers)"}</Label><Input type="password" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="••••••" className="mt-1 font-mono" /></div>
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
