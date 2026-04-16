@@ -33,7 +33,7 @@ import {
   Shield, Zap, Bell, LogOut, Star,
   ChevronRight, ChevronLeft, Banknote, Building2,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
-  ClipboardCheck, BarChart3,
+  ClipboardCheck, BarChart3, Loader2,
 } from "lucide-react";
 
 /**
