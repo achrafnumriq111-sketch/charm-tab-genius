@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,16 +11,44 @@ const PASSKIT_BASE = "https://api.pub1.passkit.io";
 
 async function getPassKitHeaders() {
   const apiKey = Deno.env.get("PASSKIT_API_KEY");
-  const apiSecret = Deno.env.get("PASSKIT_API_SECRET");
-  if (!apiKey || !apiSecret) {
-    throw new Error("PassKit credentials not configured");
-  }
-  // PassKit REST API uses the API key + secret as a Bearer JWT
-  // The API_KEY is the long-lived JWT token generated from PassKit portal
+  if (!apiKey) throw new Error("PassKit credentials not configured");
   return {
     Authorization: `Bearer ${apiKey}`,
     "Content-Type": "application/json",
   };
+}
+
+async function authenticateRequest(req: Request): Promise<{ userId: string; role: string }> {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    throw new Error("Unauthorized");
+  }
+  const token = authHeader.replace("Bearer ", "");
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const admin = createClient(supabaseUrl, serviceKey);
+
+  const { data: { user }, error } = await admin.auth.getUser(token);
+  if (error || !user) throw new Error("Unauthorized");
+
+  // Fetch employee role
+  const { data: emp } = await admin.from("employees")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("is_active", true)
+    .limit(1)
+    .single();
+
+  if (!emp) throw new Error("No active employee found");
+
+  return { userId: user.id, role: emp.role };
+}
+
+function requireRole(role: string, allowed: string[]) {
+  if (!allowed.includes(role)) {
+    throw new Error("Forbidden: insufficient permissions");
+  }
 }
 
 serve(async (req) => {
@@ -28,22 +57,24 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate all requests
+    const { role } = await authenticateRequest(req);
+
     const { action, ...params } = await req.json();
     const headers = await getPassKitHeaders();
 
     let result: any;
 
     switch (action) {
-      // ─── ENROL A NEW MEMBER ──────────────────────────────
       case "enrol": {
+        requireRole(role, ["owner", "manager", "cashier"]);
         const { programId, tierId, externalId, name, email, phone, points } = params;
         const [givenNames, ...surnameParts] = (name || "").split(" ");
         const res = await fetch(`${PASSKIT_BASE}/members/member`, {
           method: "POST",
           headers,
           body: JSON.stringify({
-            programId,
-            tierId,
+            programId, tierId,
             externalId: externalId || undefined,
             person: {
               forename: givenNames || "",
@@ -59,51 +90,27 @@ serve(async (req) => {
         break;
       }
 
-      // ─── GET MEMBER BY EXTERNAL ID, EMAIL, OR PHONE ──
       case "getMember": {
+        // All authenticated staff can look up members
         const { programId, externalId } = params;
-        // Try by externalId first
         let res = await fetch(
           `${PASSKIT_BASE}/members/member/externalId/${programId}/${encodeURIComponent(externalId)}`,
           { method: "GET", headers }
         );
         if (res.status === 404) {
-          // Try listing members filtered by email or phone
           const searchRes = await fetch(`${PASSKIT_BASE}/members/member/list`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              programId,
-              limit: 1,
-              filters: [
-                { fieldPath: "person.emailAddress", operator: "eq", value: externalId },
-              ],
-            }),
+            method: "POST", headers,
+            body: JSON.stringify({ programId, limit: 1, filters: [{ fieldPath: "person.emailAddress", operator: "eq", value: externalId }] }),
           });
           const searchData = await searchRes.json();
-          if (searchData?.members?.length > 0) {
-            result = { ...searchData.members[0], found: true };
-            break;
-          }
-          // Try by phone
+          if (searchData?.members?.length > 0) { result = { ...searchData.members[0], found: true }; break; }
           const phoneRes = await fetch(`${PASSKIT_BASE}/members/member/list`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              programId,
-              limit: 1,
-              filters: [
-                { fieldPath: "person.mobileNumber", operator: "eq", value: externalId },
-              ],
-            }),
+            method: "POST", headers,
+            body: JSON.stringify({ programId, limit: 1, filters: [{ fieldPath: "person.mobileNumber", operator: "eq", value: externalId }] }),
           });
           const phoneData = await phoneRes.json();
-          if (phoneData?.members?.length > 0) {
-            result = { ...phoneData.members[0], found: true };
-            break;
-          }
-          result = { found: false };
-          break;
+          if (phoneData?.members?.length > 0) { result = { ...phoneData.members[0], found: true }; break; }
+          result = { found: false }; break;
         }
         result = await res.json();
         if (!res.ok) throw new Error(JSON.stringify(result));
@@ -111,96 +118,68 @@ serve(async (req) => {
         break;
       }
 
-      // ─── EARN POINTS ────────────────────────────────────
       case "earnPoints": {
+        requireRole(role, ["owner", "manager", "cashier"]);
         const { memberId, externalId, programId, points } = params;
         const body: any = { points: points || 0 };
         if (memberId) body.id = memberId;
-        else if (externalId && programId) {
-          body.externalId = externalId;
-          body.programId = programId;
-        }
-        const res = await fetch(`${PASSKIT_BASE}/members/member/points/earn`, {
-          method: "PUT",
-          headers,
-          body: JSON.stringify(body),
-        });
+        else if (externalId && programId) { body.externalId = externalId; body.programId = programId; }
+        const res = await fetch(`${PASSKIT_BASE}/members/member/points/earn`, { method: "PUT", headers, body: JSON.stringify(body) });
         result = await res.json();
         if (!res.ok) throw new Error(JSON.stringify(result));
         break;
       }
 
-      // ─── BURN POINTS ────────────────────────────────────
       case "burnPoints": {
+        requireRole(role, ["owner", "manager", "cashier"]);
         const { memberId, externalId, programId, points } = params;
         const body: any = { points: points || 0 };
         if (memberId) body.id = memberId;
-        else if (externalId && programId) {
-          body.externalId = externalId;
-          body.programId = programId;
-        }
-        const res = await fetch(`${PASSKIT_BASE}/members/member/points/burn`, {
-          method: "PUT",
-          headers,
-          body: JSON.stringify(body),
-        });
+        else if (externalId && programId) { body.externalId = externalId; body.programId = programId; }
+        const res = await fetch(`${PASSKIT_BASE}/members/member/points/burn`, { method: "PUT", headers, body: JSON.stringify(body) });
         result = await res.json();
         if (!res.ok) throw new Error(JSON.stringify(result));
         break;
       }
 
-      // ─── LIST MEMBERS ──────────────────────────────────
       case "listMembers": {
+        requireRole(role, ["owner", "manager"]);
         const { programId, limit, skip } = params;
         const res = await fetch(`${PASSKIT_BASE}/members/member/list`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            programId,
-            limit: limit || 50,
-            skip: skip || 0,
-          }),
+          method: "POST", headers,
+          body: JSON.stringify({ programId, limit: limit || 50, skip: skip || 0 }),
         });
         result = await res.json();
         if (!res.ok) throw new Error(JSON.stringify(result));
         break;
       }
 
-      // ─── CHECK IN (record visit event) ─────────────────
       case "checkIn": {
+        requireRole(role, ["owner", "manager", "cashier"]);
         const { memberId, externalId, programId, lat, lon } = params;
         const body: any = {};
         if (memberId) body.id = memberId;
-        else if (externalId && programId) {
-          body.externalId = externalId;
-          body.programId = programId;
-        }
+        else if (externalId && programId) { body.externalId = externalId; body.programId = programId; }
         if (lat && lon) body.location = { lat, lon };
-        const res = await fetch(`${PASSKIT_BASE}/members/member/checkIn`, {
-          method: "PUT",
-          headers,
-          body: JSON.stringify(body),
-        });
+        const res = await fetch(`${PASSKIT_BASE}/members/member/checkIn`, { method: "PUT", headers, body: JSON.stringify(body) });
         result = await res.json();
         if (!res.ok) throw new Error(JSON.stringify(result));
         break;
       }
 
       default:
-        return new Response(
-          JSON.stringify({ error: `Unknown action: ${action}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: `Unknown action: ${action}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("PassKit error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message || "Internal error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const msg = error.message || "Internal error";
+    const status = msg === "Unauthorized" ? 401 : msg.startsWith("Forbidden") ? 403 : 500;
+    console.error("PassKit error:", msg);
+    return new Response(JSON.stringify({ error: msg }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
