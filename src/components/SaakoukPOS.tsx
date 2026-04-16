@@ -6018,7 +6018,7 @@ export default function SaakoukPOS() {
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
             {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} />}
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} />}
             {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} locationId={locationId} />}
             {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />}
             {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
