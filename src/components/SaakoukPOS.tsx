@@ -214,6 +214,33 @@ function cartItemCount(cart: any[]) {
   return cart.reduce((s, i) => s + i.qty, 0);
 }
 
+// ─── DISCOUNT PANEL (collapsible) ────────────────────────────────────────────
+
+function DiscountPanel({ discounts, selectedDiscount, updateTicket }: { discounts: any[]; selectedDiscount: any; updateTicket: (u: any) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border p-3 mb-3">
+      <button onClick={() => setOpen(!open)} className="w-full font-medium text-xs flex items-center gap-1.5 justify-between min-h-[44px]">
+        <span className="flex items-center gap-1.5">
+          <Percent className="h-3.5 w-3.5" /> Discount
+          {selectedDiscount && <Badge variant="secondary" className="text-[10px] ml-1">{selectedDiscount.name}</Badge>}
+        </span>
+        <ChevronRight className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && (
+        <div className="grid grid-cols-2 gap-1.5 mt-2">
+          {discounts.map((disc) => (
+            <Button key={disc.id} variant={selectedDiscount?.id === disc.id ? "default" : "outline"} size="sm" className="text-xs h-10 min-h-[44px] justify-start"
+              onClick={() => updateTicket({ selectedDiscount: selectedDiscount?.id === disc.id ? null : disc })}>
+              {disc.name} ({disc.value}%)
+            </Button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── MODAL WRAPPER ───────────────────────────────────────────────────────────
 
 function Modal({ open, onClose, children, wide }: { open: boolean; onClose?: () => void; children: React.ReactNode; wide?: boolean }) {
