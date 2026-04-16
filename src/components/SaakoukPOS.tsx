@@ -2767,30 +2767,48 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
             </CardContent>
           </Card>
           <Modal open={!!editing} onClose={() => setEditing(null)}>
-            <div className="p-6 space-y-4">
-              <h2 className="text-lg font-bold">{editing === "new" ? "New product" : "Edit product"}</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
-                <div>
-                  <Label>Section</Label>
-                  <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
-                    {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+            <div className="p-6 space-y-5 max-h-[85vh] overflow-y-auto">
+              {/* ── Part 1: Product Details ── */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-4 w-4 text-primary" />
+                  <h2 className="text-lg font-bold">{editing === "new" ? "New product" : "Edit product"}</h2>
                 </div>
-                <div><Label>Verkoopprijs (€)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
-                <div><Label>Inkoopprijs (€)</Label><Input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="Kostprijs" className="mt-1" /></div>
-                <div>
-                  <Label>Color</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded border cursor-pointer" />
-                    <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="flex-1" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+                  <div>
+                    <Label>Section</Label>
+                    <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+                      {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </div>
+                  <div><Label>Verkoopprijs (€)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
+                  <div><Label>Inkoopprijs (€)</Label><Input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="Kostprijs" className="mt-1" /></div>
+                  <div>
+                    <Label>Color</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded border cursor-pointer" />
+                      <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="flex-1" />
+                    </div>
+                  </div>
+                  <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Hot, Coffee, Signature" className="mt-1" /></div>
+                  <div><Label>BTW % (leeg = categorie)</Label><Input type="number" step="0.5" min="0" max="100" value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: e.target.value })} placeholder="bijv. 9" className="mt-1" /></div>
                 </div>
-                <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Hot, Coffee, Signature" className="mt-1" /></div>
-                <div><Label>BTW % (leeg = categorie)</Label><Input type="number" step="0.5" min="0" max="100" value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: e.target.value })} placeholder="bijv. 9" className="mt-1" /></div>
               </div>
-              <div>
-                <Label>Modifier groups</Label>
+
+              {/* ── Divider ── */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+                <div className="relative flex justify-center"><span className="bg-background px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Add-ons / Modifiers</span></div>
+              </div>
+
+              {/* ── Part 2: Modifier Groups ── */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-semibold">Assign modifier groups to this product</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">Selected modifiers appear as add-on options when ordering this product.</p>
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   {ALL_MODIFIER_GROUPS.map((g) => (
                     <button key={g.id} onClick={() => toggleModifierGroup(g.id)}
@@ -2800,9 +2818,13 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
                       <div className={clsx("text-xs", form.modifierGroupIds.includes(g.id) ? "text-white/70" : "text-muted-foreground")}>{g.options.length} options</div>
                     </button>
                   ))}
+                  {ALL_MODIFIER_GROUPS.length === 0 && (
+                    <p className="col-span-2 text-xs text-muted-foreground italic py-2">No modifier groups yet. Create them in the Modifiers tab.</p>
+                  )}
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
+
+              <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
                 <Button onClick={saveProduct} disabled={!form.name || !form.price}>Save</Button>
               </div>
