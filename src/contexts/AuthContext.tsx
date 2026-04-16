@@ -57,9 +57,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [employee, resetInactivityTimer]);
 
-  // Restore session on mount
+  // Restore session on mount (including impersonation bypass)
   useEffect(() => {
     const restore = async () => {
+      // Check for platform admin impersonation session first
+      const impersonation = sessionStorage.getItem("saakouk_impersonation");
+      if (impersonation) {
+        try {
+          const imp = JSON.parse(impersonation);
+          if (imp.employee) {
+            setEmployee(imp.employee);
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          sessionStorage.removeItem("saakouk_impersonation");
+        }
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const stored = localStorage.getItem("pos_employee") || sessionStorage.getItem("pos_employee");
@@ -75,7 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") clearSession();
+      if (event === "SIGNED_OUT") {
+        sessionStorage.removeItem("saakouk_impersonation");
+        clearSession();
+      }
     });
 
     restore();

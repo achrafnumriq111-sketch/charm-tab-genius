@@ -33,7 +33,7 @@ import {
   Shield, Zap, Bell, LogOut, Star,
   ChevronRight, ChevronLeft, Banknote, Building2,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
-  ClipboardCheck, BarChart3,
+  ClipboardCheck, BarChart3, Loader2,
 } from "lucide-react";
 
 /**
@@ -5713,6 +5713,101 @@ function CashAuditView() {
   );
 }
 
+// ─── PLATFORM TENANT PICKER ──────────────────────────────────────────────────
+
+function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; onSelect: (t: any) => void; onAdmin: () => void }) {
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState<string | null>(null);
+  const filtered = tenants.filter((t: any) =>
+    t.name.toLowerCase().includes(search.toLowerCase()) ||
+    t.slug.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="h-dvh flex flex-col items-center justify-center relative overflow-hidden select-none" style={{ background: "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)" }}>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.35),transparent_70%)] blur-3xl" />
+        <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.25),transparent_70%)] blur-3xl" />
+      </div>
+      <div className="relative z-10 w-full max-w-2xl px-6">
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))", border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 12px 40px rgba(160,175,219,0.15)" }}
+          >
+            <Shield className="w-8 h-8" style={{ color: "#5a5a72" }} />
+          </motion.div>
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: "#2a2a3a" }}>Selecteer Tenant</h1>
+          <p className="text-sm mt-1" style={{ color: "#8b8b9e" }}>Kies een klant om hun POS te openen</p>
+        </div>
+
+        <div className="mb-4 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9b9bab" }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Zoek tenant..."
+            className="w-full h-11 pl-10 pr-4 rounded-xl text-sm border"
+            style={{ background: "rgba(255,255,255,0.8)", borderColor: "rgba(0,0,0,0.08)", backdropFilter: "blur(10px)" }}
+          />
+        </div>
+
+        <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+          {filtered.map((t: any, i: number) => (
+            <motion.button
+              key={t.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              onClick={async () => { setLoading(t.id); await onSelect(t); setLoading(null); }}
+              disabled={loading !== null}
+              className="w-full rounded-xl p-4 flex items-center justify-between text-left transition-all hover:scale-[1.01]"
+              style={{
+                background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
+                border: "1px solid rgba(255,255,255,0.72)",
+                boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 8px 24px rgba(160,175,219,0.08)",
+                opacity: t.is_active ? 1 : 0.5,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold" style={{ background: t.is_active ? "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.2))" : "rgba(0,0,0,0.04)", color: t.is_active ? "#16a34a" : "#9b9bab" }}>
+                  {t.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{t.name}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] font-mono" style={{ color: "#8b8b9e" }}>{t.slug}</span>
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium uppercase" style={{ background: "rgba(172,155,255,0.1)", color: "#7c6bc4" }}>{t.plan}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {loading === t.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#7c6bc4" }} />
+                ) : (
+                  <ChevronRight className="w-4 h-4" style={{ color: "#9b9bab" }} />
+                )}
+              </div>
+            </motion.button>
+          ))}
+          {filtered.length === 0 && (
+            <div className="text-center py-8 text-sm" style={{ color: "#9b9bab" }}>Geen tenants gevonden</div>
+          )}
+        </div>
+
+        <div className="mt-6 text-center">
+          <button onClick={onAdmin} className="text-xs font-medium px-4 py-2 rounded-lg transition-colors hover:bg-white/50" style={{ color: "#7c6bc4" }}>
+            <Shield className="w-3.5 h-3.5 inline mr-1" />
+            Naar Admin Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function SaakoukPOS() {
@@ -6041,6 +6136,42 @@ export default function SaakoukPOS() {
   // If not authenticated, ProtectedRoute handles redirect to /login
   if (!loggedInEmployee) {
     return null;
+  }
+
+  // Platform admin: show tenant picker if no tenant selected
+  if (isPlatformAdmin && !selectedTenantId) {
+    return <PlatformTenantPicker tenants={allTenants} onSelect={async (tenant) => {
+      // Trigger impersonation via edge function
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-impersonate`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ action: "start", tenant_id: tenant.id }),
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) return;
+        sessionStorage.setItem("saakouk_impersonation", JSON.stringify({
+          tenantId: data.impersonation.tenant.id,
+          tenantName: data.impersonation.tenant.name,
+          tenantSlug: data.impersonation.tenant.slug,
+          employee: data.impersonation.employee,
+          logId: data.impersonation.log_id,
+        }));
+        selectTenant(tenant.id);
+        window.location.reload();
+      } catch (err) {
+        console.error("Impersonation failed", err);
+      }
+    }} onAdmin={() => { window.location.href = "/admin"; }} />;
   }
 
   // Show section picker after login

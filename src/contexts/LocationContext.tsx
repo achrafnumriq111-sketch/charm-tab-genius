@@ -89,9 +89,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           .order("name");
         if (tenants) setAllTenants(tenants);
         
-        // If we had a stored selection, mark as unlocked (session-only)
+        // If we had a stored selection or impersonation, mark as unlocked
         const stored = sessionStorage.getItem(TENANT_KEY);
-        if (stored) {
+        const impersonation = sessionStorage.getItem("saakouk_impersonation");
+        if (stored || impersonation) {
           setTenantUnlocked(true);
         }
       }
