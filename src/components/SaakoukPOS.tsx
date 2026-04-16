@@ -4390,7 +4390,92 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", role: "cashier", pin: "" });
+  const [form, setForm] = useState({ name: "", role: "sales", pin: "" });
+  const [showRoles, setShowRoles] = useState(false);
+  const [rolePerms, setRolePerms] = useState<Record<string, Record<string, boolean>>>({});
+  const [loadingPerms, setLoadingPerms] = useState(false);
+
+  const PERMISSION_KEYS = [
+    { key: "pos", label: "Kassa (POS)" },
+    { key: "orders", label: "Bestellingen" },
+    { key: "inventory", label: "Voorraad" },
+    { key: "menu", label: "Menu / Producten" },
+    { key: "modifiers", label: "Modifiers" },
+    { key: "employees", label: "Medewerkers" },
+    { key: "analytics", label: "Analytics / Rapportage" },
+    { key: "cash_closing", label: "Kasafsluiting" },
+    { key: "floor_plan", label: "Plattegrond" },
+    { key: "qr_orders", label: "QR Bestellingen" },
+    { key: "forecast", label: "AI Forecast" },
+    { key: "upsell", label: "Upsell Regels" },
+    { key: "logs", label: "Logboek" },
+    { key: "settings", label: "Instellingen" },
+  ];
+
+  const ROLES = [
+    { value: "owner", label: "Owner" },
+    { value: "manager", label: "Manager" },
+    { value: "sales", label: "Sales" },
+  ];
+
+  const roleColors: Record<string, string> = {
+    owner: "bg-green-100 text-green-800 border-green-200",
+    manager: "bg-blue-100 text-blue-800 border-blue-200",
+    sales: "bg-orange-100 text-orange-800 border-orange-200",
+  };
+
+  const roleLabels: Record<string, string> = {
+    owner: "Owner",
+    manager: "Manager",
+    sales: "Sales",
+  };
+
+  // Load role permissions
+  async function loadPermissions() {
+    if (!locationId) return;
+    setLoadingPerms(true);
+    const { data } = await supabase
+      .from("role_permissions")
+      .select("role, permission_key, is_enabled")
+      .eq("location_id", locationId);
+
+    const perms: Record<string, Record<string, boolean>> = {
+      owner: {},
+      manager: {},
+      sales: {},
+    };
+    // Owner always has all permissions
+    PERMISSION_KEYS.forEach((p) => { perms.owner[p.key] = true; });
+    // Set defaults for manager and sales
+    PERMISSION_KEYS.forEach((p) => {
+      perms.manager[p.key] = true; // manager default all
+      perms.sales[p.key] = ["pos", "orders", "qr_orders"].includes(p.key); // sales default limited
+    });
+    // Override with saved values
+    if (data) {
+      data.forEach((row: any) => {
+        if (perms[row.role]) perms[row.role][row.permission_key] = row.is_enabled;
+      });
+    }
+    // Owner always all
+    PERMISSION_KEYS.forEach((p) => { perms.owner[p.key] = true; });
+    setRolePerms(perms);
+    setLoadingPerms(false);
+  }
+
+  async function togglePerm(role: string, key: string) {
+    if (role === "owner") return; // owner always all
+    const newVal = !rolePerms[role]?.[key];
+    setRolePerms((prev) => ({ ...prev, [role]: { ...prev[role], [key]: newVal } }));
+    // Upsert to DB
+    const { error } = await supabase
+      .from("role_permissions")
+      .upsert(
+        { role, permission_key: key, is_enabled: newVal, location_id: locationId },
+        { onConflict: "role,permission_key,location_id" }
+      );
+    if (error) onToast?.("Fout bij opslaan permissie");
+  }
 
   function openEdit(emp: any) {
     setEditingId(emp.id);
@@ -4399,7 +4484,7 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
 
   function openAdd() {
     setEditingId(null);
-    setForm({ name: "", role: "cashier", pin: "" });
+    setForm({ name: "", role: "sales", pin: "" });
     setShowAdd(true);
   }
 
@@ -4411,19 +4496,16 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
       if (!session) { onToast?.("Niet ingelogd"); setSaving(false); return; }
 
       if (editingId) {
-        // Update PIN only
         const res = await supabase.functions.invoke("employee-manage", {
           body: { action: "update_pin", employee_id: editingId, new_pin: form.pin },
         });
         if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij bijwerken");
         onToast?.(`PIN bijgewerkt voor ${form.name}`);
       } else {
-        // Create new employee
         const res = await supabase.functions.invoke("employee-manage", {
           body: { action: "create", full_name: form.name, pin: form.pin, role: form.role, location_id: locationId },
         });
         if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij aanmaken");
-        // Refresh employees list from DB
         const { data: freshEmployees } = await supabase
           .from("employees")
           .select("id, full_name, role, is_active, location_id")
@@ -4458,25 +4540,20 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
     }
   }
 
-  const roleColors: Record<string, string> = {
-    owner: "bg-green-100 text-green-800 border-green-200",
-    manager: "bg-blue-100 text-blue-800 border-blue-200",
-    sales: "bg-orange-100 text-orange-800 border-orange-200",
-  };
-
-  const roleLabels: Record<string, string> = {
-    owner: "Owner",
-    manager: "Manager",
-    sales: "Sales",
-  };
-
   const isOwner = currentRole === "owner";
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{employees.length} medewerkers</span>
-        <Button onClick={openAdd} className="rounded-xl"><Plus className="h-4 w-4 mr-1" /> Medewerker Toevoegen</Button>
+        <div className="flex gap-2">
+          {isOwner && (
+            <Button variant="outline" onClick={() => { setShowRoles(true); loadPermissions(); }} className="rounded-xl">
+              <Shield className="h-4 w-4 mr-1" /> Rollen
+            </Button>
+          )}
+          <Button onClick={openAdd} className="rounded-xl"><Plus className="h-4 w-4 mr-1" /> Medewerker Toevoegen</Button>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {employees.map((emp) => (
@@ -4485,11 +4562,10 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
-                    {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                    {(emp.name || "").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <div className="font-semibold text-sm">{emp.name}</div>
-                    <div className="text-xs text-muted-foreground">{emp.email || ""}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -4499,15 +4575,14 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
               </div>
               <div className="flex items-center justify-between mt-3">
                 <Badge className={clsx("text-[10px] rounded-full border", roleColors[emp.role] || "bg-muted")}>{roleLabels[emp.role] || emp.role}</Badge>
-                <span className="text-xs text-muted-foreground font-mono">
-                  PIN: ••••••
-                </span>
+                <span className="text-xs text-muted-foreground font-mono">PIN: ••••••</span>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {/* Add/Edit Employee Modal */}
       <Modal open={showAdd || !!editingId} onClose={() => { setShowAdd(false); setEditingId(null); }}>
         <div className="p-6 space-y-4">
           <h3 className="text-lg font-bold">{editingId ? "Medewerker bewerken" : "Nieuwe medewerker"}</h3>
@@ -4516,10 +4591,7 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
             <div>
               <Label>Rol</Label>
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner || !!editingId}>
-                <option value="owner">Owner</option>
-                <option value="manager">Manager</option>
-                <option value="cashier">Cashier</option>
-                <option value="staff">Staff</option>
+                {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
               {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
             </div>
@@ -4528,6 +4600,52 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
             <Button onClick={save} disabled={!form.name || form.pin.length !== 6 || saving}>{saving ? "Bezig..." : "Opslaan"}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Role Permissions Modal */}
+      <Modal open={showRoles} onClose={() => setShowRoles(false)}>
+        <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          <h3 className="text-lg font-bold flex items-center gap-2"><Shield className="h-5 w-5" /> Rolbeheer</h3>
+          <p className="text-sm text-muted-foreground">Selecteer per rol welke functies beschikbaar zijn.</p>
+          {loadingPerms ? (
+            <div className="text-center py-8 text-muted-foreground">Laden...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 pr-4 font-medium">Functie</th>
+                    {ROLES.map((r) => (
+                      <th key={r.value} className="text-center py-2 px-3 font-medium">
+                        <Badge className={clsx("text-[10px] rounded-full border", roleColors[r.value])}>{r.label}</Badge>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {PERMISSION_KEYS.map((perm) => (
+                    <tr key={perm.key} className="border-b border-muted/50 hover:bg-muted/20 transition">
+                      <td className="py-2.5 pr-4 text-sm">{perm.label}</td>
+                      {ROLES.map((r) => (
+                        <td key={r.value} className="text-center py-2.5 px-3">
+                          <Checkbox
+                            checked={rolePerms[r.value]?.[perm.key] ?? false}
+                            onCheckedChange={() => togglePerm(r.value, perm.key)}
+                            disabled={r.value === "owner"}
+                            className="mx-auto"
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setShowRoles(false)}>Sluiten</Button>
           </div>
         </div>
       </Modal>
