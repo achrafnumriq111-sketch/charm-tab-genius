@@ -6,7 +6,7 @@ import {
   Loader2, Shield, Store, ToggleLeft, ToggleRight,
   Users, MapPin, LogOut, RefreshCw, ChevronDown, ChevronUp,
   ShoppingCart, Package, Edit2, Save, X, Eye,
-  Zap, Play, StopCircle,
+  Zap, Play, StopCircle, Clock, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
