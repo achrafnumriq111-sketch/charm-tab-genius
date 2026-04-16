@@ -60,81 +60,12 @@ import {
 const SECTIONS = ["Signature Drinks", "Specials", "Cold Drinks", "Hot Drinks", "Sweets"];
 
 // ─── PRODUCT & MODIFIER CONFIG ───────────────────────────────────────────────
+// All products and modifier groups are now managed via the database.
+// No hardcoded data — start fresh from the Modifiers tab, then add products.
 
-const milkGroup = {
-  id: "milk", name: "Milk", required: false, multiple: false,
-  options: [
-    { id: "whole", name: "Volle Melk", price: 0 },
-    { id: "oat", name: "Haver Melk", price: 0.3 },
-    { id: "coconut", name: "Kokos Melk", price: 0.4 },
-    { id: "almond", name: "Amandel Melk", price: 0.4 },
-  ],
-};
+const ALL_MODIFIER_GROUPS: any[] = [];
 
-const syrupGroup = {
-  id: "syrup", name: "Siroop", required: false, multiple: true,
-  options: [
-    { id: "vanille", name: "Vanille", price: 0.75 },
-    { id: "mango", name: "Mango", price: 0.75 },
-    { id: "passion", name: "Passievrucht", price: 0.75 },
-    { id: "blue", name: "Blue Magic", price: 0.75 },
-  ],
-};
-
-const lemonadeFlavorGroup = {
-  id: "lemonade-flavour", name: "Lemonade Flavours", required: true, multiple: false,
-  options: [
-    { id: "passion-glow", name: "Passion Glow", price: 0 },
-    { id: "cherry-burst", name: "Cherry Burst", price: 0 },
-    { id: "sunset-pulse", name: "Sunset Pulse", price: 0 },
-    { id: "tiffany-blue", name: "Tiffany Blue", price: 0 },
-  ],
-};
-
-const sizeGroup = {
-  id: "size", name: "Size", required: false, multiple: false,
-  options: [
-    { id: "regular", name: "Regular", price: 0 },
-    { id: "large", name: "Large", price: 1.0 },
-  ],
-};
-
-const extraGroup = {
-  id: "extras", name: "Extras", required: false, multiple: true,
-  options: [
-    { id: "whipped", name: "Slagroom", price: 0.5 },
-    { id: "extra-shot", name: "Extra shot", price: 0.75 },
-    { id: "decaf", name: "Decaf", price: 0 },
-  ],
-};
-
-const ALL_MODIFIER_GROUPS = [milkGroup, syrupGroup, lemonadeFlavorGroup, sizeGroup, extraGroup];
-
-const initialProducts = [
-  { id: "sig-1", name: "Tropical Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635", prep_station: "drinks" },
-  { id: "sig-2", name: "Tropical Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a3e635", prep_station: "drinks" },
-  { id: "sig-3", name: "Berry Matcha Medium", section: "Signature Drinks", price: 7, costPrice: 2.10, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc", prep_station: "drinks" },
-  { id: "sig-4", name: "Berry Matcha Large", section: "Signature Drinks", price: 8, costPrice: 2.50, tags: ["Drinks", "Signature"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#c084fc", prep_station: "drinks" },
-  { id: "special-1", name: "Papa Smurf", section: "Specials", price: 8.5, costPrice: 2.80, tags: ["Special"], modifierGroups: [milkGroup, extraGroup], color: "#60a5fa", prep_station: "drinks" },
-  { id: "special-2", name: "HOT Crème Brûlée", section: "Specials", price: 6.5, costPrice: 2.00, tags: ["Special", "Hot"], modifierGroups: [milkGroup, extraGroup], color: "#fbbf24", prep_station: "drinks" },
-  { id: "cold-1", name: "Iced Matcha Medium", section: "Cold Drinks", price: 6.5, costPrice: 1.80, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399", prep_station: "drinks" },
-  { id: "cold-2", name: "Iced Matcha Large", section: "Cold Drinks", price: 7.5, costPrice: 2.20, tags: ["Cold"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#34d399", prep_station: "drinks" },
-  { id: "cold-3", name: "Iced Latte Medium", section: "Cold Drinks", price: 4.5, costPrice: 1.20, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa", prep_station: "drinks" },
-  { id: "cold-4", name: "Iced Latte Large", section: "Cold Drinks", price: 5.25, costPrice: 1.50, tags: ["Cold", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#a78bfa", prep_station: "drinks" },
-  { id: "cold-5", name: "Matcha Lemonade Medium", section: "Cold Drinks", price: 5.5, costPrice: 1.60, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047", prep_station: "drinks" },
-  { id: "cold-6", name: "Matcha Lemonade Large", section: "Cold Drinks", price: 6.25, costPrice: 1.90, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047", prep_station: "drinks" },
-  { id: "cold-7", name: "Lemonade", section: "Cold Drinks", price: 4.75, costPrice: 1.00, tags: ["Cold", "Lemonade"], modifierGroups: [lemonadeFlavorGroup], color: "#fde047", prep_station: "drinks" },
-  { id: "hot-1", name: "Espresso", section: "Hot Drinks", price: 2.8, costPrice: 0.60, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#92400e", prep_station: "drinks" },
-  { id: "hot-2", name: "Flat White", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, extraGroup], color: "#d4a574", prep_station: "drinks" },
-  { id: "hot-3", name: "Cappuccino Medium", section: "Hot Drinks", price: 4.5, costPrice: 1.10, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574", prep_station: "drinks" },
-  { id: "hot-4", name: "Cappuccino Large", section: "Hot Drinks", price: 5.2, costPrice: 1.40, tags: ["Hot", "Coffee"], modifierGroups: [milkGroup, syrupGroup, extraGroup], color: "#d4a574", prep_station: "drinks" },
-  { id: "hot-5", name: "Americano Medium", section: "Hot Drinks", price: 3.5, costPrice: 0.70, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f", prep_station: "drinks" },
-  { id: "hot-6", name: "Americano Large", section: "Hot Drinks", price: 4.5, costPrice: 0.90, tags: ["Hot", "Coffee"], modifierGroups: [extraGroup], color: "#78350f", prep_station: "drinks" },
-  { id: "hot-7", name: "Tea", section: "Hot Drinks", price: 3.2, costPrice: 0.50, tags: ["Hot"], modifierGroups: [], color: "#fbbf24", prep_station: "drinks" },
-  { id: "sweet-1", name: "Sticky Date Toffee Cake", section: "Sweets", price: 4.5, costPrice: 1.80, tags: ["Sweets"], modifierGroups: [], color: "#b45309", prep_station: "food" },
-  { id: "sweet-2", name: "Pistachio Baklava", section: "Sweets", price: 3.5, costPrice: 1.50, tags: ["Sweets"], modifierGroups: [], color: "#65a30d", prep_station: "food" },
-  { id: "sweet-3", name: "Cookie", section: "Sweets", price: 2.5, costPrice: 0.80, tags: ["Sweets"], modifierGroups: [], color: "#d97706", prep_station: "food" },
-];
+const initialProducts: any[] = [];
 
 const discounts = [
   { id: "disc-1", name: "Verkeerde Drankje", type: "percent", value: 100 },
