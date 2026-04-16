@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -18,16 +18,18 @@ Deno.serve(async (req) => {
 
     // Verify caller is authenticated owner
     const authHeader = req.headers.get("authorization");
+    console.log("Auth header present:", !!authHeader);
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Niet ingelogd" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const callerClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { authorization: authHeader } },
-    });
-    const { data: { user: caller } } = await callerClient.auth.getUser();
+    // Use getUser with the token directly instead of creating a new client
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: caller }, error: userError } = await admin.auth.getUser(token);
+    console.log("Caller lookup result:", caller?.id, "error:", userError?.message);
+
     if (!caller) {
       return new Response(JSON.stringify({ error: "Niet ingelogd" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -40,6 +42,8 @@ Deno.serve(async (req) => {
       .select("role, location_id")
       .eq("user_id", caller.id)
       .single();
+
+    console.log("Caller employee:", callerEmp?.role, callerEmp?.location_id);
 
     if (!callerEmp || callerEmp.role !== "owner") {
       return new Response(JSON.stringify({ error: "Alleen owners kunnen medewerkers beheren" }), {
