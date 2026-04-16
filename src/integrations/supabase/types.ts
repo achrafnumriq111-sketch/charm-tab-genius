@@ -685,6 +685,24 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pos_transactions: {
         Row: {
           created_at: string
@@ -1473,6 +1491,7 @@ export type Database = {
         Returns: string
       }
       get_tenant_id_for_user: { Args: { _user_id: string }; Returns: string }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       setup_tenant_onboarding: {
         Args: {
           _address?: string
