@@ -4527,7 +4527,7 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
-            <Button onClick={save} disabled={!form.name || form.pin.length !== 6}>Opslaan</Button>
+            <Button onClick={save} disabled={!form.name || form.pin.length !== 6 || saving}>{saving ? "Bezig..." : "Opslaan"}</Button>
           </div>
         </div>
       </Modal>
