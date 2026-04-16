@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -14,6 +15,7 @@ const Login = () => {
   const usernameRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
+  const { tenant, isPlatformLevel, loading: tenantLoading, error: tenantError } = useTenant();
 
   useEffect(() => {
     if (isAuthenticated) navigate("/", { replace: true });
@@ -85,10 +87,12 @@ const Login = () => {
               backdropFilter: "blur(12px)",
             }}
           >
-            <span className="text-xl font-bold" style={{ color: "#5a5a72" }}>S</span>
+            <span className="text-xl font-bold" style={{ color: "#5a5a72" }}>
+              {tenant ? tenant.name.charAt(0).toUpperCase() : "S"}
+            </span>
           </motion.div>
           <h1 className="text-lg font-semibold tracking-tight" style={{ color: "#2a2a3a" }}>
-            SAAKOUK
+            {tenant ? tenant.name : "SAAKOUK"}
           </h1>
           <p className="text-xs mt-0.5" style={{ color: "#9b9bab" }}>
             Point of Sale

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 
 export interface Location {
   id: string;
@@ -26,6 +27,7 @@ const LocationContext = createContext<LocationContextType | null>(null);
 const STORAGE_KEY = "saakouk_active_location_id";
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
+  const { tenant, isPlatformLevel } = useTenant();
   const [locations, setLocations] = useState<Location[]>([]);
   const [activeLocationId, setActiveLocationIdState] = useState<string | null>(
     () => localStorage.getItem(STORAGE_KEY)
@@ -34,17 +36,22 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [tenantId, setTenantId] = useState<string | null>(null);
 
   const fetchLocations = useCallback(async () => {
-    const { data } = await supabase
+    let query = supabase
       .from("locations")
       .select("*")
       .eq("is_active", true)
       .order("name");
+
+    // If we're on a tenant subdomain, filter by tenant
+    if (tenant?.id) {
+      query = query.eq("tenant_id", tenant.id);
+    }
+
+    const { data } = await query;
     if (data && data.length > 0) {
       setLocations(data as Location[]);
-      // Derive tenant from first location
       const firstTenant = (data[0] as any).tenant_id;
       if (firstTenant) setTenantId(firstTenant);
-      // Auto-select first location if none selected or selection invalid
       const currentId = localStorage.getItem(STORAGE_KEY);
       if (!currentId || !data.find((l: any) => l.id === currentId)) {
         const firstId = data[0].id;
@@ -53,7 +60,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       }
     }
     setLoading(false);
-  }, []);
+  }, [tenant?.id]);
 
   useEffect(() => {
     fetchLocations();
