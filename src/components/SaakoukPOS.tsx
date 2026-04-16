@@ -213,9 +213,12 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void }) {
+function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange, isPlatformAdmin, allTenants, selectedTenantId, onSelectTenant, tenantUnlocked, onUnlockTenant, onClearTenant }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void; isPlatformAdmin?: boolean; allTenants?: any[]; selectedTenantId?: string | null; onSelectTenant?: (id: string) => void; tenantUnlocked?: boolean; onUnlockTenant?: (pin: string) => Promise<boolean>; onClearTenant?: () => void }) {
   const isAdmin = role === "owner" || role === "manager";
   const isOwner = role === "owner";
+  const [tenantPinInput, setTenantPinInput] = React.useState("");
+  const [tenantPinError, setTenantPinError] = React.useState(false);
+  const [pendingTenantId, setPendingTenantId] = React.useState<string | null>(null);
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
     { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true },
@@ -261,6 +264,75 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
           </motion.div>
           <span className="text-[8px] text-slate-500 truncate w-full text-center">{employeeName.split(" ")[0]}</span>
         </div>
+        {/* Platform admin: Tenant selector with PIN gate */}
+        {isPlatformAdmin && allTenants && allTenants.length > 0 && (
+          <div className="px-1.5 py-1.5 border-b border-white/50">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[7px] text-violet-500 font-semibold uppercase tracking-wider">Tenant</span>
+              {pendingTenantId && !tenantUnlocked ? (
+                <div className="flex flex-col items-center gap-1 w-full">
+                  <span className="text-[7px] text-slate-500">PIN bevestigen</span>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={tenantPinInput}
+                    onChange={(e) => { setTenantPinInput(e.target.value.replace(/\D/g, "")); setTenantPinError(false); }}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && tenantPinInput.length === 6 && onUnlockTenant) {
+                        const ok = await onUnlockTenant(tenantPinInput);
+                        if (ok && onSelectTenant && pendingTenantId) {
+                          onSelectTenant(pendingTenantId);
+                          setPendingTenantId(null);
+                          setTenantPinInput("");
+                        } else {
+                          setTenantPinError(true);
+                          setTenantPinInput("");
+                        }
+                      }
+                    }}
+                    className={`w-full text-[10px] bg-white/60 border ${tenantPinError ? "border-red-400" : "border-violet-200"} rounded-lg px-1 py-1 text-center font-mono tracking-[0.3em]`}
+                    placeholder="••••••"
+                    autoFocus
+                  />
+                  <button onClick={() => { setPendingTenantId(null); setTenantPinInput(""); }} className="text-[7px] text-slate-400 hover:text-slate-600">Annuleer</button>
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={selectedTenantId || ""}
+                    onChange={(e) => {
+                      const tid = e.target.value;
+                      if (!tid) {
+                        onClearTenant?.();
+                        return;
+                      }
+                      if (tenantUnlocked) {
+                        onSelectTenant?.(tid);
+                      } else {
+                        setPendingTenantId(tid);
+                        setTenantPinInput("");
+                        setTenantPinError(false);
+                      }
+                    }}
+                    className="w-full text-[8px] bg-violet-50/80 border border-violet-200/70 rounded-xl px-1 py-1.5 text-center font-medium text-violet-700 truncate appearance-none cursor-pointer"
+                    title="Selecteer tenant"
+                  >
+                    <option value="">— Kies tenant —</option>
+                    {allTenants.map((t: any) => (
+                      <option key={t.id} value={t.id}>{t.name} {!t.is_active ? "(inactief)" : ""}</option>
+                    ))}
+                  </select>
+                  {selectedTenantId && (
+                    <button onClick={() => onClearTenant?.()} className="text-[7px] text-violet-400 hover:text-violet-600 flex items-center gap-0.5">
+                      <X className="h-2.5 w-2.5" /> Reset
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
         {/* Location selector (owner sees dropdown, staff sees label) */}
         {activeLocation && (
           <div className="px-1.5 py-1.5 border-b border-white/50">
@@ -5645,7 +5717,7 @@ function CashAuditView() {
 
 export default function SaakoukPOS() {
   const { employee: authEmployee, logout: authLogout } = useAuth();
-  const { locations, activeLocation, setActiveLocationId } = useLocation_();
+  const { locations, activeLocation, setActiveLocationId, isPlatformAdmin, allTenants, selectedTenantId, selectTenant, clearTenantSelection, tenantUnlocked, unlockTenant } = useLocation_();
   const locationId = activeLocation?.id || null;
   const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
@@ -6014,7 +6086,7 @@ export default function SaakoukPOS() {
         <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.35),transparent_70%)] blur-3xl" />
       </div>
 
-      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} />
+      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} isPlatformAdmin={isPlatformAdmin} allTenants={allTenants} selectedTenantId={selectedTenantId} onSelectTenant={selectTenant} tenantUnlocked={tenantUnlocked} onUnlockTenant={unlockTenant} onClearTenant={clearTenantSelection} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Glass top bar */}
         <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
