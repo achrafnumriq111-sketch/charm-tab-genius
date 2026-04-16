@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         });
       }
       const validRoles = ["owner", "manager", "sales"];
-      const empRole = validRoles.includes(role) ? role : "staff";
+      const empRole = validRoles.includes(role) ? role : "sales";
       const locId = location_id || callerEmp.location_id;
 
       const normalizedUsername = full_name.trim().toLowerCase().replace(/\s+/g, " ");
