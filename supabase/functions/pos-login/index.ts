@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { username, pin } = await req.json();
+    const { username, pin, tenant_slug } = await req.json();
 
     // Input validation
     if (!username || typeof username !== "string" || !pin || typeof pin !== "string") {
@@ -40,12 +40,18 @@ Deno.serve(async (req) => {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const ua = req.headers.get("user-agent") || "unknown";
 
-    // Look up employee
-    const { data: employee, error: lookupError } = await admin
+    // Build employee query - optionally scoped to tenant
+    let empQuery = admin
       .from("employees")
-      .select("*")
-      .eq("username_normalized", normalizedUsername)
-      .single();
+      .select("*, locations!inner(tenant_id, tenants!inner(slug))")
+      .eq("username_normalized", normalizedUsername);
+
+    // If tenant_slug provided, scope to that tenant
+    if (tenant_slug && typeof tenant_slug === "string") {
+      empQuery = empQuery.eq("locations.tenants.slug", tenant_slug);
+    }
+
+    const { data: employee, error: lookupError } = await empQuery.single();
 
     if (!employee || lookupError) {
       // Log failed attempt - unknown user
@@ -158,6 +164,9 @@ Deno.serve(async (req) => {
       user_agent: ua,
     });
 
+    // Resolve tenant info for response
+    const tenantInfo = employee.locations?.tenants;
+
     return new Response(
       JSON.stringify({
         session: {
@@ -169,7 +178,11 @@ Deno.serve(async (req) => {
           id: employee.id,
           full_name: employee.full_name,
           role: employee.role,
+          location_id: employee.location_id,
         },
+        tenant: tenantInfo ? {
+          slug: tenantInfo.slug,
+        } : null,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
