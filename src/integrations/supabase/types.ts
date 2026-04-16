@@ -461,6 +461,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          tenant_id: string | null
           timezone: string
           updated_at: string
         }
@@ -472,6 +473,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          tenant_id?: string | null
           timezone?: string
           updated_at?: string
         }
@@ -483,10 +485,19 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          tenant_id?: string | null
           timezone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "locations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_audit_logs: {
         Row: {
@@ -1118,6 +1129,39 @@ export type Database = {
           },
         ]
       }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          owner_user_id: string
+          plan: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          owner_user_id: string
+          plan?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          owner_user_id?: string
+          plan?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       upsell_rules: {
         Row: {
           active_from: string | null
@@ -1427,6 +1471,19 @@ export type Database = {
       get_modifier_group_location: {
         Args: { _group_id: string }
         Returns: string
+      }
+      get_tenant_id_for_user: { Args: { _user_id: string }; Returns: string }
+      setup_tenant_onboarding: {
+        Args: {
+          _address?: string
+          _city?: string
+          _currency?: string
+          _owner_name: string
+          _slug: string
+          _tenant_name: string
+          _timezone?: string
+        }
+        Returns: Json
       }
     }
     Enums: {

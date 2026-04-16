@@ -1,7 +1,7 @@
 # Project Memory
 
 ## Core
-- SAAKOUK POS for matcha specialty shop (Amsterdam, NL).
+- SAAKOUK POS — SaaS café platform, multi-tenant architecture.
 - iPad/tablet optimized: 44px hit targets, viewport-fit=cover, responsive grid.
 - Stack: Supabase (RLS anon access for PIN auth), Edge Functions, PassKit.
 - AI BI powered exclusively by Apple WeatherKit (Europe/Amsterdam timezone).
@@ -9,8 +9,10 @@
 - Operations: "Anti-fuzz" strict logic. Ticket/cart state lifted to root.
 - Business Hours: Mon-Thu 10-22, Fri-Sat 10-00, Sun 12-00.
 - Customers: Name, Email, Phone strictly mandatory for all new entries.
+- Multi-tenant: tenants → locations → employees. Subdomain per tenant.
 
 ## Memories
+- [SaaS Tenant Model](mem://features/saas-tenant-model) — Tenants table, self-service onboarding, subdomain routing
 - [Layout Design](mem://ui/layout-design) — Compact icon-centric sidebar, wrapping POS categories
 - [State Management](mem://architecture/state-management) — Ticket/cart state keyed by table ID or walk-in
 - [Order Attribution](mem://architecture/order-attribution) — Orders permanently stamped with active employee ID

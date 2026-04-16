@@ -9,6 +9,7 @@ export interface Location {
   timezone: string;
   currency: string;
   is_active: boolean;
+  tenant_id: string | null;
 }
 
 interface LocationContextType {
@@ -17,6 +18,7 @@ interface LocationContextType {
   setActiveLocationId: (id: string) => void;
   loading: boolean;
   refetch: () => Promise<void>;
+  tenantId: string | null;
 }
 
 const LocationContext = createContext<LocationContextType | null>(null);
@@ -29,6 +31,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     () => localStorage.getItem(STORAGE_KEY)
   );
   const [loading, setLoading] = useState(true);
+  const [tenantId, setTenantId] = useState<string | null>(null);
 
   const fetchLocations = useCallback(async () => {
     const { data } = await supabase
@@ -38,6 +41,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       .order("name");
     if (data && data.length > 0) {
       setLocations(data as Location[]);
+      // Derive tenant from first location
+      const firstTenant = (data[0] as any).tenant_id;
+      if (firstTenant) setTenantId(firstTenant);
       // Auto-select first location if none selected or selection invalid
       const currentId = localStorage.getItem(STORAGE_KEY);
       if (!currentId || !data.find((l: any) => l.id === currentId)) {
@@ -68,6 +74,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         setActiveLocationId,
         loading,
         refetch: fetchLocations,
+        tenantId,
       }}
     >
       {children}

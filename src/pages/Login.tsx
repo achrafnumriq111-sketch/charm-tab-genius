@@ -255,6 +255,16 @@ const Login = () => {
             </button>
           </form>
         </div>
+
+        {/* Signup link */}
+        <div className="text-center mt-4">
+          <p className="text-[11px]" style={{ color: "#9b9bab" }}>
+            Nog geen account?{" "}
+            <button onClick={() => navigate("/signup")} className="font-medium underline" style={{ color: "#7c6bc4" }}>
+              Zaak aanmaken
+            </button>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
