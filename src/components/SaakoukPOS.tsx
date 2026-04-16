@@ -6049,7 +6049,7 @@ export default function SaakoukPOS() {
             {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
             {active === "cashaudit" && <CashAuditView />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
-            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
+            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => toast({ title: msg })} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
           </div>
         </div>
