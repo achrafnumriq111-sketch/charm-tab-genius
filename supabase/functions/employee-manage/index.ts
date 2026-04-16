@@ -64,8 +64,8 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const validRoles = ["owner", "manager", "cashier", "staff"];
-      const empRole = validRoles.includes(role) ? role : "staff";
+      const validRoles = ["owner", "manager", "sales"];
+      const empRole = validRoles.includes(role) ? role : "sales";
       const locId = location_id || callerEmp.location_id;
 
       const normalizedUsername = full_name.trim().toLowerCase().replace(/\s+/g, " ");

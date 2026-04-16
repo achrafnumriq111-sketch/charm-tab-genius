@@ -967,6 +967,44 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          location_id: string | null
+          permission_key: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          location_id?: string | null
+          permission_key: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          location_id?: string | null
+          permission_key?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_counts: {
         Row: {
           adjustment_reason: string | null
@@ -1514,7 +1552,7 @@ export type Database = {
       }
     }
     Enums: {
-      employee_role: "owner" | "manager" | "cashier" | "staff"
+      employee_role: "owner" | "manager" | "cashier" | "staff" | "sales"
       inventory_category:
         | "ingredient"
         | "packaging"
@@ -1656,7 +1694,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      employee_role: ["owner", "manager", "cashier", "staff"],
+      employee_role: ["owner", "manager", "cashier", "staff", "sales"],
       inventory_category: [
         "ingredient",
         "packaging",
