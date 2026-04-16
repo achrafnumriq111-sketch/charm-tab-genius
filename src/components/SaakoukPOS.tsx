@@ -4386,35 +4386,76 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
 
 // ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
 
-function EmployeesView({ employees = [], setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
+function EmployeesView({ employees = [], setEmployees, currentRole, locationId, onToast }: { employees: any[]; setEmployees: any; currentRole: string; locationId?: string; onToast?: (msg: string) => void }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", role: "cashier", pin: "" });
 
   function openEdit(emp: any) {
     setEditingId(emp.id);
-    setForm({ name: emp.name, email: emp.email || "", role: emp.role, pin: "" });
+    setForm({ name: emp.name || emp.full_name, role: emp.role, pin: "" });
   }
 
   function openAdd() {
     setEditingId(null);
-    setForm({ name: "", email: "", role: "sales", pin: "" });
+    setForm({ name: "", role: "cashier", pin: "" });
     setShowAdd(true);
   }
 
-  function save() {
-    if (!form.name || !form.pin || form.pin.length !== 6) return;
-    if (editingId) {
-      setEmployees((prev: any[]) => prev.map((e) => e.id === editingId ? { ...e, ...form } : e));
-    } else {
-      setEmployees((prev: any[]) => [...prev, { id: generateId(), ...form }]);
+  async function save() {
+    if (!form.name || form.pin.length !== 6) return;
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { onToast?.("Niet ingelogd"); setSaving(false); return; }
+
+      if (editingId) {
+        // Update PIN only
+        const res = await supabase.functions.invoke("employee-manage", {
+          body: { action: "update_pin", employee_id: editingId, new_pin: form.pin },
+        });
+        if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij bijwerken");
+        onToast?.(`PIN bijgewerkt voor ${form.name}`);
+      } else {
+        // Create new employee
+        const res = await supabase.functions.invoke("employee-manage", {
+          body: { action: "create", full_name: form.name, pin: form.pin, role: form.role, location_id: locationId },
+        });
+        if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij aanmaken");
+        // Refresh employees list from DB
+        const { data: freshEmployees } = await supabase
+          .from("employees")
+          .select("id, full_name, role, is_active, location_id")
+          .eq("is_active", true)
+          .eq("location_id", locationId);
+        if (freshEmployees) {
+          setEmployees(freshEmployees.map((e: any) => ({ id: e.id, name: e.full_name, role: e.role, isActive: e.is_active, locationId: e.location_id })));
+        }
+        onToast?.(`Medewerker ${form.name} aangemaakt`);
+      }
+    } catch (err: any) {
+      onToast?.(err.message || "Er ging iets mis");
+    } finally {
+      setSaving(false);
+      setShowAdd(false);
+      setEditingId(null);
     }
-    setShowAdd(false);
-    setEditingId(null);
   }
 
-  function remove(id: string) {
-    setEmployees((prev: any[]) => prev.filter((e) => e.id !== id));
+  async function remove(id: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await supabase.functions.invoke("employee-manage", {
+        body: { action: "delete", employee_id: id },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij verwijderen");
+      setEmployees((prev: any[]) => prev.filter((e) => e.id !== id));
+      onToast?.("Medewerker verwijderd");
+    } catch (err: any) {
+      onToast?.(err.message || "Er ging iets mis");
+    }
   }
 
   const roleColors: Record<string, string> = {
