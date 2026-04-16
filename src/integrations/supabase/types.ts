@@ -413,6 +413,74 @@ export type Database = {
           },
         ]
       }
+      gift_cards: {
+        Row: {
+          balance: number
+          code: string
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          initial_value: number
+          issued_at: string
+          issued_by_employee_id: string | null
+          issued_by_employee_name: string | null
+          location_id: string | null
+          passkit_enrolled: boolean
+          passkit_member_id: string | null
+          source_order_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          code: string
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          id?: string
+          initial_value?: number
+          issued_at?: string
+          issued_by_employee_id?: string | null
+          issued_by_employee_name?: string | null
+          location_id?: string | null
+          passkit_enrolled?: boolean
+          passkit_member_id?: string | null
+          source_order_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          code?: string
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          initial_value?: number
+          issued_at?: string
+          issued_by_employee_id?: string | null
+          issued_by_employee_name?: string | null
+          location_id?: string | null
+          passkit_enrolled?: boolean
+          passkit_member_id?: string | null
+          source_order_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           ai_forecast_enabled: boolean

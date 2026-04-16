@@ -34,5 +34,6 @@
 - [QR Ordering](mem://features/qr-ordering) — Auto-accept, Kanban board, and mandatory customer data
 - [Activity Logs](mem://features/activity-logs) — Audit logs and multi-criteria order history filtering
 - [Prep Station KDS](mem://features/prep-station-kds) — Kitchen display routing, live timers, and statuses
+- [Gift Cards](mem://features/gift-cards) — Post-sale issuance, PassKit coupling, DB persistence with RLS
 - [Modifiers System](mem://features/modifiers-system) — DB-driven modifier groups, options, product assignment, admin CRUD
 - [Upsell Engine](mem://features/upsell-engine) — Smart rule-based upsell prompts with time windows and conversion tracking
