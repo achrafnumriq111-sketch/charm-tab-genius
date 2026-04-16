@@ -6043,6 +6043,42 @@ export default function SaakoukPOS() {
     return null;
   }
 
+  // Platform admin: show tenant picker if no tenant selected
+  if (isPlatformAdmin && !selectedTenantId) {
+    return <PlatformTenantPicker tenants={allTenants} onSelect={async (tenant) => {
+      // Trigger impersonation via edge function
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-impersonate`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ action: "start", tenant_id: tenant.id }),
+          }
+        );
+        const data = await res.json();
+        if (!res.ok) return;
+        sessionStorage.setItem("saakouk_impersonation", JSON.stringify({
+          tenantId: data.impersonation.tenant.id,
+          tenantName: data.impersonation.tenant.name,
+          tenantSlug: data.impersonation.tenant.slug,
+          employee: data.impersonation.employee,
+          logId: data.impersonation.log_id,
+        }));
+        selectTenant(tenant.id);
+        window.location.reload();
+      } catch (err) {
+        console.error("Impersonation failed", err);
+      }
+    }} onAdmin={() => { window.location.href = "/admin"; }} />;
+  }
+
   // Show section picker after login
   if (!sectionPicked) {
     return <SectionPickerScreen employee={loggedInEmployee} onSelect={(key) => { setActive(key); setSectionPicked(true); addLog("view_changed", `Sectie gekozen: ${key}`); }} onLogout={handleLogout} />;
