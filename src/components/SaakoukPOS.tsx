@@ -4239,13 +4239,18 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, 
         </CardContent>
       </Card>
       <Card className="rounded-2xl">
-        <CardHeader><CardTitle className="text-sm">Roles</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">Rollen &amp; Rechten</CardTitle></CardHeader>
         <CardContent>
-          <div className="space-y-2 text-sm">
-            {["Owner", "Manager", "Cashier", "Barista"].map((role) => (
-              <div key={role} className="flex items-center justify-between py-1.5 border-b last:border-0">
-                <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-muted-foreground" />{role}</div>
-                <Button variant="ghost" size="sm">Configure</Button>
+          <div className="space-y-3 text-sm">
+            {([
+              { role: "Owner", desc: "Volledige toegang: POS, Dashboard, Instellingen, Voorraad, Menu, Team" },
+              { role: "Manager", desc: "POS, Dashboard, Voorraad, Menu, Team (geen instellingen)" },
+              { role: "Cashier", desc: "POS, Kassa afsluiten, Bestellingen bekijken" },
+              { role: "Staff", desc: "POS, Prep Station (KDS)" },
+            ] as const).map(({ role, desc }) => (
+              <div key={role} className="py-2 border-b last:border-0">
+                <div className="flex items-center gap-2 font-medium"><Shield className="h-4 w-4 text-muted-foreground" />{role}</div>
+                <p className="text-xs text-muted-foreground mt-0.5 ml-6">{desc}</p>
               </div>
             ))}
           </div>
@@ -4485,7 +4490,8 @@ function EmployeesView({ employees = [], setEmployees, currentRole }: { employee
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner}>
                 <option value="owner">Owner</option>
                 <option value="manager">Manager</option>
-                <option value="sales">Sales</option>
+                <option value="cashier">Cashier</option>
+                <option value="staff">Staff</option>
               </select>
               {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
             </div>
