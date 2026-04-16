@@ -1424,6 +1424,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["employee_role"]
       }
+      get_modifier_group_location: {
+        Args: { _group_id: string }
+        Returns: string
+      }
     }
     Enums: {
       employee_role: "owner" | "manager" | "cashier" | "staff"
