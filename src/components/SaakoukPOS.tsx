@@ -6092,6 +6092,46 @@ export default function SaakoukPOS() {
     loadEmployees();
   }, [locationId]);
 
+  // Load gift cards from database (location-scoped) + realtime updates
+  useEffect(() => {
+    if (!locationId) return;
+    async function loadGiftCards() {
+      const { data, error } = await supabase
+        .from("gift_cards")
+        .select("*")
+        .eq("location_id", locationId)
+        .order("issued_at", { ascending: false });
+      if (error) {
+        console.error("Failed to load gift cards:", error);
+        return;
+      }
+      if (data) {
+        setGiftCards(data.map((gc: any) => ({
+          id: gc.id,
+          code: gc.code,
+          balance: Number(gc.balance),
+          initialValue: Number(gc.initial_value),
+          status: gc.status,
+          issuedAt: gc.issued_at?.slice(0, 10),
+          customerName: gc.customer_name,
+          customerEmail: gc.customer_email,
+          customerPhone: gc.customer_phone,
+          sourceOrderId: gc.source_order_id,
+          passkitMemberId: gc.passkit_member_id,
+          passkitEnrolled: gc.passkit_enrolled,
+        })));
+      }
+    }
+    loadGiftCards();
+    const channel = supabase
+      .channel("gift-cards-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "gift_cards", filter: `location_id=eq.${locationId}` }, () => {
+        loadGiftCards();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [locationId]);
+
   // Poll low-stock items every 30s (location-scoped)
   useEffect(() => {
     if (!locationId) return;
