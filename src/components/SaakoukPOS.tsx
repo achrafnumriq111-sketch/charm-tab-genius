@@ -6086,7 +6086,7 @@ export default function SaakoukPOS() {
         <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.35),transparent_70%)] blur-3xl" />
       </div>
 
-      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} />
+      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} isPlatformAdmin={isPlatformAdmin} allTenants={allTenants} selectedTenantId={selectedTenantId} onSelectTenant={selectTenant} tenantUnlocked={tenantUnlocked} onUnlockTenant={unlockTenant} onClearTenant={clearTenantSelection} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Glass top bar */}
         <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
