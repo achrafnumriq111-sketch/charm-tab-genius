@@ -377,6 +377,105 @@ function ImpersonationBanner({ tenantName, onStop }: { tenantName: string; onSto
   );
 }
 
+/* ─── Impersonation Log Table ─── */
+function ImpersonationLogTable() {
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("admin_impersonation_log")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .limit(50);
+    setLogs(data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (open) fetchLogs();
+  }, [open, fetchLogs]);
+
+  const formatDuration = (start: string, end: string | null) => {
+    if (!end) return "Actief";
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    const mins = Math.floor(ms / 60000);
+    if (mins < 60) return `${mins}m`;
+    return `${Math.floor(mins / 60)}u ${mins % 60}m`;
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto mb-6">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full rounded-xl p-4 flex items-center justify-between transition-all"
+        style={glassCard}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(245,158,11,0.1)" }}>
+            <FileText className="w-4 h-4" style={{ color: "#f59e0b" }} />
+          </div>
+          <div className="text-left">
+            <div className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>Impersonation Log</div>
+            <div className="text-[10px]" style={{ color: "#9b9bab" }}>Overzicht van alle tenant-sessies</div>
+          </div>
+        </div>
+        {open ? <ChevronUp className="w-4 h-4" style={{ color: "#8b8b9e" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#8b8b9e" }} />}
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="rounded-b-xl p-4 space-y-2" style={{ ...glassCard, borderTop: "none", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+              {loading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#7c6bc4" }} />
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="text-xs text-center py-4" style={{ color: "#9b9bab" }}>Nog geen impersonation sessies</div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-4 gap-2 px-3 py-1">
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Tenant</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Gestart</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Gestopt</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Duur</span>
+                  </div>
+                  {logs.map((log) => (
+                    <div key={log.id} className="grid grid-cols-4 gap-2 rounded-lg px-3 py-2 items-center" style={{ background: "rgba(255,255,255,0.5)" }}>
+                      <span className="text-xs font-medium" style={{ color: "#2a2a3a" }}>{log.target_tenant_name || "Onbekend"}</span>
+                      <span className="text-[11px]" style={{ color: "#5a5a72" }}>
+                        {new Date(log.started_at).toLocaleString("nl-NL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span className="text-[11px]" style={{ color: log.ended_at ? "#5a5a72" : "#f59e0b" }}>
+                        {log.ended_at
+                          ? new Date(log.ended_at).toLocaleString("nl-NL", { hour: "2-digit", minute: "2-digit" })
+                          : "— Actief —"}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" style={{ color: log.ended_at ? "#9b9bab" : "#f59e0b" }} />
+                        <span className="text-[11px] font-medium" style={{ color: log.ended_at ? "#5a5a72" : "#f59e0b" }}>
+                          {formatDuration(log.started_at, log.ended_at)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 /* ─── Main Page ─── */
 const PlatformAdmin = () => {
   const navigate = useNavigate();
