@@ -3104,36 +3104,44 @@ function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
 
 // ─── GIFT CARDS ──────────────────────────────────────────────────────────────
 
-function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ customerName: "", value: "25" });
-
-  function issueCard() {
-    if (!form.customerName || !form.value) return;
-    const code = `SAAK-2026-${generateId().toUpperCase().slice(0, 4)}`;
-    const value = parseFloat(form.value);
-    setGiftCards((prev) => [...prev, { id: generateId(), code, balance: value, initialValue: value, status: "active", issuedAt: new Date().toISOString().slice(0, 10), customerName: form.customerName }]);
-    addLog?.("giftcard_issued", `Cadeaukaart uitgegeven: ${code} — ${euro(value)} voor ${form.customerName}`);
-    setShowAdd(false);
-    setForm({ customerName: "", value: "25" });
-  }
+function GiftCardsView({ giftCards, addLog }: any) {
+  useEffect(() => {
+    addLog?.("giftcards_view_opened", "Cadeaukaarten overzicht geopend");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Badge variant="secondary">{giftCards.length} gift cards</Badge>
-        <Button onClick={() => setShowAdd(true)}><Plus className="h-4 w-4 mr-2" />Issue card</Button>
+        <Badge variant="secondary">{giftCards.length} cadeaukaarten</Badge>
+        <Badge variant="outline" className="text-xs">Alleen uitgifte na verkoop</Badge>
       </div>
+
+      <Card className="rounded-2xl border-dashed bg-muted/30">
+        <CardContent className="p-4 flex items-start gap-3">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0">
+            <Gift className="h-4 w-4 text-white" />
+          </div>
+          <div className="text-sm">
+            <div className="font-semibold mb-1">Cadeaukaarten worden uitgegeven na een verkoop</div>
+            <div className="text-muted-foreground text-xs leading-relaxed">
+              Na het afronden van een transactie krijg je de optie om een cadeaukaart toe te voegen voor de klant.
+              Volledige naam, e-mail en telefoonnummer zijn verplicht (zoals bij PassKit-leden).
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-3">
         {giftCards.length === 0 ? (
           <Card className="rounded-2xl">
             <CardContent className="p-8 text-center">
               <Gift className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
               <div className="font-medium text-muted-foreground">Nog geen cadeaukaarten</div>
-              <div className="text-xs text-muted-foreground mt-1">Geef je eerste cadeaukaart uit om te beginnen.</div>
+              <div className="text-xs text-muted-foreground mt-1">Rond een verkoop af om een cadeaukaart uit te geven.</div>
             </CardContent>
           </Card>
-        ) : giftCards.map((gc) => (
+        ) : giftCards.map((gc: any) => (
           <Card key={gc.id} className="rounded-2xl">
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -3142,7 +3150,12 @@ function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
                 </div>
                 <div>
                   <div className="font-mono font-medium text-sm">{gc.code}</div>
-                  <div className="text-xs text-muted-foreground">{gc.customerName} · Issued {gc.issuedAt}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {gc.customerName}
+                    {gc.customerEmail && ` · ${gc.customerEmail}`}
+                    {gc.customerPhone && ` · ${gc.customerPhone}`}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Issued {gc.issuedAt} · Order #{gc.sourceOrderId || "—"}</div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -3156,26 +3169,163 @@ function GiftCardsView({ giftCards, setGiftCards, addLog }: any) {
           </Card>
         ))}
       </div>
-      <Modal open={showAdd} onClose={() => setShowAdd(false)}>
+    </div>
+  );
+}
+
+// ─── POST-SALE GIFT CARD MODAL ───────────────────────────────────────────────
+
+function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog }: any) {
+  const [step, setStep] = useState<"offer" | "form">("offer");
+  const [form, setForm] = useState({ forename: "", surname: "", email: "", phone: "", value: "25" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (open) {
+      setStep("offer");
+      setForm({ forename: "", surname: "", email: "", phone: "", value: "25" });
+      setErrors({});
+      addLog?.("giftcard_offer_shown", `Cadeaukaart aangeboden na order #${order?.id || "?"}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  function decline() {
+    addLog?.("giftcard_offer_declined", `Cadeaukaart afgewezen na order #${order?.id || "?"}`);
+    onClose();
+  }
+
+  function startForm() {
+    addLog?.("giftcard_form_started", `Cadeaukaart formulier geopend voor order #${order?.id || "?"}`);
+    setStep("form");
+  }
+
+  function selectValue(v: string) {
+    addLog?.("giftcard_value_selected", `Cadeaukaart waarde gekozen: ${euro(parseFloat(v))}`);
+    setForm((f) => ({ ...f, value: v }));
+  }
+
+  function validate(): boolean {
+    const e: Record<string, string> = {};
+    const forename = form.forename.trim();
+    const surname = form.surname.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+    const value = parseFloat(form.value);
+
+    if (!forename) e.forename = "Voornaam verplicht";
+    else if (forename.length > 100) e.forename = "Te lang";
+    if (!surname) e.surname = "Achternaam verplicht";
+    else if (surname.length > 100) e.surname = "Te lang";
+    if (!email) e.email = "E-mail verplicht";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Ongeldig e-mailadres";
+    else if (email.length > 255) e.email = "Te lang";
+    if (!phone) e.phone = "Telefoonnummer verplicht";
+    else if (!/^[+\d][\d\s\-()]{6,19}$/.test(phone)) e.phone = "Ongeldig nummer";
+    if (!value || value < 5 || value > 1000) e.value = "Waarde 5 – 1000";
+
+    setErrors(e);
+    if (Object.keys(e).length > 0) {
+      addLog?.("giftcard_validation_failed", `Validatiefouten: ${Object.keys(e).join(", ")}`);
+      return false;
+    }
+    return true;
+  }
+
+  function issue() {
+    if (!validate()) return;
+    const code = `SAAK-2026-${generateId().toUpperCase().slice(0, 4)}`;
+    const value = parseFloat(form.value);
+    const card = {
+      id: generateId(),
+      code,
+      balance: value,
+      initialValue: value,
+      status: "active",
+      issuedAt: new Date().toISOString().slice(0, 10),
+      customerName: `${form.forename.trim()} ${form.surname.trim()}`,
+      customerEmail: form.email.trim(),
+      customerPhone: form.phone.trim(),
+      sourceOrderId: order?.id || null,
+    };
+    onIssue(card);
+    addLog?.(
+      "giftcard_issued",
+      `Cadeaukaart ${code} (${euro(value)}) uitgegeven aan ${card.customerName} <${card.customerEmail}> ${card.customerPhone} na order #${order?.id || "?"}`
+    );
+    onClose();
+  }
+
+  return (
+    <Modal open={open} onClose={decline}>
+      {step === "offer" ? (
         <div className="p-6 space-y-4">
-          <h2 className="text-lg font-bold">Issue gift card</h2>
-          <div><Label>Recipient name</Label><Input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} className="mt-1" /></div>
-          <div>
-            <Label>Value</Label>
-            <div className="grid grid-cols-4 gap-2 mt-1">
-              {["10", "15", "25", "50"].map((v) => (
-                <Button key={v} variant={form.value === v ? "default" : "outline"} onClick={() => setForm({ ...form, value: v })}>{euro(parseFloat(v))}</Button>
-              ))}
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <Gift className="h-6 w-6 text-white" />
             </div>
-            <Input type="number" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="Custom amount" className="mt-2" />
+            <div>
+              <h2 className="text-lg font-bold">Cadeaukaart toevoegen?</h2>
+              <p className="text-xs text-muted-foreground">Order #{order?.id || "?"} — {euro(order?.total || 0)}</p>
+            </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button onClick={issueCard} disabled={!form.customerName || !form.value}>Issue card</Button>
+          <p className="text-sm text-muted-foreground">Wil de klant een cadeaukaart aanschaffen bij deze aankoop?</p>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={decline}>Nee, dank je</Button>
+            <Button onClick={startForm}>Ja, doorgaan</Button>
           </div>
         </div>
-      </Modal>
-    </div>
+      ) : (
+        <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          <h2 className="text-lg font-bold">Klantgegevens cadeaukaart</h2>
+          <p className="text-xs text-muted-foreground">Alle velden verplicht (zoals bij PassKit).</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Voornaam *</Label>
+              <Input value={form.forename} onChange={(e) => setForm({ ...form, forename: e.target.value })} className="mt-1" maxLength={100} />
+              {errors.forename && <div className="text-xs text-destructive mt-1">{errors.forename}</div>}
+            </div>
+            <div>
+              <Label>Achternaam *</Label>
+              <Input value={form.surname} onChange={(e) => setForm({ ...form, surname: e.target.value })} className="mt-1" maxLength={100} />
+              {errors.surname && <div className="text-xs text-destructive mt-1">{errors.surname}</div>}
+            </div>
+          </div>
+
+          <div>
+            <Label>E-mail *</Label>
+            <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" maxLength={255} />
+            {errors.email && <div className="text-xs text-destructive mt-1">{errors.email}</div>}
+          </div>
+
+          <div>
+            <Label>Telefoonnummer *</Label>
+            <Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1" placeholder="+316..." />
+            {errors.phone && <div className="text-xs text-destructive mt-1">{errors.phone}</div>}
+          </div>
+
+          <div>
+            <Label>Waarde *</Label>
+            <div className="grid grid-cols-4 gap-2 mt-1">
+              {["10", "15", "25", "50"].map((v) => (
+                <Button key={v} variant={form.value === v ? "default" : "outline"} onClick={() => selectValue(v)}>{euro(parseFloat(v))}</Button>
+              ))}
+            </div>
+            <Input type="number" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="Eigen bedrag" className="mt-2" min={5} max={1000} />
+            {errors.value && <div className="text-xs text-destructive mt-1">{errors.value}</div>}
+          </div>
+
+          <div className="flex justify-between gap-2 pt-2">
+            <Button variant="ghost" onClick={() => { addLog?.("giftcard_form_back", "Terug naar aanbieding"); setStep("offer"); }}>Terug</Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={decline}>Annuleer</Button>
+              <Button onClick={issue}>Cadeaukaart uitgeven</Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }
 
