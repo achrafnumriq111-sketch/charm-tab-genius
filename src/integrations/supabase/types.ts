@@ -1552,7 +1552,7 @@ export type Database = {
       }
     }
     Enums: {
-      employee_role: "owner" | "manager" | "cashier" | "staff"
+      employee_role: "owner" | "manager" | "cashier" | "staff" | "sales"
       inventory_category:
         | "ingredient"
         | "packaging"
@@ -1694,7 +1694,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      employee_role: ["owner", "manager", "cashier", "staff"],
+      employee_role: ["owner", "manager", "cashier", "staff", "sales"],
       inventory_category: [
         "ingredient",
         "packaging",
