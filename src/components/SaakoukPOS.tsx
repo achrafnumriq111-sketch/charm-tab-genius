@@ -4386,35 +4386,76 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
 
 // ─── EMPLOYEES VIEW ──────────────────────────────────────────────────────────
 
-function EmployeesView({ employees = [], setEmployees, currentRole }: { employees: any[]; setEmployees: any; currentRole: string }) {
+function EmployeesView({ employees = [], setEmployees, currentRole, locationId, onToast }: { employees: any[]; setEmployees: any; currentRole: string; locationId?: string; onToast?: (msg: string) => void }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", role: "sales", pin: "" });
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", role: "cashier", pin: "" });
 
   function openEdit(emp: any) {
     setEditingId(emp.id);
-    setForm({ name: emp.name, email: emp.email || "", role: emp.role, pin: "" });
+    setForm({ name: emp.name || emp.full_name, role: emp.role, pin: "" });
   }
 
   function openAdd() {
     setEditingId(null);
-    setForm({ name: "", email: "", role: "sales", pin: "" });
+    setForm({ name: "", role: "cashier", pin: "" });
     setShowAdd(true);
   }
 
-  function save() {
-    if (!form.name || !form.pin || form.pin.length !== 6) return;
-    if (editingId) {
-      setEmployees((prev: any[]) => prev.map((e) => e.id === editingId ? { ...e, ...form } : e));
-    } else {
-      setEmployees((prev: any[]) => [...prev, { id: generateId(), ...form }]);
+  async function save() {
+    if (!form.name || form.pin.length !== 6) return;
+    setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { onToast?.("Niet ingelogd"); setSaving(false); return; }
+
+      if (editingId) {
+        // Update PIN only
+        const res = await supabase.functions.invoke("employee-manage", {
+          body: { action: "update_pin", employee_id: editingId, new_pin: form.pin },
+        });
+        if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij bijwerken");
+        onToast?.(`PIN bijgewerkt voor ${form.name}`);
+      } else {
+        // Create new employee
+        const res = await supabase.functions.invoke("employee-manage", {
+          body: { action: "create", full_name: form.name, pin: form.pin, role: form.role, location_id: locationId },
+        });
+        if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij aanmaken");
+        // Refresh employees list from DB
+        const { data: freshEmployees } = await supabase
+          .from("employees")
+          .select("id, full_name, role, is_active, location_id")
+          .eq("is_active", true)
+          .eq("location_id", locationId);
+        if (freshEmployees) {
+          setEmployees(freshEmployees.map((e: any) => ({ id: e.id, name: e.full_name, role: e.role, isActive: e.is_active, locationId: e.location_id })));
+        }
+        onToast?.(`Medewerker ${form.name} aangemaakt`);
+      }
+    } catch (err: any) {
+      onToast?.(err.message || "Er ging iets mis");
+    } finally {
+      setSaving(false);
+      setShowAdd(false);
+      setEditingId(null);
     }
-    setShowAdd(false);
-    setEditingId(null);
   }
 
-  function remove(id: string) {
-    setEmployees((prev: any[]) => prev.filter((e) => e.id !== id));
+  async function remove(id: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await supabase.functions.invoke("employee-manage", {
+        body: { action: "delete", employee_id: id },
+      });
+      if (res.error || res.data?.error) throw new Error(res.data?.error || "Fout bij verwijderen");
+      setEmployees((prev: any[]) => prev.filter((e) => e.id !== id));
+      onToast?.("Medewerker verwijderd");
+    } catch (err: any) {
+      onToast?.(err.message || "Er ging iets mis");
+    }
   }
 
   const roleColors: Record<string, string> = {
@@ -4471,11 +4512,10 @@ function EmployeesView({ employees = [], setEmployees, currentRole }: { employee
         <div className="p-6 space-y-4">
           <h3 className="text-lg font-bold">{editingId ? "Medewerker bewerken" : "Nieuwe medewerker"}</h3>
           <div className="space-y-3">
-            <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
-            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
+            <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" disabled={!!editingId} /></div>
             <div>
               <Label>Rol</Label>
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner}>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner || !!editingId}>
                 <option value="owner">Owner</option>
                 <option value="manager">Manager</option>
                 <option value="cashier">Cashier</option>
@@ -4483,11 +4523,11 @@ function EmployeesView({ employees = [], setEmployees, currentRole }: { employee
               </select>
               {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
             </div>
-            <div><Label>PIN (6 cijfers)</Label><Input type="password" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="••••••" className="mt-1 font-mono" /></div>
+            <div><Label>{editingId ? "Nieuwe PIN (6 cijfers)" : "PIN (6 cijfers)"}</Label><Input type="password" maxLength={6} value={form.pin} onChange={(e) => setForm({ ...form, pin: e.target.value.replace(/\D/g, "").slice(0, 6) })} placeholder="••••••" className="mt-1 font-mono" /></div>
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => { setShowAdd(false); setEditingId(null); }}>Annuleren</Button>
-            <Button onClick={save} disabled={!form.name || form.pin.length !== 6}>Opslaan</Button>
+            <Button onClick={save} disabled={!form.name || form.pin.length !== 6 || saving}>{saving ? "Bezig..." : "Opslaan"}</Button>
           </div>
         </div>
       </Modal>
@@ -6009,7 +6049,7 @@ export default function SaakoukPOS() {
             {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
             {active === "cashaudit" && <CashAuditView />}
             {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
-            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} />}
+            {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
           </div>
         </div>
