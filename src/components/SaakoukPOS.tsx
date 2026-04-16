@@ -213,9 +213,12 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void }) {
+function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange, isPlatformAdmin, allTenants, selectedTenantId, onSelectTenant, tenantUnlocked, onUnlockTenant, onClearTenant }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void; isPlatformAdmin?: boolean; allTenants?: any[]; selectedTenantId?: string | null; onSelectTenant?: (id: string) => void; tenantUnlocked?: boolean; onUnlockTenant?: (pin: string) => Promise<boolean>; onClearTenant?: () => void }) {
   const isAdmin = role === "owner" || role === "manager";
   const isOwner = role === "owner";
+  const [tenantPinInput, setTenantPinInput] = React.useState("");
+  const [tenantPinError, setTenantPinError] = React.useState(false);
+  const [pendingTenantId, setPendingTenantId] = React.useState<string | null>(null);
   const allSections = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
     { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true },
