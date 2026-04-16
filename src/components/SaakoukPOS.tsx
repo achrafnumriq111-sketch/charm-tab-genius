@@ -3175,16 +3175,18 @@ function GiftCardsView({ giftCards, addLog }: any) {
 
 // ─── POST-SALE GIFT CARD MODAL ───────────────────────────────────────────────
 
-function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog }: any) {
+function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog, passkitConfig }: any) {
   const [step, setStep] = useState<"offer" | "form">("offer");
-  const [form, setForm] = useState({ forename: "", surname: "", email: "", phone: "", value: "25" });
+  const [form, setForm] = useState({ forename: "", surname: "", email: "", phone: "", value: "25", enrolPasskit: true });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setStep("offer");
-      setForm({ forename: "", surname: "", email: "", phone: "", value: "25" });
+      setForm({ forename: "", surname: "", email: "", phone: "", value: "25", enrolPasskit: true });
       setErrors({});
+      setSubmitting(false);
       addLog?.("giftcard_offer_shown", `Cadeaukaart aangeboden na order #${order?.id || "?"}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3203,6 +3205,11 @@ function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog }: any) {
   function selectValue(v: string) {
     addLog?.("giftcard_value_selected", `Cadeaukaart waarde gekozen: ${euro(parseFloat(v))}`);
     setForm((f) => ({ ...f, value: v }));
+  }
+
+  function togglePasskit(v: boolean) {
+    addLog?.("giftcard_passkit_toggle", `PassKit-inschrijving ${v ? "aangevinkt" : "uitgevinkt"}`);
+    setForm((f) => ({ ...f, enrolPasskit: v }));
   }
 
   function validate(): boolean {
@@ -3232,10 +3239,38 @@ function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog }: any) {
     return true;
   }
 
-  function issue() {
+  async function issue() {
     if (!validate()) return;
+    setSubmitting(true);
     const code = `SAAK-2026-${generateId().toUpperCase().slice(0, 4)}`;
     const value = parseFloat(form.value);
+    const customerName = `${form.forename.trim()} ${form.surname.trim()}`;
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+
+    let passkitMemberId: string | null = null;
+    let passkitEnrolled = false;
+
+    // Optional PassKit enrolment using the same data
+    if (form.enrolPasskit && passkitConfig?.programId) {
+      addLog?.("giftcard_passkit_enrol_attempt", `PassKit inschrijving gestart voor ${email}`);
+      try {
+        const member = await passkitEnrolMember({
+          programId: passkitConfig.programId,
+          tierId: passkitConfig.tierId,
+          externalId: email,
+          name: customerName,
+          email,
+          phone,
+        });
+        passkitMemberId = member?.id || null;
+        passkitEnrolled = true;
+        addLog?.("giftcard_passkit_enrolled", `PassKit-lid aangemaakt: ${customerName} <${email}>${passkitMemberId ? ` (id ${passkitMemberId})` : ""}`);
+      } catch (err: any) {
+        addLog?.("giftcard_passkit_enrol_failed", `PassKit inschrijving mislukt: ${err?.message || err}`);
+      }
+    }
+
     const card = {
       id: generateId(),
       code,
@@ -3243,17 +3278,26 @@ function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog }: any) {
       initialValue: value,
       status: "active",
       issuedAt: new Date().toISOString().slice(0, 10),
-      customerName: `${form.forename.trim()} ${form.surname.trim()}`,
-      customerEmail: form.email.trim(),
-      customerPhone: form.phone.trim(),
+      customerName,
+      customerEmail: email,
+      customerPhone: phone,
       sourceOrderId: order?.id || null,
+      passkitMemberId,
+      passkitEnrolled,
     };
-    onIssue(card);
-    addLog?.(
-      "giftcard_issued",
-      `Cadeaukaart ${code} (${euro(value)}) uitgegeven aan ${card.customerName} <${card.customerEmail}> ${card.customerPhone} na order #${order?.id || "?"}`
-    );
-    onClose();
+
+    try {
+      await onIssue(card);
+      addLog?.(
+        "giftcard_issued",
+        `Cadeaukaart ${code} (${euro(value)}) uitgegeven aan ${customerName} <${email}> ${phone} na order #${order?.id || "?"}${passkitEnrolled ? " · PassKit gekoppeld" : ""}`
+      );
+      onClose();
+    } catch (err: any) {
+      addLog?.("giftcard_issue_failed", `Opslaan mislukt: ${err?.message || err}`);
+      setErrors({ value: `Opslaan mislukt: ${err?.message || "onbekende fout"}` });
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -3316,11 +3360,27 @@ function PostSaleGiftCardModal({ open, onClose, order, onIssue, addLog }: any) {
             {errors.value && <div className="text-xs text-destructive mt-1">{errors.value}</div>}
           </div>
 
+          {passkitConfig?.programId && (
+            <div className="rounded-xl border border-purple-200 bg-purple-50 p-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="enrol-passkit"
+                checked={form.enrolPasskit}
+                onChange={(e) => togglePasskit(e.target.checked)}
+                className="mt-1 h-4 w-4"
+              />
+              <label htmlFor="enrol-passkit" className="text-xs leading-relaxed cursor-pointer flex-1">
+                <span className="font-semibold text-purple-900 block">Ook inschrijven als PassKit-lid</span>
+                <span className="text-purple-700">Dezelfde naam, e-mail en telefoonnummer worden gebruikt om automatisch een loyalty-account aan te maken.</span>
+              </label>
+            </div>
+          )}
+
           <div className="flex justify-between gap-2 pt-2">
-            <Button variant="ghost" onClick={() => { addLog?.("giftcard_form_back", "Terug naar aanbieding"); setStep("offer"); }}>Terug</Button>
+            <Button variant="ghost" onClick={() => { addLog?.("giftcard_form_back", "Terug naar aanbieding"); setStep("offer"); }} disabled={submitting}>Terug</Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={decline}>Annuleer</Button>
-              <Button onClick={issue}>Cadeaukaart uitgeven</Button>
+              <Button variant="outline" onClick={decline} disabled={submitting}>Annuleer</Button>
+              <Button onClick={issue} disabled={submitting}>{submitting ? "Bezig…" : "Cadeaukaart uitgeven"}</Button>
             </div>
           </div>
         </div>
