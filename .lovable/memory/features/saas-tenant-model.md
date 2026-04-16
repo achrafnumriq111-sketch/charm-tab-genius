@@ -1,6 +1,6 @@
 ---
 name: SaaS Tenant Model
-description: Multi-tenant architecture with tenants table, self-service onboarding, subdomain routing, and tenant-scoped RLS
+description: Multi-tenant architecture with tenants table, self-service onboarding, subdomain routing, tenant-scoped RLS, feature flags, and impersonation
 type: feature
 ---
 ## Tenant Model
@@ -29,10 +29,31 @@ type: feature
 - `/admin` page: manage all tenants, activate/deactivate
 - Separate from café owner role
 
+## Feature Flags (NEW)
+- `tenant_feature_flags` table: tenant_id + feature_key + is_enabled
+- 10 modules: pos, qr_ordering, upsell, loyalty, ai_forecast, inventory, prep_station, reservations, cash_closing, analytics
+- Platform admins toggle per tenant in /admin panel
+- `useFeatureFlags(tenantId)` hook for client-side conditional rendering
+- Basis for pricing tiers (Free = limited features, Pro = all features)
+
+## Impersonation (NEW)
+- `admin-impersonate` edge function: JWT-verified platform admin only
+- "Bekijk als tenant" button in /admin panel
+- Redirects to POS with `?tenant=slug` and impersonation context in sessionStorage
+- `admin_impersonation_log` table tracks all impersonation sessions (start/end, IP, UA)
+- NOT logged in tenant's audit logs — platform-only visibility
+- Orange banner shows during impersonation with stop button
+
+## Tenant Selector (Platform Admin Sidebar)
+- Only visible to platform admins in POS sidebar
+- PIN-gate: must re-verify own 6-digit PIN before switching tenant
+- Session-only (not persistent across browser close)
+- Filters locations by selected tenant
+
 ## RLS (Stap E - Hardened)
 - All 22+ tables: dual isolation (tenant + location)
 - Owner: sees all locations within OWN tenant only (not cross-tenant)
 - Staff: sees own location only
 - Platform admins: separate policies for cross-tenant access
-- Anon: read active tenants (subdomain), QR orders, upsell rules (unchanged)
+- Anon: read active tenants (subdomain), QR orders (insert only), upsell rules (unchanged)
 - pos-login edge function accepts optional `tenant_slug` for scoped login
