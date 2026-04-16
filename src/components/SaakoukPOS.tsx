@@ -6005,6 +6005,7 @@ export default function SaakoukPOS() {
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
   const [showLowStockPanel, setShowLowStockPanel] = useState(false);
   const [showCashClosing, setShowCashClosing] = useState(false);
+  const [pendingGiftCardOrder, setPendingGiftCardOrder] = useState<any | null>(null);
 
   const addLog = useCallback((action: string, details: string) => {
     if (!loggedInEmployee) return;
@@ -6265,6 +6266,9 @@ export default function SaakoukPOS() {
     }
     setToast(`Order #${order.id} completed — ${euro(order.total)}`);
     addLog("order_completed", `Bestelling #${order.id} afgerond — ${euro(order.total)} (${order.method})`);
+
+    // Offer gift card after sale (post-sale only, like PassKit enrolment)
+    setPendingGiftCardOrder(stamped);
   }
 
   function updatePrepStatus(ticketId: string, status: PrepTicket["status"]) {
@@ -6515,7 +6519,7 @@ export default function SaakoukPOS() {
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
-            {active === "giftcards" && <GiftCardsView giftCards={giftCards} setGiftCards={setGiftCards} addLog={addLog} />}
+            {active === "giftcards" && <GiftCardsView giftCards={giftCards} addLog={addLog} />}
             {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
             {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
@@ -6535,6 +6539,16 @@ export default function SaakoukPOS() {
         orders={orders}
         onComplete={() => setToast("Kassa succesvol afgesloten!")}
         addLog={addLog}
+      />
+      <PostSaleGiftCardModal
+        open={!!pendingGiftCardOrder}
+        onClose={() => setPendingGiftCardOrder(null)}
+        order={pendingGiftCardOrder}
+        addLog={addLog}
+        onIssue={(card: any) => {
+          setGiftCards((prev) => [...prev, card]);
+          setToast(`Cadeaukaart ${card.code} uitgegeven (${euro(card.balance)})`);
+        }}
       />
     </div>
   );
