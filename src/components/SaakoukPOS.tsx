@@ -1262,19 +1262,9 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                 })
               )}
             </div>
-            {/* Discounts */}
+            {/* Discounts — collapsible */}
             {cart.length > 0 && (
-              <div className="rounded-xl border p-3 mb-3">
-                <div className="font-medium text-xs flex items-center gap-1.5 mb-2"><Percent className="h-3.5 w-3.5" /> Discount</div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {discounts.map((disc) => (
-                    <Button key={disc.id} variant={selectedDiscount?.id === disc.id ? "default" : "outline"} size="sm" className="text-xs h-10 min-h-[44px] justify-start"
-                      onClick={() => updateTicket({ selectedDiscount: selectedDiscount?.id === disc.id ? null : disc })}>
-                      {disc.name} ({disc.value}%)
-                    </Button>
-                  ))}
-                </div>
-              </div>
+              <DiscountPanel discounts={discounts} selectedDiscount={selectedDiscount} updateTicket={updateTicket} />
             )}
           </div>
           {/* Totals + Pay buttons */}
@@ -2611,7 +2601,8 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId }: any) {
+  const [activeTab, setActiveTab] = useState<"products" | "modifiers">("products");
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
