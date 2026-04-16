@@ -59,6 +59,14 @@ import {
 
 const SECTIONS = ["Signature Drinks", "Specials", "Cold Drinks", "Hot Drinks", "Sweets"];
 
+const SECTION_COLORS: Record<string, string> = {
+  "Signature Drinks": "#a3e635",
+  "Specials": "#60a5fa",
+  "Cold Drinks": "#34d399",
+  "Hot Drinks": "#d4a574",
+  "Sweets": "#fbbf24",
+};
+
 // ─── PRODUCT & MODIFIER CONFIG ───────────────────────────────────────────────
 // All products and modifier groups are now managed via the database.
 // No hardcoded data — start fresh from the Modifiers tab, then add products.
@@ -2589,7 +2597,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
       addLog?.("product_edit_open", `Product bewerken geopend: ${product.name}`);
     } else {
       setEditing("new");
-      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: "#94a3b8", tags: "", modifierGroupIds: [], vatRate: "" });
+      setForm({ name: "", section: "Hot Drinks", price: "", costPrice: "", color: SECTION_COLORS["Hot Drinks"] || "#94a3b8", tags: "", modifierGroupIds: [], vatRate: "" });
       addLog?.("product_add_open", "Nieuw product formulier geopend");
     }
   }
@@ -2709,19 +2717,12 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
                   <div className="col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
                   <div>
                     <Label>Section</Label>
-                    <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+                    <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value, color: SECTION_COLORS[e.target.value] || "#94a3b8" })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
                       {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                   <div><Label>Verkoopprijs (€)</Label><Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="mt-1" /></div>
                   <div><Label>Inkoopprijs (€)</Label><Input type="number" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="Kostprijs" className="mt-1" /></div>
-                  <div>
-                    <Label>Color</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-9 w-12 rounded border cursor-pointer" />
-                      <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="flex-1" />
-                    </div>
-                  </div>
                   <div><Label>Tags (comma-separated)</Label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="Hot, Coffee, Signature" className="mt-1" /></div>
                   <div><Label>BTW % (leeg = categorie)</Label><Input type="number" step="0.5" min="0" max="100" value={form.vatRate} onChange={(e) => setForm({ ...form, vatRate: e.target.value })} placeholder="bijv. 9" className="mt-1" /></div>
                 </div>
