@@ -6226,12 +6226,28 @@ export default function SaakoukPOS() {
     handleSelectTable(table.id);
   }
 
-  function handleRedeemGiftCard(giftCardId: string, amount: number) {
+  async function handleRedeemGiftCard(giftCardId: string, amount: number) {
+    let newBalance = 0;
+    let newStatus = "active";
     setGiftCards((prev) => prev.map((gc) => {
       if (gc.id !== giftCardId) return gc;
-      const newBalance = Math.max(0, gc.balance - amount);
-      return { ...gc, balance: newBalance, status: newBalance === 0 ? "redeemed" : "active" };
+      newBalance = Math.max(0, gc.balance - amount);
+      newStatus = newBalance === 0 ? "redeemed" : "active";
+      return { ...gc, balance: newBalance, status: newStatus };
     }));
+    addLog?.("giftcard_redeemed", `Cadeaukaart ingewisseld: ${euro(amount)} · nieuw saldo ${euro(newBalance)}`);
+    try {
+      const { error } = await supabase
+        .from("gift_cards")
+        .update({ balance: newBalance, status: newStatus } as any)
+        .eq("id", giftCardId);
+      if (error) {
+        console.error("Failed to persist gift card redemption:", error);
+        addLog?.("giftcard_redeem_persist_failed", `DB-update mislukt: ${error.message}`);
+      }
+    } catch (err: any) {
+      console.error("Gift card redemption error:", err);
+    }
   }
 
   async function handleOrderComplete(order: any) {
@@ -6605,8 +6621,34 @@ export default function SaakoukPOS() {
         onClose={() => setPendingGiftCardOrder(null)}
         order={pendingGiftCardOrder}
         addLog={addLog}
-        onIssue={(card: any) => {
-          setGiftCards((prev) => [...prev, card]);
+        passkitConfig={passkitConfig}
+        onIssue={async (card: any) => {
+          // Persist to database first — only update UI on success
+          const { data, error } = await supabase
+            .from("gift_cards")
+            .insert({
+              code: card.code,
+              customer_name: card.customerName,
+              customer_email: card.customerEmail,
+              customer_phone: card.customerPhone,
+              initial_value: card.initialValue,
+              balance: card.balance,
+              status: card.status,
+              source_order_id: card.sourceOrderId,
+              issued_by_employee_id: loggedInEmployee?.id || null,
+              issued_by_employee_name: loggedInEmployee?.name || null,
+              passkit_member_id: card.passkitMemberId || null,
+              passkit_enrolled: !!card.passkitEnrolled,
+              location_id: locationId,
+            } as any)
+            .select()
+            .single();
+          if (error) {
+            addLog?.("giftcard_persist_failed", `DB-insert mislukt: ${error.message}`);
+            throw error;
+          }
+          // Use DB-returned id so future redemptions match
+          setGiftCards((prev) => [...prev, { ...card, id: (data as any)?.id || card.id }]);
           setToast(`Cadeaukaart ${card.code} uitgegeven (${euro(card.balance)})`);
         }}
       />
