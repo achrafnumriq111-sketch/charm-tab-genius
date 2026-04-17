@@ -35,5 +35,6 @@
 - [Activity Logs](mem://features/activity-logs) — Audit logs and multi-criteria order history filtering
 - [Prep Station KDS](mem://features/prep-station-kds) — Kitchen display routing, live timers, and statuses
 - [Gift Cards](mem://features/gift-cards) — Post-sale issuance, PassKit coupling, DB persistence with RLS
+- [Customers Registry](mem://features/customers) — Unified customers table, auto-upsert from POS/gift card/QR, RLS, backfilled
 - [Modifiers System](mem://features/modifiers-system) — DB-driven modifier groups, options, product assignment, admin CRUD
 - [Upsell Engine](mem://features/upsell-engine) — Smart rule-based upsell prompts with time windows and conversion tracking
