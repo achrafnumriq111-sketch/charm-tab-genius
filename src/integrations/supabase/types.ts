@@ -307,6 +307,68 @@ export type Database = {
           },
         ]
       }
+      customers: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_seen_at: string
+          full_name: string
+          id: string
+          last_seen_at: string
+          location_id: string | null
+          marketing_opt_in: boolean
+          notes: string | null
+          passkit_member_id: string | null
+          phone: string | null
+          source: string
+          total_spent: number
+          updated_at: string
+          visit_count: number
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_seen_at?: string
+          full_name: string
+          id?: string
+          last_seen_at?: string
+          location_id?: string | null
+          marketing_opt_in?: boolean
+          notes?: string | null
+          passkit_member_id?: string | null
+          phone?: string | null
+          source?: string
+          total_spent?: number
+          updated_at?: string
+          visit_count?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_seen_at?: string
+          full_name?: string
+          id?: string
+          last_seen_at?: string
+          location_id?: string | null
+          marketing_opt_in?: boolean
+          notes?: string | null
+          passkit_member_id?: string | null
+          phone?: string | null
+          source?: string
+          total_spent?: number
+          updated_at?: string
+          visit_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           created_at: string
