@@ -6727,7 +6727,7 @@ export default function SaakoukPOS() {
             {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} locationId={locationId} />}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
-            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
+            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} onToast={setToast} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} addLog={addLog} />}
             {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
