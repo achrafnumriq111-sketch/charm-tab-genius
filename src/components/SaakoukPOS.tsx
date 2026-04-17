@@ -6319,9 +6319,33 @@ export default function SaakoukPOS() {
         source: 'pos',
         location_id: locationId,
       } as any);
-      if (error) console.error("Failed to save transaction:", error);
-    } catch (err) {
+      if (error) {
+        console.error("Failed to save transaction:", error);
+        addLog?.("transaction_persist_failed", `DB-insert mislukt: ${error.message}`);
+        setToast(`⚠ Transactie niet opgeslagen: ${error.message}`);
+      }
+    } catch (err: any) {
       console.error("Failed to save transaction:", err);
+      setToast(`⚠ Transactie niet opgeslagen: ${err?.message || err}`);
+    }
+
+    // Upsert customer record if we captured contact details on the order
+    if (stamped.customerName && (stamped.customerEmail || stamped.customerPhone)) {
+      const { upsertCustomer } = await import("@/lib/customers");
+      const res = await upsertCustomer({
+        locationId,
+        fullName: stamped.customerName,
+        email: stamped.customerEmail,
+        phone: stamped.customerPhone,
+        source: "pos",
+        spentDelta: Number(stamped.total || 0),
+        incrementVisit: true,
+      });
+      if (res.error) {
+        addLog?.("customer_upsert_failed", `Klant niet opgeslagen: ${res.error}`);
+      } else {
+        addLog?.("customer_upserted", `Klant ${stamped.customerName} opgeslagen/bijgewerkt`);
+      }
     }
 
     // Auto-deduct stock based on product recipes
@@ -6685,10 +6709,30 @@ export default function SaakoukPOS() {
             .single();
           if (error) {
             addLog?.("giftcard_persist_failed", `DB-insert mislukt: ${error.message}`);
+            setToast(`⚠ Cadeaukaart niet opgeslagen: ${error.message}`);
             throw error;
           }
           // Use DB-returned id so future redemptions match
           setGiftCards((prev) => [...prev, { ...card, id: (data as any)?.id || card.id }]);
+
+          // Persist customer to unified customers table
+          const { upsertCustomer } = await import("@/lib/customers");
+          const cust = await upsertCustomer({
+            locationId,
+            fullName: card.customerName,
+            email: card.customerEmail,
+            phone: card.customerPhone,
+            source: "gift_card",
+            passkitMemberId: card.passkitMemberId || null,
+            spentDelta: Number(card.initialValue || 0),
+            incrementVisit: true,
+          });
+          if (cust.error) {
+            addLog?.("customer_upsert_failed", `Klant niet opgeslagen: ${cust.error}`);
+          } else {
+            addLog?.("customer_upserted", `Klant ${card.customerName} opgeslagen/bijgewerkt`);
+          }
+
           setToast(`Cadeaukaart ${card.code} uitgegeven (${euro(card.balance)})`);
         }}
       />
