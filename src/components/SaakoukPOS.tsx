@@ -2970,30 +2970,59 @@ function QrView({ features, tables }: any) {
 
 // ─── CUSTOMERS ───────────────────────────────────────────────────────────────
 
-function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
+function CustomersView({ customers, setCustomers, addLog, currentRole, locationId, onToast }: any) {
   const isOwner = currentRole === "owner";
 
-  function deleteCustomer(id: string) {
+  async function deleteCustomer(id: string) {
     const c = customers.find((x: any) => x.id === id);
+    // Optimistic remove
     setCustomers((prev: any[]) => prev.filter((x) => x.id !== id));
-    addLog?.("customer_deleted", `Klant verwijderd: ${c?.name || id}`);
+    addLog?.("customer_delete_attempt", `Verwijderen klant: ${c?.name || id}`);
+    // Note: customers table has no DELETE policy (audit trail) — keep UI-only removal
+    // but log the attempt clearly. If a hard-delete is desired, add an RLS DELETE policy.
+    addLog?.("customer_deleted_local", `Klant lokaal verwijderd: ${c?.name || id} (DB blijft bewaard voor audit)`);
   }
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", provider: "none" });
   const [selected, setSelected] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const filtered = customers.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     (c.email || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  function addCustomer() {
+  async function addCustomer() {
     if (!form.name || !form.email || !form.phone) return;
-    setCustomers((prev) => [...prev, { ...form, id: generateId(), loyaltyId: form.provider !== "none" ? `LYL-${generateId().toUpperCase().slice(0, 3)}` : "", points: 0, visits: 0, totalSpent: 0, lastVisit: "-" }]);
-    addLog?.("customer_created", `Klant aangemaakt: ${form.name} (${form.email})`);
+    if (!locationId) {
+      onToast?.("⚠ Geen locatie actief — klant niet opgeslagen");
+      addLog?.("customer_create_failed", `Geen locationId — ${form.name}`);
+      return;
+    }
+    setSaving(true);
+    addLog?.("customer_create_attempt", `Klant invoeren: ${form.name} (${form.email})`);
+    const { upsertCustomer } = await import("@/lib/customers");
+    const res = await upsertCustomer({
+      locationId,
+      fullName: form.name,
+      email: form.email,
+      phone: form.phone,
+      source: "manual",
+      incrementVisit: false,
+      spentDelta: 0,
+    });
+    setSaving(false);
+    if (res.error) {
+      onToast?.(`⚠ Klant niet opgeslagen: ${res.error}`);
+      addLog?.("customer_create_failed", `DB-fout: ${res.error}`);
+      return;
+    }
+    addLog?.("customer_created", `Klant opgeslagen in DB: ${form.name} (${form.email})`);
+    onToast?.(`Klant ${form.name} opgeslagen`);
     setShowAdd(false);
     setForm({ name: "", email: "", phone: "", provider: "none" });
+    // Realtime subscription will refresh the list automatically
   }
 
   return (
@@ -3064,8 +3093,8 @@ function CustomersView({ customers, setCustomers, addLog, currentRole }: any) {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button onClick={addCustomer} disabled={!form.name || !form.email || !form.phone}>Save</Button>
+            <Button variant="outline" onClick={() => setShowAdd(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={addCustomer} disabled={!form.name || !form.email || !form.phone || saving}>{saving ? "Opslaan…" : "Save"}</Button>
           </div>
         </div>
       </Modal>
@@ -6698,7 +6727,7 @@ export default function SaakoukPOS() {
             {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} locationId={locationId} />}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
-            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} />}
+            {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} onToast={setToast} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} addLog={addLog} />}
             {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
             {active === "accounting" && <AccountingView orders={orders} />}
