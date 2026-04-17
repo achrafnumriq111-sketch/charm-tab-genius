@@ -6132,6 +6132,46 @@ export default function SaakoukPOS() {
     return () => { supabase.removeChannel(channel); };
   }, [locationId]);
 
+  // Load customers from database (unified registry) + realtime updates
+  useEffect(() => {
+    if (!locationId) return;
+    async function loadCustomers() {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("location_id", locationId)
+        .order("last_seen_at", { ascending: false });
+      if (error) {
+        console.error("Failed to load customers:", error);
+        return;
+      }
+      if (data) {
+        setCustomers(data.map((c: any) => ({
+          id: c.id,
+          name: c.full_name,
+          email: c.email || "",
+          phone: c.phone || "",
+          provider: c.passkit_member_id ? "passkit" : "none",
+          loyaltyId: c.passkit_member_id || "",
+          points: 0,
+          visits: c.visit_count || 0,
+          totalSpent: Number(c.total_spent || 0),
+          lastVisit: c.last_seen_at ? new Date(c.last_seen_at).toLocaleDateString("nl-NL") : "-",
+          source: c.source,
+          marketingOptIn: c.marketing_opt_in,
+        })));
+      }
+    }
+    loadCustomers();
+    const channel = supabase
+      .channel("customers-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `location_id=eq.${locationId}` }, () => {
+        loadCustomers();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [locationId]);
+
   // Poll low-stock items every 30s (location-scoped)
   useEffect(() => {
     if (!locationId) return;
@@ -6319,9 +6359,33 @@ export default function SaakoukPOS() {
         source: 'pos',
         location_id: locationId,
       } as any);
-      if (error) console.error("Failed to save transaction:", error);
-    } catch (err) {
+      if (error) {
+        console.error("Failed to save transaction:", error);
+        addLog?.("transaction_persist_failed", `DB-insert mislukt: ${error.message}`);
+        setToast(`⚠ Transactie niet opgeslagen: ${error.message}`);
+      }
+    } catch (err: any) {
       console.error("Failed to save transaction:", err);
+      setToast(`⚠ Transactie niet opgeslagen: ${err?.message || err}`);
+    }
+
+    // Upsert customer record if we captured contact details on the order
+    if (stamped.customerName && (stamped.customerEmail || stamped.customerPhone)) {
+      const { upsertCustomer } = await import("@/lib/customers");
+      const res = await upsertCustomer({
+        locationId,
+        fullName: stamped.customerName,
+        email: stamped.customerEmail,
+        phone: stamped.customerPhone,
+        source: "pos",
+        spentDelta: Number(stamped.total || 0),
+        incrementVisit: true,
+      });
+      if (res.error) {
+        addLog?.("customer_upsert_failed", `Klant niet opgeslagen: ${res.error}`);
+      } else {
+        addLog?.("customer_upserted", `Klant ${stamped.customerName} opgeslagen/bijgewerkt`);
+      }
     }
 
     // Auto-deduct stock based on product recipes
@@ -6685,10 +6749,30 @@ export default function SaakoukPOS() {
             .single();
           if (error) {
             addLog?.("giftcard_persist_failed", `DB-insert mislukt: ${error.message}`);
+            setToast(`⚠ Cadeaukaart niet opgeslagen: ${error.message}`);
             throw error;
           }
           // Use DB-returned id so future redemptions match
           setGiftCards((prev) => [...prev, { ...card, id: (data as any)?.id || card.id }]);
+
+          // Persist customer to unified customers table
+          const { upsertCustomer } = await import("@/lib/customers");
+          const cust = await upsertCustomer({
+            locationId,
+            fullName: card.customerName,
+            email: card.customerEmail,
+            phone: card.customerPhone,
+            source: "gift_card",
+            passkitMemberId: card.passkitMemberId || null,
+            spentDelta: Number(card.initialValue || 0),
+            incrementVisit: true,
+          });
+          if (cust.error) {
+            addLog?.("customer_upsert_failed", `Klant niet opgeslagen: ${cust.error}`);
+          } else {
+            addLog?.("customer_upserted", `Klant ${card.customerName} opgeslagen/bijgewerkt`);
+          }
+
           setToast(`Cadeaukaart ${card.code} uitgegeven (${euro(card.balance)})`);
         }}
       />
