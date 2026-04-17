@@ -2994,20 +2994,38 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
   );
 
   async function addCustomer() {
-    if (!form.name || !form.email || !form.phone) return;
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const phone = form.phone.trim();
+    if (!name) {
+      onToast?.("⚠ Naam is verplicht");
+      addLog?.("customer_create_validation_failed", "Naam ontbreekt");
+      return;
+    }
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!email || !emailValid) {
+      onToast?.("⚠ Geldig e-mailadres is verplicht");
+      addLog?.("customer_create_validation_failed", `Ongeldig e-mailadres: ${email || "(leeg)"}`);
+      return;
+    }
+    if (!phone) {
+      onToast?.("⚠ Telefoonnummer is verplicht");
+      addLog?.("customer_create_validation_failed", "Telefoon ontbreekt");
+      return;
+    }
     if (!locationId) {
       onToast?.("⚠ Geen locatie actief — klant niet opgeslagen");
-      addLog?.("customer_create_failed", `Geen locationId — ${form.name}`);
+      addLog?.("customer_create_failed", `Geen locationId — ${name}`);
       return;
     }
     setSaving(true);
-    addLog?.("customer_create_attempt", `Klant invoeren: ${form.name} (${form.email})`);
+    addLog?.("customer_create_attempt", `Klant invoeren: ${name} (${email})`);
     const { upsertCustomer } = await import("@/lib/customers");
     const res = await upsertCustomer({
       locationId,
-      fullName: form.name,
-      email: form.email,
-      phone: form.phone,
+      fullName: name,
+      email,
+      phone,
       source: "manual",
       incrementVisit: false,
       spentDelta: 0,
@@ -3018,8 +3036,8 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
       addLog?.("customer_create_failed", `DB-fout: ${res.error}`);
       return;
     }
-    addLog?.("customer_created", `Klant opgeslagen in DB: ${form.name} (${form.email})`);
-    onToast?.(`Klant ${form.name} opgeslagen`);
+    addLog?.("customer_created", `Klant opgeslagen in DB: ${name} (${email})`);
+    onToast?.(`Klant ${name} opgeslagen`);
     setShowAdd(false);
     setForm({ name: "", email: "", phone: "", provider: "none" });
     // Realtime subscription will refresh the list automatically
@@ -3079,9 +3097,9 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
         <div className="p-6 space-y-4">
           <h2 className="text-lg font-bold">New customer</h2>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
-            <div><Label>Email</Label><Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /></div>
-            <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1" /></div>
+            <div><Label>Name <span className="text-red-500">*</span></Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
+            <div><Label>Email <span className="text-red-500">*</span></Label><Input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="naam@voorbeeld.nl" className="mt-1" /></div>
+            <div><Label>Phone <span className="text-red-500">*</span></Label><Input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1" /></div>
             <div>
               <Label>Loyalty provider</Label>
               <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
