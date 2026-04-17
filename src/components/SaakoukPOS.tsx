@@ -3093,8 +3093,8 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
-            <Button onClick={addCustomer} disabled={!form.name || !form.email || !form.phone}>Save</Button>
+            <Button variant="outline" onClick={() => setShowAdd(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={addCustomer} disabled={!form.name || !form.email || !form.phone || saving}>{saving ? "Opslaan…" : "Save"}</Button>
           </div>
         </div>
       </Modal>
