@@ -6132,6 +6132,46 @@ export default function SaakoukPOS() {
     return () => { supabase.removeChannel(channel); };
   }, [locationId]);
 
+  // Load customers from database (unified registry) + realtime updates
+  useEffect(() => {
+    if (!locationId) return;
+    async function loadCustomers() {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("location_id", locationId)
+        .order("last_seen_at", { ascending: false });
+      if (error) {
+        console.error("Failed to load customers:", error);
+        return;
+      }
+      if (data) {
+        setCustomers(data.map((c: any) => ({
+          id: c.id,
+          name: c.full_name,
+          email: c.email || "",
+          phone: c.phone || "",
+          provider: c.passkit_member_id ? "passkit" : "none",
+          loyaltyId: c.passkit_member_id || "",
+          points: 0,
+          visits: c.visit_count || 0,
+          totalSpent: Number(c.total_spent || 0),
+          lastVisit: c.last_seen_at ? new Date(c.last_seen_at).toLocaleDateString("nl-NL") : "-",
+          source: c.source,
+          marketingOptIn: c.marketing_opt_in,
+        })));
+      }
+    }
+    loadCustomers();
+    const channel = supabase
+      .channel("customers-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "customers", filter: `location_id=eq.${locationId}` }, () => {
+        loadCustomers();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [locationId]);
+
   // Poll low-stock items every 30s (location-scoped)
   useEffect(() => {
     if (!locationId) return;
