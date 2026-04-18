@@ -2632,7 +2632,7 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId, upsellRules, onRefetchUpsell }: any) {
   const [activeTab, setActiveTab] = useState<"products" | "modifiers" | "upsell">("products");
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
