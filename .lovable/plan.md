@@ -1,38 +1,56 @@
 
 
-# Plan: Platform Admin UX Overhaul
+## Analyse van het huidige menu
 
-Three changes to `src/pages/PlatformAdmin.tsx`:
+Het zijbalk-menu heeft nu **24 items**. Een aantal zijn dubbel of horen logisch onder een ander module thuis. Hieronder de duidelijke duplicaten:
 
-## 1. Impersonation Log Overzicht
+### Duplicaten / overbodig
 
-Add a new tab/section at the top of the admin page showing all entries from `admin_impersonation_log`. Columns: admin, tenant, start time, end time, duration (calculated). Sorted by most recent. Uses the existing table which already has RLS for platform admins.
+| # | Knop | Probleem | Voorstel |
+|---|------|----------|----------|
+| 1 | **Waste** (top-level) | Bestaat al als tab `Verspilling` binnen **Voorraad** | Verwijderen uit zijbalk |
+| 2 | **Telling** (stockcount) | Hoort logisch bij voorraad­beheer, nu losse knop | Toevoegen als tab in **Voorraad**, knop verwijderen |
+| 3 | **Activity** vs **Logs** | Beide tonen audit-events. `Activity` = order­geschiedenis, `Logs` = klik­logs | Samenvoegen tot één **Logs** view met 2 tabs (Orders / Acties) |
+| 4 | **Sales** vs **Accounting** | Sales = transactie­lijst, Accounting = BTW/omzet over zelfde data | Samenvoegen tot **Verkoop** met tabs (Transacties / Boekhouding) |
+| 5 | **Kassa** (cashclose) vs **Audit** (cashaudit) | Kassasluiting + 4-eyes audit horen bij hetzelfde proces | Samenvoegen tot **Kassa** met tab "Audit" |
+| 6 | **Mods** (modifiers) | Hoort bij productbeheer | Verplaatsen naar tab in **Products** |
+| 7 | **Upsell** | Productregels — past bij Products | Verplaatsen naar tab in **Products** |
+| 8 | **AI Forecast** vs **Dashboard** | Owner ziet beide — forecast is een widget, geen module | Integreren in **Dashboard** (tab of sectie) |
 
-## 2. Direct "Inloggen als tenant" (without PIN)
+### Resultaat: 24 → 14 menu-items
 
-The "Bekijk als tenant" button already exists and calls the `admin-impersonate` edge function. Currently it redirects to `/?tenant=slug` — but the POS still requires PIN login via AuthContext. The fix:
-- When impersonation data is stored in sessionStorage (`saakouk_impersonation`), the AuthContext/POS should detect this and bypass PIN login, using the employee data returned by the edge function directly.
-- Update `src/contexts/AuthContext.tsx` to check for impersonation session on mount and auto-set the employee state.
+```text
+Owner / Admin                Staff
+─────────────                ─────
+Dashboard (incl. AI)         POS
+Locaties                     Prep
+POS                          Kassa
+Prep                         Reservations
+Kassa (incl. audit)          Customers
+Reservations                 Gift cards
+Products (incl. Mods+Upsell)
+Voorraad (incl. Waste+Telling)
+Marges
+QR Ordering
+Customers
+Gift cards
+Verkoop (Transacties+Boekhouding)
+Logs (Orders+Acties)
+Team
+Settings
+```
 
-## 3. Tenant-First Landing for Platform Admin
+### Wat ik ga doen
 
-When a platform admin logs in and navigates to `/`, instead of showing the POS immediately, show a **tenant selector screen** first. This is a full-screen overlay/page listing all tenants with search. Clicking a tenant either:
-- Opens their POS via impersonation, or
-- Navigates to `/admin` with that tenant expanded.
+1. **`Sidebar` `allSections` array inkorten** in `src/components/SaakoukPOS.tsx` (regel 222-247) — 8 items eruit.
+2. **Voorraad-tabs uitbreiden** met `Telling` (regel 6722-6743) zodat `MonthlyCountView` daar binnenkomt.
+3. **Products-view** een tab-laag geven met sub-tabs: Producten / Modifiers / Upsell.
+4. **Verkoop-view** maken die `SalesView` + `AccountingView` als tabs combineert.
+5. **Logs-view** uitbreiden naar tabs "Acties" (huidige `LogsView`) + "Orders" (huidige `ActivityView`).
+6. **Kassa-view** uitbreiden met tab "Audit" (huidige `CashAuditView`).
+7. **Dashboard** een sectie/tab "AI Forecast" geven die `AIForecastCenter` rendert.
+8. **Backwards-compat**: in de router-switch bij `active === "waste"` etc. doorverwijzen naar de nieuwe locatie zodat oude bookmarks/links blijven werken.
+9. **Activity logging** behouden (`view_changed` event) — niets gaat verloren in de audit trail.
 
-Implementation: In `src/pages/Index.tsx` or `SaakoukPOS.tsx`, detect `isPlatformAdmin` from LocationContext. If true and no tenant is selected yet, render a tenant picker overlay instead of the POS.
-
-## Technical Details
-
-### Files to modify:
-1. **`src/pages/PlatformAdmin.tsx`** — Add `ImpersonationLogTable` component fetching from `admin_impersonation_log`, render it as a collapsible section above the tenant list.
-
-2. **`src/contexts/AuthContext.tsx`** — On mount, check `sessionStorage.getItem("saakouk_impersonation")`. If present, set employee state from stored data and skip PIN screen.
-
-3. **`src/components/SaakoukPOS.tsx`** — When `isPlatformAdmin` is true and no `selectedTenantId` exists, render a tenant picker (cards with tenant name, plan badge, location count). Selecting a tenant calls `selectTenant()` from LocationContext and then triggers impersonation.
-
-4. **`src/contexts/LocationContext.tsx`** — Minor: ensure `unlockTenant` is auto-called when impersonation session exists.
-
-### No database changes needed
-The `admin_impersonation_log` table already exists with the right columns and RLS policies.
+Geen data­migraties nodig — alleen UI-herindeling. Alle bestaande componenten blijven bestaan, ze worden alleen onder een andere knop gemonteerd.
 
