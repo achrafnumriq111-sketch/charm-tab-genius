@@ -225,22 +225,14 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
     { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
     { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
-    { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
-    { key: "modifiers", label: "Mods", icon: Zap, adminOnly: true, ownerOnly: false },
-    { key: "upsell", label: "Upsell", icon: Sparkles, adminOnly: true, ownerOnly: false },
-    { key: "waste", label: "Waste", icon: Trash2, adminOnly: true, ownerOnly: false },
-    { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
-    { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true },
     { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
     { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
     { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
-    { key: "sales", label: "Sales", icon: Receipt, adminOnly: true, ownerOnly: true },
-    { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true, ownerOnly: true },
-    { key: "cashaudit", label: "Audit", icon: Shield, adminOnly: false, ownerOnly: true },
+    { key: "verkoop", label: "Verkoop", icon: Receipt, adminOnly: true, ownerOnly: true },
     { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true },
     { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
     { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
@@ -2640,8 +2632,8 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId }: any) {
-  const [activeTab, setActiveTab] = useState<"products" | "modifiers">("products");
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId, upsellRules, onRefetchUpsell }: any) {
+  const [activeTab, setActiveTab] = useState<"products" | "modifiers" | "upsell">("products");
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
@@ -2727,17 +2719,22 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
   return (
     <div className="space-y-4">
       {/* Tab switcher */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button variant={activeTab === "products" ? "default" : "outline"} onClick={() => setActiveTab("products")} className="min-h-[44px]">
           <ShoppingCart className="h-4 w-4 mr-2" /> Producten
         </Button>
         <Button variant={activeTab === "modifiers" ? "default" : "outline"} onClick={() => setActiveTab("modifiers")} className="min-h-[44px]">
           <Zap className="h-4 w-4 mr-2" /> Modifiers
         </Button>
+        <Button variant={activeTab === "upsell" ? "default" : "outline"} onClick={() => setActiveTab("upsell")} className="min-h-[44px]">
+          <Sparkles className="h-4 w-4 mr-2" /> Upsell
+        </Button>
       </div>
 
       {activeTab === "modifiers" ? (
         <ModifiersView groups={modifierGroups} links={modifierLinks} products={allProducts} onRefetch={onRefetchModifiers} onToast={onToast} addLog={addLog} locationId={locationId} />
+      ) : activeTab === "upsell" ? (
+        <UpsellRulesView rules={upsellRules || []} products={allProducts} onRefetch={onRefetchUpsell || (() => {})} onToast={onToast} addLog={addLog} />
       ) : (
         <>
           <div className="flex items-center gap-3">
@@ -4596,20 +4593,15 @@ const sectionPickerItems = [
   { key: "pos", label: "Point of Sale", icon: ShoppingCart, adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
   { key: "prepstation", label: "Prepstation", icon: ChefHat, adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
   { key: "cashclose", label: "Kassa Afsluiting", icon: Lock, adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
-  { key: "activity", label: "Order History", icon: Activity, adminOnly: false, ownerOnly: true, color: "from-blue-400 to-cyan-400" },
   { key: "reservations", label: "Reserveringen", icon: CalendarDays, adminOnly: false, ownerOnly: false, color: "from-fuchsia-400 to-purple-400" },
   { key: "products", label: "Producten", icon: Package, adminOnly: false, ownerOnly: false, color: "from-lime-400 to-green-400" },
   { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false, color: "from-sky-400 to-blue-400" },
-  { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false, color: "from-teal-400 to-emerald-400" },
   { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true, color: "from-yellow-400 to-amber-400" },
-  { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true, color: "from-purple-400 to-violet-400" },
   { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false, color: "from-indigo-400 to-blue-400" },
   { key: "customers", label: "Klanten", icon: Users, adminOnly: false, ownerOnly: false, color: "from-rose-400 to-pink-400" },
   { key: "giftcards", label: "Cadeaukaarten", icon: Gift, adminOnly: false, ownerOnly: false, color: "from-orange-400 to-red-400" },
-  { key: "sales", label: "Sales Reports", icon: Receipt, adminOnly: true, ownerOnly: true, color: "from-cyan-400 to-sky-400" },
-  { key: "accounting", label: "Boekhouding", icon: Calculator, adminOnly: true, ownerOnly: true, color: "from-green-400 to-emerald-400" },
-  { key: "cashaudit", label: "Cash Audit", icon: Shield, adminOnly: false, ownerOnly: true, color: "from-red-400 to-rose-400" },
-  { key: "logs", label: "Activiteiten Log", icon: FileText, adminOnly: false, ownerOnly: true, color: "from-slate-400 to-gray-400" },
+  { key: "verkoop", label: "Verkoop", icon: Receipt, adminOnly: true, ownerOnly: true, color: "from-cyan-400 to-sky-400" },
+  { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true, color: "from-slate-400 to-gray-400" },
   { key: "employees", label: "Medewerkers", icon: UserCog, adminOnly: true, ownerOnly: false, color: "from-violet-400 to-fuchsia-400" },
   { key: "settings", label: "Instellingen", icon: Settings, adminOnly: true, ownerOnly: false, color: "from-gray-400 to-slate-400" },
 ];
@@ -6688,7 +6680,20 @@ export default function SaakoukPOS() {
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />}
+            {active === "dashboard" && (
+              <Tabs defaultValue="overview" className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="overview">Overzicht</TabsTrigger>
+                  <TabsTrigger value="forecast">AI Forecast</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview">
+                  <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />
+                </TabsContent>
+                <TabsContent value="forecast">
+                  <AIForecastCenter onToast={setToast} />
+                </TabsContent>
+              </Tabs>
+            )}
             {active === "multilocatie" && <MultiLocationDashboard />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
@@ -6713,19 +6718,18 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
-            {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} />}
-            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} locationId={locationId} />}
-            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />}
-            {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
-            {(active === "inventory" || active === "intake") && (
-              <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {/* Backwards-compat: modifiers/upsell now live inside Products */}
+            {(active === "modifiers" || active === "upsell") && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {(active === "inventory" || active === "intake" || active === "waste" || active === "stockcount") && (
+              <Tabs defaultValue={active === "intake" ? "intake" : active === "waste" ? "waste" : active === "stockcount" ? "telling" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">
                   <TabsTrigger value="voorraad">Voorraad</TabsTrigger>
                   <TabsTrigger value="dynamic">Dynamic Stock</TabsTrigger>
                   <TabsTrigger value="intake">Intake</TabsTrigger>
                   <TabsTrigger value="waste">Verspilling</TabsTrigger>
+                  <TabsTrigger value="telling">Telling</TabsTrigger>
                 </TabsList>
                 <TabsContent value="voorraad">
                   <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} />
@@ -6739,19 +6743,62 @@ export default function SaakoukPOS() {
                 <TabsContent value="waste">
                   <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
+                <TabsContent value="telling">
+                  <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />
+                </TabsContent>
               </Tabs>
             )}
-            {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />}
             {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} locationId={locationId} />}
-            {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} onToast={setToast} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} addLog={addLog} />}
-            {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
-            {active === "accounting" && <AccountingView orders={orders} />}
-            {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
-            {active === "cashaudit" && <CashAuditView />}
-            {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
+            {/* Verkoop = Sales transactions + Accounting (backwards-compat for "sales"/"accounting") */}
+            {(active === "verkoop" || active === "sales" || active === "accounting") && (
+              <Tabs defaultValue={active === "accounting" ? "boekhouding" : "transacties"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="transacties">Transacties</TabsTrigger>
+                  <TabsTrigger value="boekhouding">Boekhouding</TabsTrigger>
+                </TabsList>
+                <TabsContent value="transacties">
+                  <SalesView orders={orders} products={enrichedProducts} employees={employees} />
+                </TabsContent>
+                <TabsContent value="boekhouding">
+                  <AccountingView orders={orders} />
+                </TabsContent>
+              </Tabs>
+            )}
+            {/* Kassa = Cash close + Audit (backwards-compat for "cashaudit") */}
+            {(active === "cashclose" || active === "cashaudit") && (
+              <Tabs defaultValue={active === "cashaudit" ? "audit" : "afsluiting"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="afsluiting">Afsluiting</TabsTrigger>
+                  <TabsTrigger value="audit">Audit</TabsTrigger>
+                </TabsList>
+                <TabsContent value="afsluiting">
+                  <CashCloseView onOpen={() => setShowCashClosing(true)} />
+                </TabsContent>
+                <TabsContent value="audit">
+                  <CashAuditView />
+                </TabsContent>
+              </Tabs>
+            )}
+            {/* Logs = System actions + Order history (backwards-compat for "activity") */}
+            {(active === "logs" || active === "activity") && (
+              <Tabs defaultValue={active === "activity" ? "orders" : "acties"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="acties">Acties</TabsTrigger>
+                  <TabsTrigger value="orders">Orders</TabsTrigger>
+                </TabsList>
+                <TabsContent value="acties">
+                  <LogsView logs={activityLogs} employees={employees} />
+                </TabsContent>
+                <TabsContent value="orders">
+                  <ActivityView orders={orders} employees={employees} />
+                </TabsContent>
+              </Tabs>
+            )}
+            {/* Dashboard = Overview + AI Forecast (backwards-compat for "aiforecast") */}
+            {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
           </div>
