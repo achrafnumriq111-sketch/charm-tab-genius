@@ -225,22 +225,14 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
     { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
     { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
     { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
-    { key: "activity", label: "Activity", icon: Activity, adminOnly: false, ownerOnly: true },
     { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
     { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
     { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
-    { key: "modifiers", label: "Mods", icon: Zap, adminOnly: true, ownerOnly: false },
-    { key: "upsell", label: "Upsell", icon: Sparkles, adminOnly: true, ownerOnly: false },
-    { key: "waste", label: "Waste", icon: Trash2, adminOnly: true, ownerOnly: false },
-    { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false },
     { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
-    { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true },
     { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
     { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
     { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
-    { key: "sales", label: "Sales", icon: Receipt, adminOnly: true, ownerOnly: true },
-    { key: "accounting", label: "Accounting", icon: Calculator, adminOnly: true, ownerOnly: true },
-    { key: "cashaudit", label: "Audit", icon: Shield, adminOnly: false, ownerOnly: true },
+    { key: "verkoop", label: "Verkoop", icon: Receipt, adminOnly: true, ownerOnly: true },
     { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true },
     { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
     { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
@@ -2641,7 +2633,8 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
 function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId }: any) {
-  const [activeTab, setActiveTab] = useState<"products" | "modifiers">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "modifiers" | "upsell">("products");
+  const upsellEngine = useUpsell(locationId);
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
@@ -4596,20 +4589,15 @@ const sectionPickerItems = [
   { key: "pos", label: "Point of Sale", icon: ShoppingCart, adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
   { key: "prepstation", label: "Prepstation", icon: ChefHat, adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
   { key: "cashclose", label: "Kassa Afsluiting", icon: Lock, adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
-  { key: "activity", label: "Order History", icon: Activity, adminOnly: false, ownerOnly: true, color: "from-blue-400 to-cyan-400" },
   { key: "reservations", label: "Reserveringen", icon: CalendarDays, adminOnly: false, ownerOnly: false, color: "from-fuchsia-400 to-purple-400" },
   { key: "products", label: "Producten", icon: Package, adminOnly: false, ownerOnly: false, color: "from-lime-400 to-green-400" },
   { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false, color: "from-sky-400 to-blue-400" },
-  { key: "stockcount", label: "Telling", icon: ClipboardCheck, adminOnly: true, ownerOnly: false, color: "from-teal-400 to-emerald-400" },
   { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true, color: "from-yellow-400 to-amber-400" },
-  { key: "aiforecast", label: "AI Forecast", icon: Sparkles, adminOnly: false, ownerOnly: true, color: "from-purple-400 to-violet-400" },
   { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false, color: "from-indigo-400 to-blue-400" },
   { key: "customers", label: "Klanten", icon: Users, adminOnly: false, ownerOnly: false, color: "from-rose-400 to-pink-400" },
   { key: "giftcards", label: "Cadeaukaarten", icon: Gift, adminOnly: false, ownerOnly: false, color: "from-orange-400 to-red-400" },
-  { key: "sales", label: "Sales Reports", icon: Receipt, adminOnly: true, ownerOnly: true, color: "from-cyan-400 to-sky-400" },
-  { key: "accounting", label: "Boekhouding", icon: Calculator, adminOnly: true, ownerOnly: true, color: "from-green-400 to-emerald-400" },
-  { key: "cashaudit", label: "Cash Audit", icon: Shield, adminOnly: false, ownerOnly: true, color: "from-red-400 to-rose-400" },
-  { key: "logs", label: "Activiteiten Log", icon: FileText, adminOnly: false, ownerOnly: true, color: "from-slate-400 to-gray-400" },
+  { key: "verkoop", label: "Verkoop", icon: Receipt, adminOnly: true, ownerOnly: true, color: "from-cyan-400 to-sky-400" },
+  { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true, color: "from-slate-400 to-gray-400" },
   { key: "employees", label: "Medewerkers", icon: UserCog, adminOnly: true, ownerOnly: false, color: "from-violet-400 to-fuchsia-400" },
   { key: "settings", label: "Instellingen", icon: Settings, adminOnly: true, ownerOnly: false, color: "from-gray-400 to-slate-400" },
 ];
