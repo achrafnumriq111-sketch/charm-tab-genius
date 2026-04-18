@@ -6705,19 +6705,18 @@ export default function SaakoukPOS() {
               </Tabs>
             )}
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
-            {active === "activity" && <ActivityView orders={orders} employees={employees} />}
             {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} />}
-            {active === "modifiers" && <ModifiersView groups={modifierGroups} links={modifierLinks} products={enrichedProducts} onRefetch={refetchModifiers} onToast={setToast} addLog={addLog} locationId={locationId} />}
-            {active === "waste" && <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />}
-            {active === "upsell" && <UpsellRulesView rules={upsellEngine.rules} products={enrichedProducts} onRefetch={upsellEngine.refetch} onToast={setToast} addLog={addLog} />}
-            {(active === "inventory" || active === "intake") && (
-              <Tabs defaultValue={active === "intake" ? "intake" : "voorraad"} className="space-y-3">
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {/* Backwards-compat: modifiers/upsell now live inside Products */}
+            {(active === "modifiers" || active === "upsell") && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {(active === "inventory" || active === "intake" || active === "waste" || active === "stockcount") && (
+              <Tabs defaultValue={active === "intake" ? "intake" : active === "waste" ? "waste" : active === "stockcount" ? "telling" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">
                   <TabsTrigger value="voorraad">Voorraad</TabsTrigger>
                   <TabsTrigger value="dynamic">Dynamic Stock</TabsTrigger>
                   <TabsTrigger value="intake">Intake</TabsTrigger>
                   <TabsTrigger value="waste">Verspilling</TabsTrigger>
+                  <TabsTrigger value="telling">Telling</TabsTrigger>
                 </TabsList>
                 <TabsContent value="voorraad">
                   <InventoryView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} />
@@ -6731,19 +6730,62 @@ export default function SaakoukPOS() {
                 <TabsContent value="waste">
                   <WasteLoggingView onToast={setToast} addLog={addLog} currentRole={loggedInEmployee.role} employeeName={loggedInEmployee.name} locationId={locationId} />
                 </TabsContent>
+                <TabsContent value="telling">
+                  <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />
+                </TabsContent>
               </Tabs>
             )}
-            {active === "stockcount" && <MonthlyCountView onToast={setToast} addLog={addLog} employeeName={loggedInEmployee.name} locationId={locationId} />}
             {active === "costing" && <CostingView products={enrichedProducts} orders={orders} onToast={setToast} locationId={locationId} />}
-            {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "qr" && <QrView features={features} tables={tables} />}
             {active === "customers" && <CustomersView customers={customers} setCustomers={setCustomers} addLog={addLog} currentRole={loggedInEmployee.role} locationId={locationId} onToast={setToast} />}
             {active === "giftcards" && <GiftCardsView giftCards={giftCards} addLog={addLog} />}
-            {active === "sales" && <SalesView orders={orders} products={enrichedProducts} employees={employees} />}
-            {active === "accounting" && <AccountingView orders={orders} />}
-            {active === "cashclose" && <CashCloseView onOpen={() => setShowCashClosing(true)} />}
-            {active === "cashaudit" && <CashAuditView />}
-            {active === "logs" && <LogsView logs={activityLogs} employees={employees} />}
+            {/* Verkoop = Sales transactions + Accounting (backwards-compat for "sales"/"accounting") */}
+            {(active === "verkoop" || active === "sales" || active === "accounting") && (
+              <Tabs defaultValue={active === "accounting" ? "boekhouding" : "transacties"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="transacties">Transacties</TabsTrigger>
+                  <TabsTrigger value="boekhouding">Boekhouding</TabsTrigger>
+                </TabsList>
+                <TabsContent value="transacties">
+                  <SalesView orders={orders} products={enrichedProducts} employees={employees} />
+                </TabsContent>
+                <TabsContent value="boekhouding">
+                  <AccountingView orders={orders} />
+                </TabsContent>
+              </Tabs>
+            )}
+            {/* Kassa = Cash close + Audit (backwards-compat for "cashaudit") */}
+            {(active === "cashclose" || active === "cashaudit") && (
+              <Tabs defaultValue={active === "cashaudit" ? "audit" : "afsluiting"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="afsluiting">Afsluiting</TabsTrigger>
+                  <TabsTrigger value="audit">Audit</TabsTrigger>
+                </TabsList>
+                <TabsContent value="afsluiting">
+                  <CashCloseView onOpen={() => setShowCashClosing(true)} />
+                </TabsContent>
+                <TabsContent value="audit">
+                  <CashAuditView />
+                </TabsContent>
+              </Tabs>
+            )}
+            {/* Logs = System actions + Order history (backwards-compat for "activity") */}
+            {(active === "logs" || active === "activity") && (
+              <Tabs defaultValue={active === "activity" ? "orders" : "acties"} className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="acties">Acties</TabsTrigger>
+                  <TabsTrigger value="orders">Orders</TabsTrigger>
+                </TabsList>
+                <TabsContent value="acties">
+                  <LogsView logs={activityLogs} employees={employees} />
+                </TabsContent>
+                <TabsContent value="orders">
+                  <ActivityView orders={orders} employees={employees} />
+                </TabsContent>
+              </Tabs>
+            )}
+            {/* Dashboard = Overview + AI Forecast (backwards-compat for "aiforecast") */}
+            {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
           </div>
