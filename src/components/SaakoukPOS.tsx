@@ -2719,17 +2719,22 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
   return (
     <div className="space-y-4">
       {/* Tab switcher */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button variant={activeTab === "products" ? "default" : "outline"} onClick={() => setActiveTab("products")} className="min-h-[44px]">
           <ShoppingCart className="h-4 w-4 mr-2" /> Producten
         </Button>
         <Button variant={activeTab === "modifiers" ? "default" : "outline"} onClick={() => setActiveTab("modifiers")} className="min-h-[44px]">
           <Zap className="h-4 w-4 mr-2" /> Modifiers
         </Button>
+        <Button variant={activeTab === "upsell" ? "default" : "outline"} onClick={() => setActiveTab("upsell")} className="min-h-[44px]">
+          <Sparkles className="h-4 w-4 mr-2" /> Upsell
+        </Button>
       </div>
 
       {activeTab === "modifiers" ? (
         <ModifiersView groups={modifierGroups} links={modifierLinks} products={allProducts} onRefetch={onRefetchModifiers} onToast={onToast} addLog={addLog} locationId={locationId} />
+      ) : activeTab === "upsell" ? (
+        <UpsellRulesView rules={upsellRules || []} products={allProducts} onRefetch={onRefetchUpsell || (() => {})} onToast={onToast} addLog={addLog} />
       ) : (
         <>
           <div className="flex items-center gap-3">
