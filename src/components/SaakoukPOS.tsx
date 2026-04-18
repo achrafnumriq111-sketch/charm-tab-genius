@@ -6680,7 +6680,20 @@ export default function SaakoukPOS() {
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
-            {active === "dashboard" && <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />}
+            {active === "dashboard" && (
+              <Tabs defaultValue="overview" className="space-y-3">
+                <TabsList className="rounded-xl">
+                  <TabsTrigger value="overview">Overzicht</TabsTrigger>
+                  <TabsTrigger value="forecast">AI Forecast</TabsTrigger>
+                </TabsList>
+                <TabsContent value="overview">
+                  <DashboardView orders={orders} tables={tables} openTickets={openTickets} qrOrders={qrOrders} onAdvanceOrder={advanceQrOrder} products={enrichedProducts} reservations={reservations} customers={customers} />
+                </TabsContent>
+                <TabsContent value="forecast">
+                  <AIForecastCenter onToast={setToast} />
+                </TabsContent>
+              </Tabs>
+            )}
             {active === "multilocatie" && <MultiLocationDashboard />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
