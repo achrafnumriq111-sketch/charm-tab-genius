@@ -2634,7 +2634,6 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
 
 function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId }: any) {
   const [activeTab, setActiveTab] = useState<"products" | "modifiers" | "upsell">("products");
-  const upsellEngine = useUpsell(locationId);
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
   const [editing, setEditing] = useState(null);
