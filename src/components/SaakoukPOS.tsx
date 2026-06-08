@@ -2513,29 +2513,39 @@ function ActivityView({ orders, employees }: any) {
 
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 
-function ReservationsView({ reservations, setReservations, tables, addLog }: any) {
+function ReservationsView({ reservations, setReservations, tables, addLog, onCreateReservation, onUpdateReservation, onDeleteReservation }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
 
-  function addReservation() {
-    if (!form.name || !form.date || !form.time) return;
-    setReservations((prev) => [...prev, { ...form, id: generateId(), guests: parseInt(form.guests) || 2, status: "confirmed" }]);
+  async function addReservation() {
+    if (!form.name || !form.date || !form.time || !onCreateReservation) return;
+    await onCreateReservation({
+      guest_name: form.name,
+      reservation_date: form.date,
+      reservation_time: form.time,
+      guests: parseInt(form.guests) || 2,
+      table_name: form.table || null,
+      phone: form.phone || null,
+      notes: form.notes || null,
+      status: "confirmed",
+    });
     addLog?.("reservation_created", `Reservering aangemaakt: ${form.name} — ${form.date} ${form.time}, ${form.guests} gasten, tafel ${form.table}`);
     setShowAdd(false);
     setForm({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
   }
 
-  function updateStatus(id, status) {
-    const r = reservations.find((x) => x.id === id);
-    setReservations((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+  async function updateStatus(id: string, status: string) {
+    const r = reservations.find((x: any) => x.id === id);
+    if (onUpdateReservation) await onUpdateReservation(id, { status });
     addLog?.("reservation_status_changed", `Reservering status gewijzigd: ${r?.name || id} → ${status}`);
   }
 
-  function removeReservation(id) {
-    const r = reservations.find((x) => x.id === id);
+  async function removeReservation(id: string) {
+    const r = reservations.find((x: any) => x.id === id);
     addLog?.("reservation_deleted", `Reservering verwijderd: ${r?.name || id}`);
-    setReservations((prev) => prev.filter((r) => r.id !== id));
+    if (onDeleteReservation) await onDeleteReservation(id);
   }
+
 
   return (
     <div className="space-y-4">
