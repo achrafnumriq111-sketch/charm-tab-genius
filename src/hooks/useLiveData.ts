@@ -107,9 +107,8 @@ export function useLiveData(locationId: string | null): LiveDataApi {
       if (seededRef.current !== locationId) {
         seededRef.current = locationId;
         if (!ls.data) {
-          await supabase.from("location_settings").insert({ location_id: locationId }).then(({ data }) => {
-            if (data && data[0]) setSettings(data[0]);
-          });
+          const { data: lsData } = await supabase.from("location_settings").insert({ location_id: locationId } as any).select().single();
+          if (lsData) setSettings(lsData);
         }
         if ((dc.data || []).length === 0) {
           const rows = DEFAULT_DISCOUNTS.map((d, i) => ({ ...d, location_id: locationId, sort_order: i }));
