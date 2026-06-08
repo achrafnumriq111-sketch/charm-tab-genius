@@ -225,7 +225,7 @@ export function useLiveData(locationId: string | null): LiveDataApi {
     if (!locationId) return;
     setVatRatesState((prev) => ({ ...prev, [category]: rate }));
     await supabase.from("vat_category_rates").upsert(
-      { location_id: locationId, category, rate },
+      { location_id: locationId, category, rate } as any,
       { onConflict: "location_id,category" }
     );
   }, [locationId]);
@@ -233,7 +233,7 @@ export function useLiveData(locationId: string | null): LiveDataApi {
   const updateSettings = useCallback(async (patch: Partial<AnyRow>) => {
     if (!locationId) return;
     setSettings((prev) => ({ ...(prev || { location_id: locationId }), ...patch }));
-    await supabase.from("location_settings").upsert({ location_id: locationId, ...patch }, { onConflict: "location_id" });
+    await supabase.from("location_settings").upsert({ location_id: locationId, ...patch } as any, { onConflict: "location_id" });
   }, [locationId]);
 
   const appendActivityLog = useCallback(async (entry: { employeeId?: string | null; employeeName?: string; employeeRole?: string; action: string; details: string; metadata?: AnyRow }) => {
@@ -246,7 +246,7 @@ export function useLiveData(locationId: string | null): LiveDataApi {
       action: entry.action,
       details: entry.details,
       metadata: entry.metadata || {},
-    });
+    } as any);
   }, [locationId]);
 
   return {
