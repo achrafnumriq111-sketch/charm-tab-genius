@@ -2619,7 +2619,7 @@ function ReservationsView({ reservations, setReservations, tables, addLog, onCre
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId, upsellRules, onRefetchUpsell }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId, upsellRules, onRefetchUpsell, onCreateProduct, onUpdateProduct, onDeleteProduct }: any) {
   const [activeTab, setActiveTab] = useState<"products" | "modifiers" | "upsell">("products");
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
@@ -2661,28 +2661,17 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
     });
   }
 
-  function saveProduct() {
+  async function saveProduct() {
     if (!form.name || !form.price) return;
-    const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
-    const vatRate = form.vatRate !== "" ? parseFloat(form.vatRate) : undefined;
+    const vatRate = form.vatRate !== "" ? parseFloat(form.vatRate) : null;
     if (editing === "new") {
-      const newProduct = {
-        id: generateId(),
-        name: form.name,
-        section: form.section,
-        price: parseFloat(form.price),
-        costPrice,
-        tags,
-        modifierGroups,
-        color: form.color,
-        vatRate,
-        createdBy: currentEmployee?.name || "Onbekend",
-        createdById: currentEmployee?.id || null,
-        createdAt: new Date().toISOString(),
-      };
-      setProducts((prev) => [...prev, newProduct]);
+      if (!onCreateProduct) return;
+      await onCreateProduct({
+        name: form.name, section: form.section, price: parseFloat(form.price),
+        cost_price: costPrice, vat_rate: vatRate, color: form.color, tags,
+      });
       addLog?.("product_created", `Product aangemaakt: ${form.name} (${euro(parseFloat(form.price))})`);
       if (currentRole !== "owner") {
         setNotifications?.((prev: any[]) => [
@@ -2691,17 +2680,22 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         ]);
       }
     } else {
-      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, vatRate, tags, modifierGroups, color: form.color } : p));
+      if (!onUpdateProduct) return;
+      await onUpdateProduct(editing, {
+        name: form.name, section: form.section, price: parseFloat(form.price),
+        cost_price: costPrice, vat_rate: vatRate, color: form.color, tags,
+      });
       addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
   }
 
-  function deleteProduct(id) {
-    const product = allProducts.find((p) => p.id === id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  async function deleteProduct(id: string) {
+    const product = allProducts.find((p: any) => p.id === id);
+    if (onDeleteProduct) await onDeleteProduct(id);
     addLog?.("product_deleted", `Product verwijderd: ${product?.name || id}`);
   }
+
 
   return (
     <div className="space-y-4">
