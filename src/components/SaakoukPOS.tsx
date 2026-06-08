@@ -8,6 +8,7 @@ import { useLocation_ } from "@/contexts/LocationContext";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { useModifiers } from "@/hooks/useModifiers";
+import { useLiveData } from "@/hooks/useLiveData";
 import ModifiersView from "@/components/ModifiersView";
 import UpsellPrompt from "@/components/UpsellPrompt";
 import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
@@ -76,42 +77,15 @@ const ALL_MODIFIER_GROUPS: any[] = [];
 
 const initialProducts: any[] = [];
 
-const discounts = [
-  { id: "disc-1", name: "Verkeerde Drankje", type: "percent", value: 100 },
-  { id: "disc-2", name: "Influencer", type: "percent", value: 100 },
-  { id: "disc-3", name: "Staff use", type: "percent", value: 40 },
-  { id: "disc-4", name: "Familie", type: "percent", value: 30 },
-  { id: "disc-5", name: "Gemeente", type: "percent", value: 10 },
-  { id: "disc-6", name: "Matcha Zakje", type: "percent", value: 25 },
-];
-
-const initialTables = [
-  { id: "1", name: "1", seats: 2, area: "Binnen", shape: "square" as const, x: 60, y: 60, w: 70, h: 70 },
-  { id: "2", name: "2", seats: 2, area: "Binnen", shape: "square" as const, x: 160, y: 60, w: 70, h: 70 },
-  { id: "3", name: "3", seats: 2, area: "Binnen", shape: "square" as const, x: 260, y: 60, w: 70, h: 70 },
-  { id: "4", name: "4", seats: 4, area: "Binnen", shape: "rect" as const, x: 60, y: 180, w: 120, h: 70 },
-  { id: "5", name: "5", seats: 4, area: "Binnen", shape: "rect" as const, x: 220, y: 180, w: 120, h: 70 },
-  { id: "bar", name: "Bar", seats: 6, area: "Binnen", shape: "rect" as const, x: 400, y: 60, w: 140, h: 50 },
-  { id: "t1", name: "T1", seats: 4, area: "Terras", shape: "circle" as const, x: 80, y: 80, w: 80, h: 80 },
-  { id: "t2", name: "T2", seats: 4, area: "Terras", shape: "circle" as const, x: 220, y: 80, w: 80, h: 80 },
-];
-
+// Discounts, products, tables, zones, customers, gift cards, reservations all live in the database.
+// Hardcoded seeds removed — useLiveData seeds defaults on first location load.
 const initialChannels = [
   { id: "afhaal", name: "Afhaal", icon: "🛍️" },
   { id: "uber-eats", name: "Uber Eats", icon: "🚗" },
   { id: "thuisbezorgd", name: "Thuisbezorgd", icon: "🛵" },
 ];
-
-const initialZones = [
-  { id: "zone-binnen", name: "Binnen" },
-  { id: "zone-terras", name: "Terras" },
-];
-
 const initialCustomers: any[] = [];
-
 const initialGiftCards: any[] = [];
-
-const initialReservations: any[] = [];
 
 // ─── EMPLOYEES (loaded from database) ────────────────────────────────────────
 // No more hardcoded employee list — employees are fetched from the database
