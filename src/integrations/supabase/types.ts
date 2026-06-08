@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          employee_id: string | null
+          employee_name: string | null
+          employee_role: string | null
+          id: string
+          location_id: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          employee_id?: string | null
+          employee_name?: string | null
+          employee_role?: string | null
+          id?: string
+          location_id?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          employee_id?: string | null
+          employee_name?: string | null
+          employee_role?: string | null
+          id?: string
+          location_id?: string | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_impersonation_log: {
         Row: {
           admin_user_id: string
@@ -369,6 +420,50 @@ export type Database = {
           },
         ]
       }
+      discounts: {
+        Row: {
+          created_at: string
+          discount_type: string
+          id: string
+          is_active: boolean
+          location_id: string
+          name: string
+          sort_order: number
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          discount_type?: string
+          id?: string
+          is_active?: boolean
+          location_id: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          discount_type?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discounts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -502,6 +597,107 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "employees_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floor_tables: {
+        Row: {
+          created_at: string
+          h: number
+          id: string
+          is_active: boolean
+          location_id: string
+          name: string
+          seats: number
+          shape: string
+          updated_at: string
+          w: number
+          x: number
+          y: number
+          zone_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          h?: number
+          id?: string
+          is_active?: boolean
+          location_id: string
+          name: string
+          seats?: number
+          shape?: string
+          updated_at?: string
+          w?: number
+          x?: number
+          y?: number
+          zone_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          h?: number
+          id?: string
+          is_active?: boolean
+          location_id?: string
+          name?: string
+          seats?: number
+          shape?: string
+          updated_at?: string
+          w?: number
+          x?: number
+          y?: number
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_tables_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "floor_tables_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "floor_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floor_zones: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          location_id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_id: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_zones_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -705,6 +901,65 @@ export type Database = {
             foreignKeyName: "inventory_items_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_settings: {
+        Row: {
+          auto_enrol: boolean
+          created_at: string
+          extra: Json | null
+          feature_kitchen: boolean
+          feature_leat: boolean
+          feature_passkit: boolean
+          feature_piggy: boolean
+          feature_qr: boolean
+          feature_tips: boolean
+          location_id: string
+          passkit_program_id: string | null
+          passkit_tier_id: string | null
+          points_per_euro: number
+          updated_at: string
+        }
+        Insert: {
+          auto_enrol?: boolean
+          created_at?: string
+          extra?: Json | null
+          feature_kitchen?: boolean
+          feature_leat?: boolean
+          feature_passkit?: boolean
+          feature_piggy?: boolean
+          feature_qr?: boolean
+          feature_tips?: boolean
+          location_id: string
+          passkit_program_id?: string | null
+          passkit_tier_id?: string | null
+          points_per_euro?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_enrol?: boolean
+          created_at?: string
+          extra?: Json | null
+          feature_kitchen?: boolean
+          feature_leat?: boolean
+          feature_passkit?: boolean
+          feature_piggy?: boolean
+          feature_qr?: boolean
+          feature_tips?: boolean
+          location_id?: string
+          passkit_program_id?: string | null
+          passkit_tier_id?: string | null
+          points_per_euro?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
@@ -1178,6 +1433,62 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          color: string | null
+          cost_price: number
+          created_at: string
+          id: string
+          is_active: boolean
+          location_id: string
+          name: string
+          price: number
+          section: string
+          sort_order: number
+          tags: string[] | null
+          updated_at: string
+          vat_rate: number | null
+        }
+        Insert: {
+          color?: string | null
+          cost_price?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_id: string
+          name: string
+          price?: number
+          section?: string
+          sort_order?: number
+          tags?: string[] | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Update: {
+          color?: string | null
+          cost_price?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string
+          name?: string
+          price?: number
+          section?: string
+          sort_order?: number
+          tags?: string[] | null
+          updated_at?: string
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_orders: {
         Row: {
           created_at: string
@@ -1221,6 +1532,82 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservations: {
+        Row: {
+          created_at: string
+          email: string | null
+          employee_id: string | null
+          guest_name: string
+          guests: number
+          id: string
+          location_id: string
+          notes: string | null
+          phone: string | null
+          reservation_date: string
+          reservation_time: string
+          status: string
+          table_id: string | null
+          table_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          employee_id?: string | null
+          guest_name: string
+          guests?: number
+          id?: string
+          location_id: string
+          notes?: string | null
+          phone?: string | null
+          reservation_date: string
+          reservation_time: string
+          status?: string
+          table_id?: string | null
+          table_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          employee_id?: string | null
+          guest_name?: string
+          guests?: number
+          id?: string
+          location_id?: string
+          notes?: string | null
+          phone?: string | null
+          reservation_date?: string
+          reservation_time?: string
+          status?: string
+          table_id?: string | null
+          table_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "floor_tables"
             referencedColumns: ["id"]
           },
         ]
@@ -1593,6 +1980,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "upsell_rules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vat_category_rates: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          location_id: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          location_id: string
+          rate: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          location_id?: string
+          rate?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vat_category_rates_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
