@@ -952,7 +952,7 @@ function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void })
 // ─── COUNTER POS VIEW ────────────────────────────────────────────────────────
 // Cart state is now lifted: ticket comes from parent via props
 
-function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast, addLog }: any) {
+function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast, addLog, discounts = [] }: any) {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("Signature Drinks");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -1329,12 +1329,10 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 // ─── TABLE VIEW ──────────────────────────────────────────────────────────────
 // ─── FLOOR PLAN EDITOR ───────────────────────────────────────────────────────
 
-function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation, channels, addLog }: any) {
-  const [zones, setZones] = useState(() => {
-    const saved = localStorage.getItem("saakouk_zones");
-    return saved ? JSON.parse(saved) : initialZones;
-  });
-  const [activeZone, setActiveZone] = useState(zones[0]?.name || "Binnen");
+function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation, channels, addLog, zones: zonesProp, onCreateZone, onDeleteZone, onCreateTable, onUpdateTable, onDeleteTable }: any) {
+  const zones = zonesProp || [];
+  const [activeZone, setActiveZone] = useState<string>("");
+  useEffect(() => { if (!activeZone && zones[0]) setActiveZone(zones[0].name); }, [zones, activeZone]);
   const [editMode, setEditMode] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -6040,36 +6038,81 @@ export default function SaakoukPOS() {
   const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
-  const [products, setProducts] = useState(initialProducts);
+  const live = useLiveData(locationId);
+  const [products, setProducts] = useState<any[]>([]);
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers(locationId);
   const upsellEngine = useUpsellEngine(products, locationId);
-  const [tables, setTables] = useState(() => {
-    const saved = localStorage.getItem("saakouk_tables");
-    return saved ? JSON.parse(saved) : initialTables;
-  });
+  const [tables, setTables] = useState<any[]>([]);
   const [channels] = useState(initialChannels);
   const [orders, setOrders] = useState<any[]>([]);
   const [dbLoaded, setDbLoaded] = useState(false);
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
-  const [reservations, setReservations] = useState(initialReservations);
+  const [reservations, setReservations] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [toast, setToast] = useState("");
-  const [features, setFeatures] = useState({
-    tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
-  });
-  const [vatRates, setVatRates] = useState<Record<string, number>>(() => {
-    const saved = localStorage.getItem("saakouk_vat_rates");
-    return saved ? JSON.parse(saved) : {
-      "Signature Drinks": 9, "Specials": 9, "Cold Drinks": 9, "Hot Drinks": 9, "Sweets": 9, default: 21,
-    };
-  });
-  const [passkitConfig, setPasskitConfig] = useState({
-    programId: "24RMbRfRp5Y9h9ptYWnwFe",
-    tierId: "",
-    pointsPerEuro: 1,
-    autoEnrol: true,
-  });
+  // Feature flags now sourced from location_settings; sensible defaults until loaded.
+  const features = useMemo(() => ({
+    tips: live.settings?.feature_tips ?? true,
+    passkit: live.settings?.feature_passkit ?? true,
+    piggy: live.settings?.feature_piggy ?? false,
+    leat: live.settings?.feature_leat ?? false,
+    qr: live.settings?.feature_qr ?? true,
+    kitchen: live.settings?.feature_kitchen ?? false,
+  }), [live.settings]);
+  const setFeatures = useCallback((patch: any) => {
+    const next = typeof patch === "function" ? patch(features) : patch;
+    live.updateSettings({
+      feature_tips: next.tips, feature_passkit: next.passkit, feature_piggy: next.piggy,
+      feature_leat: next.leat, feature_qr: next.qr, feature_kitchen: next.kitchen,
+    });
+  }, [features, live]);
+  const vatRates = live.vatRates;
+  const setVatRates = useCallback((updater: any) => {
+    const next = typeof updater === "function" ? updater(vatRates) : updater;
+    Object.entries(next).forEach(([cat, rate]) => {
+      if (vatRates[cat] !== rate) live.setVatRate(cat, Number(rate));
+    });
+  }, [vatRates, live]);
+  const passkitConfig = useMemo(() => ({
+    programId: live.settings?.passkit_program_id || "24RMbRfRp5Y9h9ptYWnwFe",
+    tierId: live.settings?.passkit_tier_id || "",
+    pointsPerEuro: Number(live.settings?.points_per_euro ?? 1),
+    autoEnrol: live.settings?.auto_enrol ?? true,
+  }), [live.settings]);
+  const setPasskitConfig = useCallback((patch: any) => {
+    const next = typeof patch === "function" ? patch(passkitConfig) : patch;
+    live.updateSettings({
+      passkit_program_id: next.programId, passkit_tier_id: next.tierId,
+      points_per_euro: next.pointsPerEuro, auto_enrol: next.autoEnrol,
+    });
+  }, [passkitConfig, live]);
+  const discounts = useMemo(() => live.discounts.map((d) => ({
+    id: d.id, name: d.name, type: d.discount_type, value: Number(d.value),
+  })), [live.discounts]);
+
+  // Mirror live data into legacy local state used throughout component tree.
+  useEffect(() => {
+    setProducts(live.products.map((p) => ({
+      id: p.id, name: p.name, section: p.section, price: Number(p.price),
+      costPrice: Number(p.cost_price || 0), vatRate: p.vat_rate != null ? Number(p.vat_rate) : undefined,
+      color: p.color, tags: p.tags || [], modifierGroups: [],
+    })));
+  }, [live.products]);
+  useEffect(() => {
+    const zoneMap = new Map(live.zones.map((z) => [z.id, z.name]));
+    setTables(live.tables.map((t) => ({
+      id: t.id, name: t.name, seats: t.seats, area: zoneMap.get(t.zone_id) || "Binnen",
+      shape: t.shape, x: t.x, y: t.y, w: t.w, h: t.h,
+    })));
+  }, [live.tables, live.zones]);
+  useEffect(() => {
+    setReservations(live.reservations.map((r) => ({
+      id: r.id, name: r.guest_name, date: r.reservation_date, time: (r.reservation_time || "").slice(0, 5),
+      guests: r.guests, table: r.table_name || "", phone: r.phone || "", notes: r.notes || "", status: r.status,
+    })));
+  }, [live.reservations]);
+
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
