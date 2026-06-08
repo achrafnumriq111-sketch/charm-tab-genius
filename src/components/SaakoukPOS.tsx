@@ -1342,8 +1342,7 @@ function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelec
   const [newTable, setNewTable] = useState({ name: "", seats: 2, shape: "square" as "square" | "circle" | "rect" });
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { localStorage.setItem("saakouk_zones", JSON.stringify(zones)); }, [zones]);
-  useEffect(() => { localStorage.setItem("saakouk_tables", JSON.stringify(tables)); }, [tables]);
+  // Floor plan zones + tables persisted to DB via onCreate/onUpdate/onDelete props.
 
   const filtered = tables.filter((t: any) => t.area === activeZone);
 
@@ -1379,47 +1378,53 @@ function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelec
     setTables((prev: any[]) => prev.map((t: any) => t.id === dragging ? { ...t, x: Math.round(newX), y: Math.round(newY) } : t));
   }
 
-  function handleMouseUp() { setDragging(null); }
+  function handleMouseUp() {
+    if (dragging) {
+      const t = tables.find((tb: any) => tb.id === dragging);
+      if (t && onUpdateTable) onUpdateTable(t.id, { x: t.x, y: t.y });
+    }
+    setDragging(null);
+  }
 
-  function addNewTable() {
-    if (!newTable.name.trim()) return;
-    const id = generateId();
-    const t = {
-      id, name: newTable.name.trim(), seats: newTable.seats,
-      area: activeZone, shape: newTable.shape,
-      x: 60 + Math.random() * 200, y: 60 + Math.random() * 150,
+  async function addNewTable() {
+    if (!newTable.name.trim() || !onCreateTable) return;
+    const zone = zones.find((z: any) => z.name === activeZone);
+    await onCreateTable({
+      name: newTable.name.trim(), seats: newTable.seats, shape: newTable.shape,
+      zone_id: zone?.id || null,
+      x: Math.round(60 + Math.random() * 200), y: Math.round(60 + Math.random() * 150),
       w: newTable.shape === "rect" ? 120 : 70, h: 70,
-    };
-    setTables((prev: any[]) => [...prev, t]);
-    addLog?.("table_created", `Tafel "${t.name}" aangemaakt in zone ${activeZone}`);
+    });
+    addLog?.("table_created", `Tafel "${newTable.name.trim()}" aangemaakt in zone ${activeZone}`);
     setNewTable({ name: "", seats: 2, shape: "square" });
     setShowAddTable(false);
   }
 
-  function removeTable(id: string) {
+  async function removeTable(id: string) {
     const t = tables.find((tb: any) => tb.id === id);
-    setTables((prev: any[]) => prev.filter((tb: any) => tb.id !== id));
+    if (onDeleteTable) await onDeleteTable(id);
     addLog?.("table_deleted", `Tafel "${t?.name}" verwijderd`);
   }
 
-  function addZone() {
-    if (!newZoneName.trim()) return;
-    setZones((prev: any[]) => [...prev, { id: generateId(), name: newZoneName.trim() }]);
-    setActiveZone(newZoneName.trim());
+  async function addZone() {
+    if (!newZoneName.trim() || !onCreateZone) return;
+    const created = await onCreateZone(newZoneName.trim());
+    if (created) setActiveZone(created.name);
     setNewZoneName("");
     setShowAddZone(false);
   }
 
-  function removeZone(zoneId: string) {
+  async function removeZone(zoneId: string) {
     const zone = zones.find((z: any) => z.id === zoneId);
-    if (!zone) return;
-    setTables((prev: any[]) => prev.filter((t: any) => t.area !== zone.name));
-    setZones((prev: any[]) => prev.filter((z: any) => z.id !== zoneId));
+    if (!zone || !onDeleteZone) return;
+    // Tables in this zone become unassigned (zone_id null via realtime/cascade).
+    await onDeleteZone(zoneId);
     if (activeZone === zone.name) {
       const remaining = zones.filter((z: any) => z.id !== zoneId);
       if (remaining.length > 0) setActiveZone(remaining[0].name);
     }
   }
+
 
   return (
     <div className="space-y-3">
