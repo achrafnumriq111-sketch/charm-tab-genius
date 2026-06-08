@@ -73,19 +73,16 @@ const SECTION_COLORS: Record<string, string> = {
 // All products and modifier groups are now managed via the database.
 // No hardcoded data — start fresh from the Modifiers tab, then add products.
 
+// All domain data (products, modifiers, customers, gift cards, tables, zones,
+// reservations, discounts, VAT rates, activity logs, settings) is loaded from
+// the database via useLiveData / dedicated effects. No hardcoded seeds remain.
 const ALL_MODIFIER_GROUPS: any[] = [];
-
-const initialProducts: any[] = [];
-
-// Discounts, products, tables, zones, customers, gift cards, reservations all live in the database.
-// Hardcoded seeds removed — useLiveData seeds defaults on first location load.
-const initialChannels = [
+// Delivery channels are static UI metadata (icons/labels), not business data.
+const DELIVERY_CHANNELS = [
   { id: "afhaal", name: "Afhaal", icon: "🛍️" },
   { id: "uber-eats", name: "Uber Eats", icon: "🚗" },
   { id: "thuisbezorgd", name: "Thuisbezorgd", icon: "🛵" },
 ];
-const initialCustomers: any[] = [];
-const initialGiftCards: any[] = [];
 
 // ─── EMPLOYEES (loaded from database) ────────────────────────────────────────
 // No more hardcoded employee list — employees are fetched from the database
@@ -6052,11 +6049,11 @@ export default function SaakoukPOS() {
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers(locationId);
   const upsellEngine = useUpsellEngine(products, locationId);
   const [tables, setTables] = useState<any[]>([]);
-  const [channels] = useState(initialChannels);
+  const [channels] = useState(DELIVERY_CHANNELS);
   const [orders, setOrders] = useState<any[]>([]);
   const [dbLoaded, setDbLoaded] = useState(false);
-  const [customers, setCustomers] = useState(initialCustomers);
-  const [giftCards, setGiftCards] = useState(initialGiftCards);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [giftCards, setGiftCards] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [toast, setToast] = useState("");
@@ -6257,7 +6254,7 @@ export default function SaakoukPOS() {
     return () => clearInterval(interval);
   }, [locationId]);
 
-  // Enrich products with DB modifier groups (fallback to hardcoded)
+  // Enrich products with DB-linked modifier groups when available.
   const enrichedProducts = useMemo(() => {
     if (modifierGroups.length === 0) return products;
     return products.map((p) => {
