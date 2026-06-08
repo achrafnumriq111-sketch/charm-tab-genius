@@ -6254,7 +6254,7 @@ export default function SaakoukPOS() {
     return () => clearInterval(interval);
   }, [locationId]);
 
-  // Enrich products with DB modifier groups (fallback to hardcoded)
+  // Enrich products with DB-linked modifier groups when available.
   const enrichedProducts = useMemo(() => {
     if (modifierGroups.length === 0) return products;
     return products.map((p) => {
