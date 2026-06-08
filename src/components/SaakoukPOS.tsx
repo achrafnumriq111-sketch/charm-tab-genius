@@ -8,6 +8,7 @@ import { useLocation_ } from "@/contexts/LocationContext";
 import { getMember as passkitGetMember, earnPoints as passkitEarnPoints, enrolMember as passkitEnrolMember } from "@/lib/passkit";
 import { InventoryView, RecipeBuilderView, StockIntakeView, MonthlyCountView, CostingView, DynamicStockView, WasteLoggingView, deductStockForOrder, restoreStockForRefund } from "@/components/InventoryViews";
 import { useModifiers } from "@/hooks/useModifiers";
+import { useLiveData } from "@/hooks/useLiveData";
 import ModifiersView from "@/components/ModifiersView";
 import UpsellPrompt from "@/components/UpsellPrompt";
 import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
@@ -76,42 +77,15 @@ const ALL_MODIFIER_GROUPS: any[] = [];
 
 const initialProducts: any[] = [];
 
-const discounts = [
-  { id: "disc-1", name: "Verkeerde Drankje", type: "percent", value: 100 },
-  { id: "disc-2", name: "Influencer", type: "percent", value: 100 },
-  { id: "disc-3", name: "Staff use", type: "percent", value: 40 },
-  { id: "disc-4", name: "Familie", type: "percent", value: 30 },
-  { id: "disc-5", name: "Gemeente", type: "percent", value: 10 },
-  { id: "disc-6", name: "Matcha Zakje", type: "percent", value: 25 },
-];
-
-const initialTables = [
-  { id: "1", name: "1", seats: 2, area: "Binnen", shape: "square" as const, x: 60, y: 60, w: 70, h: 70 },
-  { id: "2", name: "2", seats: 2, area: "Binnen", shape: "square" as const, x: 160, y: 60, w: 70, h: 70 },
-  { id: "3", name: "3", seats: 2, area: "Binnen", shape: "square" as const, x: 260, y: 60, w: 70, h: 70 },
-  { id: "4", name: "4", seats: 4, area: "Binnen", shape: "rect" as const, x: 60, y: 180, w: 120, h: 70 },
-  { id: "5", name: "5", seats: 4, area: "Binnen", shape: "rect" as const, x: 220, y: 180, w: 120, h: 70 },
-  { id: "bar", name: "Bar", seats: 6, area: "Binnen", shape: "rect" as const, x: 400, y: 60, w: 140, h: 50 },
-  { id: "t1", name: "T1", seats: 4, area: "Terras", shape: "circle" as const, x: 80, y: 80, w: 80, h: 80 },
-  { id: "t2", name: "T2", seats: 4, area: "Terras", shape: "circle" as const, x: 220, y: 80, w: 80, h: 80 },
-];
-
+// Discounts, products, tables, zones, customers, gift cards, reservations all live in the database.
+// Hardcoded seeds removed — useLiveData seeds defaults on first location load.
 const initialChannels = [
   { id: "afhaal", name: "Afhaal", icon: "🛍️" },
   { id: "uber-eats", name: "Uber Eats", icon: "🚗" },
   { id: "thuisbezorgd", name: "Thuisbezorgd", icon: "🛵" },
 ];
-
-const initialZones = [
-  { id: "zone-binnen", name: "Binnen" },
-  { id: "zone-terras", name: "Terras" },
-];
-
 const initialCustomers: any[] = [];
-
 const initialGiftCards: any[] = [];
-
-const initialReservations: any[] = [];
 
 // ─── EMPLOYEES (loaded from database) ────────────────────────────────────────
 // No more hardcoded employee list — employees are fetched from the database
@@ -978,7 +952,7 @@ function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void })
 // ─── COUNTER POS VIEW ────────────────────────────────────────────────────────
 // Cart state is now lifted: ticket comes from parent via props
 
-function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast, addLog }: any) {
+function CounterView({ products: allProducts, tables, features, customers, giftCards, onRedeemGiftCard, ticket, setTicket, onOrderComplete, passkitConfig, onToast, addLog, discounts = [] }: any) {
   const [search, setSearch] = useState("");
   const [section, setSection] = useState("Signature Drinks");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -1355,12 +1329,10 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
 // ─── TABLE VIEW ──────────────────────────────────────────────────────────────
 // ─── FLOOR PLAN EDITOR ───────────────────────────────────────────────────────
 
-function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation, channels, addLog }: any) {
-  const [zones, setZones] = useState(() => {
-    const saved = localStorage.getItem("saakouk_zones");
-    return saved ? JSON.parse(saved) : initialZones;
-  });
-  const [activeZone, setActiveZone] = useState(zones[0]?.name || "Binnen");
+function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelectTable, onCloseTable, onSeatReservation, channels, addLog, zones: zonesProp, onCreateZone, onDeleteZone, onCreateTable, onUpdateTable, onDeleteTable }: any) {
+  const zones = zonesProp || [];
+  const [activeZone, setActiveZone] = useState<string>("");
+  useEffect(() => { if (!activeZone && zones[0]) setActiveZone(zones[0].name); }, [zones, activeZone]);
   const [editMode, setEditMode] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -1370,8 +1342,7 @@ function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelec
   const [newTable, setNewTable] = useState({ name: "", seats: 2, shape: "square" as "square" | "circle" | "rect" });
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { localStorage.setItem("saakouk_zones", JSON.stringify(zones)); }, [zones]);
-  useEffect(() => { localStorage.setItem("saakouk_tables", JSON.stringify(tables)); }, [tables]);
+  // Floor plan zones + tables persisted to DB via onCreate/onUpdate/onDelete props.
 
   const filtered = tables.filter((t: any) => t.area === activeZone);
 
@@ -1407,47 +1378,53 @@ function FloorPlanEditor({ tables, setTables, openTickets, reservations, onSelec
     setTables((prev: any[]) => prev.map((t: any) => t.id === dragging ? { ...t, x: Math.round(newX), y: Math.round(newY) } : t));
   }
 
-  function handleMouseUp() { setDragging(null); }
+  function handleMouseUp() {
+    if (dragging) {
+      const t = tables.find((tb: any) => tb.id === dragging);
+      if (t && onUpdateTable) onUpdateTable(t.id, { x: t.x, y: t.y });
+    }
+    setDragging(null);
+  }
 
-  function addNewTable() {
-    if (!newTable.name.trim()) return;
-    const id = generateId();
-    const t = {
-      id, name: newTable.name.trim(), seats: newTable.seats,
-      area: activeZone, shape: newTable.shape,
-      x: 60 + Math.random() * 200, y: 60 + Math.random() * 150,
+  async function addNewTable() {
+    if (!newTable.name.trim() || !onCreateTable) return;
+    const zone = zones.find((z: any) => z.name === activeZone);
+    await onCreateTable({
+      name: newTable.name.trim(), seats: newTable.seats, shape: newTable.shape,
+      zone_id: zone?.id || null,
+      x: Math.round(60 + Math.random() * 200), y: Math.round(60 + Math.random() * 150),
       w: newTable.shape === "rect" ? 120 : 70, h: 70,
-    };
-    setTables((prev: any[]) => [...prev, t]);
-    addLog?.("table_created", `Tafel "${t.name}" aangemaakt in zone ${activeZone}`);
+    });
+    addLog?.("table_created", `Tafel "${newTable.name.trim()}" aangemaakt in zone ${activeZone}`);
     setNewTable({ name: "", seats: 2, shape: "square" });
     setShowAddTable(false);
   }
 
-  function removeTable(id: string) {
+  async function removeTable(id: string) {
     const t = tables.find((tb: any) => tb.id === id);
-    setTables((prev: any[]) => prev.filter((tb: any) => tb.id !== id));
+    if (onDeleteTable) await onDeleteTable(id);
     addLog?.("table_deleted", `Tafel "${t?.name}" verwijderd`);
   }
 
-  function addZone() {
-    if (!newZoneName.trim()) return;
-    setZones((prev: any[]) => [...prev, { id: generateId(), name: newZoneName.trim() }]);
-    setActiveZone(newZoneName.trim());
+  async function addZone() {
+    if (!newZoneName.trim() || !onCreateZone) return;
+    const created = await onCreateZone(newZoneName.trim());
+    if (created) setActiveZone(created.name);
     setNewZoneName("");
     setShowAddZone(false);
   }
 
-  function removeZone(zoneId: string) {
+  async function removeZone(zoneId: string) {
     const zone = zones.find((z: any) => z.id === zoneId);
-    if (!zone) return;
-    setTables((prev: any[]) => prev.filter((t: any) => t.area !== zone.name));
-    setZones((prev: any[]) => prev.filter((z: any) => z.id !== zoneId));
+    if (!zone || !onDeleteZone) return;
+    // Tables in this zone become unassigned (zone_id null via realtime/cascade).
+    await onDeleteZone(zoneId);
     if (activeZone === zone.name) {
       const remaining = zones.filter((z: any) => z.id !== zoneId);
       if (remaining.length > 0) setActiveZone(remaining[0].name);
     }
   }
+
 
   return (
     <div className="space-y-3">
@@ -2536,29 +2513,39 @@ function ActivityView({ orders, employees }: any) {
 
 // ─── RESERVATIONS ────────────────────────────────────────────────────────────
 
-function ReservationsView({ reservations, setReservations, tables, addLog }: any) {
+function ReservationsView({ reservations, setReservations, tables, addLog, onCreateReservation, onUpdateReservation, onDeleteReservation }: any) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
 
-  function addReservation() {
-    if (!form.name || !form.date || !form.time) return;
-    setReservations((prev) => [...prev, { ...form, id: generateId(), guests: parseInt(form.guests) || 2, status: "confirmed" }]);
+  async function addReservation() {
+    if (!form.name || !form.date || !form.time || !onCreateReservation) return;
+    await onCreateReservation({
+      guest_name: form.name,
+      reservation_date: form.date,
+      reservation_time: form.time,
+      guests: parseInt(form.guests) || 2,
+      table_name: form.table || null,
+      phone: form.phone || null,
+      notes: form.notes || null,
+      status: "confirmed",
+    });
     addLog?.("reservation_created", `Reservering aangemaakt: ${form.name} — ${form.date} ${form.time}, ${form.guests} gasten, tafel ${form.table}`);
     setShowAdd(false);
     setForm({ name: "", date: "", time: "", guests: "2", table: "", phone: "", notes: "" });
   }
 
-  function updateStatus(id, status) {
-    const r = reservations.find((x) => x.id === id);
-    setReservations((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+  async function updateStatus(id: string, status: string) {
+    const r = reservations.find((x: any) => x.id === id);
+    if (onUpdateReservation) await onUpdateReservation(id, { status });
     addLog?.("reservation_status_changed", `Reservering status gewijzigd: ${r?.name || id} → ${status}`);
   }
 
-  function removeReservation(id) {
-    const r = reservations.find((x) => x.id === id);
+  async function removeReservation(id: string) {
+    const r = reservations.find((x: any) => x.id === id);
     addLog?.("reservation_deleted", `Reservering verwijderd: ${r?.name || id}`);
-    setReservations((prev) => prev.filter((r) => r.id !== id));
+    if (onDeleteReservation) await onDeleteReservation(id);
   }
+
 
   return (
     <div className="space-y-4">
@@ -2632,7 +2619,7 @@ function ReservationsView({ reservations, setReservations, tables, addLog }: any
 
 // ─── PRODUCTS MANAGEMENT ─────────────────────────────────────────────────────
 
-function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId, upsellRules, onRefetchUpsell }: any) {
+function ProductsView({ products: allProducts, setProducts, currentRole, currentEmployee, addLog, setNotifications, modifierGroups, modifierLinks, onRefetchModifiers, onToast, locationId, upsellRules, onRefetchUpsell, onCreateProduct, onUpdateProduct, onDeleteProduct }: any) {
   const [activeTab, setActiveTab] = useState<"products" | "modifiers" | "upsell">("products");
   const [search, setSearch] = useState("");
   const [filterSection, setFilterSection] = useState("all");
@@ -2674,28 +2661,17 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
     });
   }
 
-  function saveProduct() {
+  async function saveProduct() {
     if (!form.name || !form.price) return;
-    const modifierGroups = ALL_MODIFIER_GROUPS.filter((g) => form.modifierGroupIds.includes(g.id));
     const tags = form.tags.split(",").map((t) => t.trim()).filter(Boolean);
     const costPrice = form.costPrice ? parseFloat(form.costPrice) : 0;
-    const vatRate = form.vatRate !== "" ? parseFloat(form.vatRate) : undefined;
+    const vatRate = form.vatRate !== "" ? parseFloat(form.vatRate) : null;
     if (editing === "new") {
-      const newProduct = {
-        id: generateId(),
-        name: form.name,
-        section: form.section,
-        price: parseFloat(form.price),
-        costPrice,
-        tags,
-        modifierGroups,
-        color: form.color,
-        vatRate,
-        createdBy: currentEmployee?.name || "Onbekend",
-        createdById: currentEmployee?.id || null,
-        createdAt: new Date().toISOString(),
-      };
-      setProducts((prev) => [...prev, newProduct]);
+      if (!onCreateProduct) return;
+      await onCreateProduct({
+        name: form.name, section: form.section, price: parseFloat(form.price),
+        cost_price: costPrice, vat_rate: vatRate, color: form.color, tags,
+      });
       addLog?.("product_created", `Product aangemaakt: ${form.name} (${euro(parseFloat(form.price))})`);
       if (currentRole !== "owner") {
         setNotifications?.((prev: any[]) => [
@@ -2704,17 +2680,22 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
         ]);
       }
     } else {
-      setProducts((prev) => prev.map((p) => p.id === editing ? { ...p, name: form.name, section: form.section, price: parseFloat(form.price), costPrice, vatRate, tags, modifierGroups, color: form.color } : p));
+      if (!onUpdateProduct) return;
+      await onUpdateProduct(editing, {
+        name: form.name, section: form.section, price: parseFloat(form.price),
+        cost_price: costPrice, vat_rate: vatRate, color: form.color, tags,
+      });
       addLog?.("product_updated", `Product bijgewerkt: ${form.name}`);
     }
     setEditing(null);
   }
 
-  function deleteProduct(id) {
-    const product = allProducts.find((p) => p.id === id);
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  async function deleteProduct(id: string) {
+    const product = allProducts.find((p: any) => p.id === id);
+    if (onDeleteProduct) await onDeleteProduct(id);
     addLog?.("product_deleted", `Product verwijderd: ${product?.name || id}`);
   }
+
 
   return (
     <div className="space-y-4">
@@ -6066,39 +6047,83 @@ export default function SaakoukPOS() {
   const loggedInEmployee = authEmployee ? { id: authEmployee.id, name: authEmployee.full_name, role: authEmployee.role } : null;
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
-  const [products, setProducts] = useState(initialProducts);
+  const live = useLiveData(locationId);
+  const [products, setProducts] = useState<any[]>([]);
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers(locationId);
   const upsellEngine = useUpsellEngine(products, locationId);
-  const [tables, setTables] = useState(() => {
-    const saved = localStorage.getItem("saakouk_tables");
-    return saved ? JSON.parse(saved) : initialTables;
-  });
+  const [tables, setTables] = useState<any[]>([]);
   const [channels] = useState(initialChannels);
   const [orders, setOrders] = useState<any[]>([]);
   const [dbLoaded, setDbLoaded] = useState(false);
   const [customers, setCustomers] = useState(initialCustomers);
   const [giftCards, setGiftCards] = useState(initialGiftCards);
-  const [reservations, setReservations] = useState(initialReservations);
+  const [reservations, setReservations] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [toast, setToast] = useState("");
-  const [features, setFeatures] = useState({
-    tips: true, passkit: true, piggy: true, leat: true, qr: true, kitchen: false,
-  });
-  const [vatRates, setVatRates] = useState<Record<string, number>>(() => {
-    const saved = localStorage.getItem("saakouk_vat_rates");
-    return saved ? JSON.parse(saved) : {
-      "Signature Drinks": 9, "Specials": 9, "Cold Drinks": 9, "Hot Drinks": 9, "Sweets": 9, default: 21,
-    };
-  });
-  const [passkitConfig, setPasskitConfig] = useState({
-    programId: "24RMbRfRp5Y9h9ptYWnwFe",
-    tierId: "",
-    pointsPerEuro: 1,
-    autoEnrol: true,
-  });
+  // Feature flags now sourced from location_settings; sensible defaults until loaded.
+  const features = useMemo(() => ({
+    tips: live.settings?.feature_tips ?? true,
+    passkit: live.settings?.feature_passkit ?? true,
+    piggy: live.settings?.feature_piggy ?? false,
+    leat: live.settings?.feature_leat ?? false,
+    qr: live.settings?.feature_qr ?? true,
+    kitchen: live.settings?.feature_kitchen ?? false,
+  }), [live.settings]);
+  const setFeatures = useCallback((patch: any) => {
+    const next = typeof patch === "function" ? patch(features) : patch;
+    live.updateSettings({
+      feature_tips: next.tips, feature_passkit: next.passkit, feature_piggy: next.piggy,
+      feature_leat: next.leat, feature_qr: next.qr, feature_kitchen: next.kitchen,
+    });
+  }, [features, live]);
+  const vatRates = live.vatRates;
+  const setVatRates = useCallback((updater: any) => {
+    const next = typeof updater === "function" ? updater(vatRates) : updater;
+    Object.entries(next).forEach(([cat, rate]) => {
+      if (vatRates[cat] !== rate) live.setVatRate(cat, Number(rate));
+    });
+  }, [vatRates, live]);
+  const passkitConfig = useMemo(() => ({
+    programId: live.settings?.passkit_program_id || "24RMbRfRp5Y9h9ptYWnwFe",
+    tierId: live.settings?.passkit_tier_id || "",
+    pointsPerEuro: Number(live.settings?.points_per_euro ?? 1),
+    autoEnrol: live.settings?.auto_enrol ?? true,
+  }), [live.settings]);
+  const setPasskitConfig = useCallback((patch: any) => {
+    const next = typeof patch === "function" ? patch(passkitConfig) : patch;
+    live.updateSettings({
+      passkit_program_id: next.programId, passkit_tier_id: next.tierId,
+      points_per_euro: next.pointsPerEuro, auto_enrol: next.autoEnrol,
+    });
+  }, [passkitConfig, live]);
+  const discounts = useMemo(() => live.discounts.map((d) => ({
+    id: d.id, name: d.name, type: d.discount_type, value: Number(d.value),
+  })), [live.discounts]);
+
+  // Mirror live data into legacy local state used throughout component tree.
+  useEffect(() => {
+    setProducts(live.products.map((p) => ({
+      id: p.id, name: p.name, section: p.section, price: Number(p.price),
+      costPrice: Number(p.cost_price || 0), vatRate: p.vat_rate != null ? Number(p.vat_rate) : undefined,
+      color: p.color, tags: p.tags || [], modifierGroups: [],
+    })));
+  }, [live.products]);
+  useEffect(() => {
+    const zoneMap = new Map(live.zones.map((z) => [z.id, z.name]));
+    setTables(live.tables.map((t) => ({
+      id: t.id, name: t.name, seats: t.seats, area: zoneMap.get(t.zone_id) || "Binnen",
+      shape: t.shape, x: t.x, y: t.y, w: t.w, h: t.h,
+    })));
+  }, [live.tables, live.zones]);
+  useEffect(() => {
+    setReservations(live.reservations.map((r) => ({
+      id: r.id, name: r.guest_name, date: r.reservation_date, time: (r.reservation_time || "").slice(0, 5),
+      guests: r.guests, table: r.table_name || "", phone: r.phone || "", notes: r.notes || "", status: r.status,
+    })));
+  }, [live.reservations]);
+
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
-  const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [prepTickets, setPrepTickets] = useState<PrepTicket[]>([]);
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
@@ -6106,18 +6131,24 @@ export default function SaakoukPOS() {
   const [showCashClosing, setShowCashClosing] = useState(false);
   const [pendingGiftCardOrder, setPendingGiftCardOrder] = useState<any | null>(null);
 
+  // Activity logs sourced from DB (location-scoped) via realtime; mapped for legacy consumers.
+  const activityLogs = useMemo(() => live.activityLogs.map((l) => ({
+    id: l.id, action: l.action, details: l.details,
+    employeeId: l.employee_id, employeeName: l.employee_name, employeeRole: l.employee_role,
+    timestamp: new Date(l.created_at),
+  })), [live.activityLogs]);
+  const setActivityLogs = useCallback(() => {}, []); // no-op; logs persist server-side.
+
   const addLog = useCallback((action: string, details: string) => {
     if (!loggedInEmployee) return;
-    setActivityLogs((prev) => [{
-      id: generateId(),
-      action,
-      details,
+    live.appendActivityLog({
       employeeId: loggedInEmployee.id,
       employeeName: loggedInEmployee.name,
       employeeRole: loggedInEmployee.role,
-      timestamp: new Date(),
-    }, ...prev]);
-  }, [loggedInEmployee]);
+      action,
+      details,
+    });
+  }, [loggedInEmployee, live]);
 
   // Load employees from database (location-scoped)
   useEffect(() => {
@@ -6706,22 +6737,25 @@ export default function SaakoukPOS() {
                     products={enrichedProducts} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
-                    passkitConfig={passkitConfig} onToast={setToast} addLog={addLog}
+                    passkitConfig={passkitConfig} onToast={setToast} addLog={addLog} discounts={discounts}
                   />
                 </TabsContent>
                 <TabsContent value="table">
                   <FloorPlanEditor tables={tables} setTables={setTables} openTickets={openTickets} reservations={reservations}
                     onSelectTable={handleSelectTable} onCloseTable={handleCloseTable} onSeatReservation={handleSeatReservation}
                     channels={channels} addLog={addLog}
+                    zones={live.zones}
+                    onCreateZone={live.createZone} onDeleteZone={live.deleteZone}
+                    onCreateTable={live.createTable} onUpdateTable={live.updateTable} onDeleteTable={live.deleteTable}
                   />
                 </TabsContent>
               </Tabs>
             )}
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
-            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} onCreateReservation={live.createReservation} onUpdateReservation={live.updateReservation} onDeleteReservation={live.deleteReservation} />}
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} onCreateProduct={live.createProduct} onUpdateProduct={live.updateProduct} onDeleteProduct={live.deleteProduct} />}
             {/* Backwards-compat: modifiers/upsell now live inside Products */}
-            {(active === "modifiers" || active === "upsell") && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {(active === "modifiers" || active === "upsell") && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} onCreateProduct={live.createProduct} onUpdateProduct={live.updateProduct} onDeleteProduct={live.deleteProduct} />}
             {(active === "inventory" || active === "intake" || active === "waste" || active === "stockcount") && (
               <Tabs defaultValue={active === "intake" ? "intake" : active === "waste" ? "waste" : active === "stockcount" ? "telling" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">
