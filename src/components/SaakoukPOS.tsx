@@ -6124,7 +6124,6 @@ export default function SaakoukPOS() {
 
 
   const [qrOrders, setQrOrders] = useState<any[]>([]);
-  const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [prepTickets, setPrepTickets] = useState<PrepTicket[]>([]);
   const [lowStockItems, setLowStockItems] = useState<any[]>([]);
@@ -6132,17 +6131,24 @@ export default function SaakoukPOS() {
   const [showCashClosing, setShowCashClosing] = useState(false);
   const [pendingGiftCardOrder, setPendingGiftCardOrder] = useState<any | null>(null);
 
+  // Activity logs sourced from DB (location-scoped) via realtime; mapped for legacy consumers.
+  const activityLogs = useMemo(() => live.activityLogs.map((l) => ({
+    id: l.id, action: l.action, details: l.details,
+    employeeId: l.employee_id, employeeName: l.employee_name, employeeRole: l.employee_role,
+    timestamp: new Date(l.created_at),
+  })), [live.activityLogs]);
+  const setActivityLogs = useCallback(() => {}, []); // no-op; logs persist server-side.
+
   const addLog = useCallback((action: string, details: string) => {
     if (!loggedInEmployee) return;
-    setActivityLogs((prev) => [{
-      id: generateId(),
-      action,
-      details,
+    live.appendActivityLog({
       employeeId: loggedInEmployee.id,
       employeeName: loggedInEmployee.name,
       employeeRole: loggedInEmployee.role,
-      timestamp: new Date(),
-    }, ...prev]);
+      action,
+      details,
+    });
+  }, [loggedInEmployee, live]);
   }, [loggedInEmployee]);
 
   // Load employees from database (location-scoped)
@@ -6732,22 +6738,25 @@ export default function SaakoukPOS() {
                     products={enrichedProducts} tables={tables} features={features} customers={customers}
                     giftCards={giftCards} onRedeemGiftCard={handleRedeemGiftCard}
                     ticket={activeTicket} setTicket={setActiveTicket} onOrderComplete={handleOrderComplete}
-                    passkitConfig={passkitConfig} onToast={setToast} addLog={addLog}
+                    passkitConfig={passkitConfig} onToast={setToast} addLog={addLog} discounts={discounts}
                   />
                 </TabsContent>
                 <TabsContent value="table">
                   <FloorPlanEditor tables={tables} setTables={setTables} openTickets={openTickets} reservations={reservations}
                     onSelectTable={handleSelectTable} onCloseTable={handleCloseTable} onSeatReservation={handleSeatReservation}
                     channels={channels} addLog={addLog}
+                    zones={live.zones}
+                    onCreateZone={live.createZone} onDeleteZone={live.deleteZone}
+                    onCreateTable={live.createTable} onUpdateTable={live.updateTable} onDeleteTable={live.deleteTable}
                   />
                 </TabsContent>
               </Tabs>
             )}
             {active === "prepstation" && <PrepStationView prepTickets={prepTickets} onUpdateStatus={updatePrepStatus} />}
-            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} />}
-            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {active === "reservations" && <ReservationsView reservations={reservations} setReservations={setReservations} tables={tables} addLog={addLog} onCreateReservation={live.createReservation} onUpdateReservation={live.updateReservation} onDeleteReservation={live.deleteReservation} />}
+            {active === "products" && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} onCreateProduct={live.createProduct} onUpdateProduct={live.updateProduct} onDeleteProduct={live.deleteProduct} />}
             {/* Backwards-compat: modifiers/upsell now live inside Products */}
-            {(active === "modifiers" || active === "upsell") && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} />}
+            {(active === "modifiers" || active === "upsell") && <ProductsView products={enrichedProducts} setProducts={setProducts} currentRole={loggedInEmployee.role} currentEmployee={loggedInEmployee} addLog={addLog} setNotifications={setNotifications} modifierGroups={modifierGroups} modifierLinks={modifierLinks} onRefetchModifiers={refetchModifiers} onToast={setToast} locationId={locationId} upsellRules={upsellEngine.rules} onRefetchUpsell={upsellEngine.refetch} onCreateProduct={live.createProduct} onUpdateProduct={live.updateProduct} onDeleteProduct={live.deleteProduct} />}
             {(active === "inventory" || active === "intake" || active === "waste" || active === "stockcount") && (
               <Tabs defaultValue={active === "intake" ? "intake" : active === "waste" ? "waste" : active === "stockcount" ? "telling" : "voorraad"} className="space-y-3">
                 <TabsList className="rounded-xl">
