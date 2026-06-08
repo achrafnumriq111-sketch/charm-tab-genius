@@ -73,19 +73,16 @@ const SECTION_COLORS: Record<string, string> = {
 // All products and modifier groups are now managed via the database.
 // No hardcoded data — start fresh from the Modifiers tab, then add products.
 
+// All domain data (products, modifiers, customers, gift cards, tables, zones,
+// reservations, discounts, VAT rates, activity logs, settings) is loaded from
+// the database via useLiveData / dedicated effects. No hardcoded seeds remain.
 const ALL_MODIFIER_GROUPS: any[] = [];
-
-const initialProducts: any[] = [];
-
-// Discounts, products, tables, zones, customers, gift cards, reservations all live in the database.
-// Hardcoded seeds removed — useLiveData seeds defaults on first location load.
-const initialChannels = [
+// Delivery channels are static UI metadata (icons/labels), not business data.
+const DELIVERY_CHANNELS = [
   { id: "afhaal", name: "Afhaal", icon: "🛍️" },
   { id: "uber-eats", name: "Uber Eats", icon: "🚗" },
   { id: "thuisbezorgd", name: "Thuisbezorgd", icon: "🛵" },
 ];
-const initialCustomers: any[] = [];
-const initialGiftCards: any[] = [];
 
 // ─── EMPLOYEES (loaded from database) ────────────────────────────────────────
 // No more hardcoded employee list — employees are fetched from the database
