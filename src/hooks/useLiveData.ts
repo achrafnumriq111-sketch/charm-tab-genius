@@ -109,16 +109,16 @@ export function useLiveData(locationId: string | null): LiveDataApi {
         if (!ls.data) {
           await supabase.from("location_settings").insert({ location_id: locationId }).then(({ data }) => {
             if (data && data[0]) setSettings(data[0]);
-          }).catch(() => {});
+          });
         }
         if ((dc.data || []).length === 0) {
           const rows = DEFAULT_DISCOUNTS.map((d, i) => ({ ...d, location_id: locationId, sort_order: i }));
-          const { data } = await supabase.from("discounts").insert(rows).select();
+          const { data } = await supabase.from("discounts").insert(rows as any).select();
           if (data) setDiscounts(data);
         }
         if ((vt.data || []).length === 0) {
           const rows = Object.entries(VAT_DEFAULTS).map(([category, rate]) => ({ location_id: locationId, category, rate }));
-          await supabase.from("vat_category_rates").insert(rows);
+          await supabase.from("vat_category_rates").insert(rows as any);
         }
       }
     };
@@ -152,13 +152,13 @@ export function useLiveData(locationId: string | null): LiveDataApi {
   // ----- CRUD helpers -----
   const createProduct = useCallback(async (p: Partial<AnyRow>) => {
     if (!locationId) return null;
-    const { data, error } = await supabase.from("products").insert({ ...p, location_id: locationId }).select().single();
+    const { data, error } = await supabase.from("products").insert({ ...p, location_id: locationId } as any).select().single();
     if (error) { console.error(error); return null; }
     return data;
   }, [locationId]);
 
   const updateProduct = useCallback(async (id: string, p: Partial<AnyRow>) => {
-    await supabase.from("products").update(p).eq("id", id);
+    await supabase.from("products").update(p as any).eq("id", id);
   }, []);
 
   const deleteProduct = useCallback(async (id: string) => {
@@ -179,12 +179,12 @@ export function useLiveData(locationId: string | null): LiveDataApi {
 
   const createTable = useCallback(async (t: Partial<AnyRow>) => {
     if (!locationId) return null;
-    const { data } = await supabase.from("floor_tables").insert({ ...t, location_id: locationId }).select().single();
+    const { data } = await supabase.from("floor_tables").insert({ ...t, location_id: locationId } as any).select().single();
     return data;
   }, [locationId]);
 
   const updateTable = useCallback(async (id: string, t: Partial<AnyRow>) => {
-    await supabase.from("floor_tables").update(t).eq("id", id);
+    await supabase.from("floor_tables").update(t as any).eq("id", id);
   }, []);
 
   const deleteTable = useCallback(async (id: string) => {
@@ -194,12 +194,12 @@ export function useLiveData(locationId: string | null): LiveDataApi {
 
   const createReservation = useCallback(async (r: Partial<AnyRow>) => {
     if (!locationId) return null;
-    const { data } = await supabase.from("reservations").insert({ ...r, location_id: locationId }).select().single();
+    const { data } = await supabase.from("reservations").insert({ ...r, location_id: locationId } as any).select().single();
     return data;
   }, [locationId]);
 
   const updateReservation = useCallback(async (id: string, r: Partial<AnyRow>) => {
-    await supabase.from("reservations").update(r).eq("id", id);
+    await supabase.from("reservations").update(r as any).eq("id", id);
   }, []);
 
   const deleteReservation = useCallback(async (id: string) => {
@@ -209,12 +209,12 @@ export function useLiveData(locationId: string | null): LiveDataApi {
 
   const createDiscount = useCallback(async (d: Partial<AnyRow>) => {
     if (!locationId) return null;
-    const { data } = await supabase.from("discounts").insert({ ...d, location_id: locationId }).select().single();
+    const { data } = await supabase.from("discounts").insert({ ...d, location_id: locationId } as any).select().single();
     return data;
   }, [locationId]);
 
   const updateDiscount = useCallback(async (id: string, d: Partial<AnyRow>) => {
-    await supabase.from("discounts").update(d).eq("id", id);
+    await supabase.from("discounts").update(d as any).eq("id", id);
   }, []);
 
   const deleteDiscount = useCallback(async (id: string) => {
