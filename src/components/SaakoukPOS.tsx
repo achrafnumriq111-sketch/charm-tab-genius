@@ -6049,11 +6049,11 @@ export default function SaakoukPOS() {
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers(locationId);
   const upsellEngine = useUpsellEngine(products, locationId);
   const [tables, setTables] = useState<any[]>([]);
-  const [channels] = useState(initialChannels);
+  const [channels] = useState(DELIVERY_CHANNELS);
   const [orders, setOrders] = useState<any[]>([]);
   const [dbLoaded, setDbLoaded] = useState(false);
-  const [customers, setCustomers] = useState(initialCustomers);
-  const [giftCards, setGiftCards] = useState(initialGiftCards);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [giftCards, setGiftCards] = useState<any[]>([]);
   const [reservations, setReservations] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [toast, setToast] = useState("");
