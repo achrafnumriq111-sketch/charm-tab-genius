@@ -6149,7 +6149,6 @@ export default function SaakoukPOS() {
       details,
     });
   }, [loggedInEmployee, live]);
-  }, [loggedInEmployee]);
 
   // Load employees from database (location-scoped)
   useEffect(() => {
