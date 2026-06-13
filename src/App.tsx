@@ -4,7 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { TenantProvider } from "@/contexts/TenantContext";
+import { TenantProvider, useTenant } from "@/contexts/TenantContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -16,7 +16,40 @@ const Menu = lazy(() => import("./pages/Menu.tsx"));
 const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
+const MarketingHome = lazy(() => import("./pages/marketing/Home.tsx"));
+const MarketingFeatures = lazy(() => import("./pages/marketing/Features.tsx"));
+const MarketingPricing = lazy(() => import("./pages/marketing/Pricing.tsx"));
+const MarketingContact = lazy(() => import("./pages/marketing/Contact.tsx"));
+const MarketingDemo = lazy(() => import("./pages/marketing/Demo.tsx"));
+
 const queryClient = new QueryClient();
+
+const AppRoutes = () => {
+  const { isPlatformLevel } = useTenant();
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/admin" element={<PlatformAdmin />} />
+        <Route path="/menu/:tableId" element={<Menu />} />
+        {isPlatformLevel ? (
+          <>
+            <Route path="/" element={<MarketingHome />} />
+            <Route path="/features" element={<MarketingFeatures />} />
+            <Route path="/pricing" element={<MarketingPricing />} />
+            <Route path="/contact" element={<MarketingContact />} />
+            <Route path="/demo" element={<MarketingDemo />} />
+            <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          </>
+        ) : (
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+        )}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -27,17 +60,7 @@ const App = () => (
         <TenantProvider>
           <AuthProvider>
             <LocationProvider>
-              <Suspense fallback={<div className="min-h-screen" />}>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/admin" element={<PlatformAdmin />} />
-                  <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                  <Route path="/menu/:tableId" element={<Menu />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+              <AppRoutes />
             </LocationProvider>
           </AuthProvider>
         </TenantProvider>
