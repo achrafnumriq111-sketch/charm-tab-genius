@@ -29,8 +29,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearSession = useCallback(() => {
     setEmployee(null);
-    sessionStorage.removeItem("pos_employee");
-    localStorage.removeItem("pos_employee");
+    // Wipe every saakouk_/pos_ key from both storages so a logout
+    // fully resets tenant, location, impersonation and employee state.
+    const wipe = (s: Storage) => {
+      try {
+        const keys: string[] = [];
+        for (let i = 0; i < s.length; i++) {
+          const k = s.key(i);
+          if (k && (k.startsWith("saakouk_") || k.startsWith("pos_"))) keys.push(k);
+        }
+        keys.forEach((k) => s.removeItem(k));
+      } catch { /* ignore */ }
+    };
+    wipe(sessionStorage);
+    wipe(localStorage);
   }, []);
 
   const logout = useCallback(async () => {

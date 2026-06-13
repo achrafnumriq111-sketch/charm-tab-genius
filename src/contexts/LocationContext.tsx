@@ -166,17 +166,29 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       setLocations(data as Location[]);
       const firstTenant = (data[0] as any).tenant_id;
       if (firstTenant) setTenantId(firstTenant);
-      const currentId = localStorage.getItem(STORAGE_KEY);
-      if (!currentId || !data.find((l: any) => l.id === currentId)) {
+      // A7: validate BOTH state and storage. If the currently active
+      // location is no longer in the user's allowed set (e.g. removed,
+      // tenant switch, removed from employee), force reselect.
+      const stateId = activeLocationId;
+      const storedId = localStorage.getItem(STORAGE_KEY);
+      const stillValid = (id: string | null) => !!id && data.some((l: any) => l.id === id);
+      if (!stillValid(stateId) && !stillValid(storedId)) {
         const firstId = data[0].id;
         setActiveLocationIdState(firstId);
         localStorage.setItem(STORAGE_KEY, firstId);
+      } else if (!stillValid(stateId) && stillValid(storedId)) {
+        setActiveLocationIdState(storedId);
       }
     } else {
+      // No accessible locations → clear stale id so app doesn't render
+      // a phantom location.
       setLocations([]);
+      setActiveLocationIdState(null);
+      localStorage.removeItem(STORAGE_KEY);
+      setTenantId(null);
     }
     setLoading(false);
-  }, [effectiveTenantId]);
+  }, [effectiveTenantId, activeLocationId]);
 
   useEffect(() => {
     fetchLocations();

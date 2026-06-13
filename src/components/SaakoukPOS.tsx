@@ -13,6 +13,7 @@ import ModifiersView from "@/components/ModifiersView";
 import UpsellPrompt from "@/components/UpsellPrompt";
 import { useUpsellEngine, UpsellSuggestion } from "@/hooks/useUpsell";
 import UpsellRulesView from "@/components/UpsellRulesView";
+import { useRolePermissions, VIEW_PERMISSION_MAP } from "@/hooks/useRolePermissions";
 import { AIForecastCenter } from "@/components/AIForecastCenter";
 import MultiLocationDashboard from "@/components/MultiLocationDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -184,7 +185,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange, isPlatformAdmin, allTenants, selectedTenantId, onSelectTenant, tenantUnlocked, onUnlockTenant, onClearTenant }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void; isPlatformAdmin?: boolean; allTenants?: any[]; selectedTenantId?: string | null; onSelectTenant?: (id: string) => void; tenantUnlocked?: boolean; onUnlockTenant?: (pin: string) => Promise<boolean>; onClearTenant?: () => void }) {
+function Sidebar({ active, setActive, role, onLogout, employeeName, locations, activeLocation, onLocationChange, isPlatformAdmin, allTenants, selectedTenantId, onSelectTenant, tenantUnlocked, onUnlockTenant, onClearTenant, canAccessView }: { active: string; setActive: (k: string) => void; role: string; onLogout: () => void; employeeName: string; locations: any[]; activeLocation: any; onLocationChange: (id: string) => void; isPlatformAdmin?: boolean; allTenants?: any[]; selectedTenantId?: string | null; onSelectTenant?: (id: string) => void; tenantUnlocked?: boolean; onUnlockTenant?: (pin: string) => Promise<boolean>; onClearTenant?: () => void; canAccessView: (k: string) => boolean }) {
   const isAdmin = role === "owner" || role === "manager";
   const isOwner = role === "owner";
   const [tenantPinInput, setTenantPinInput] = React.useState("");
@@ -211,6 +212,8 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
   const sections = allSections.filter((s) => {
     if (s.ownerOnly && !isOwner) return false;
     if (s.adminOnly && !isAdmin) return false;
+    // A6: also enforce per-permission gate from role_permissions
+    if (!canAccessView(s.key)) return false;
     return true;
   });
   return (
@@ -6045,6 +6048,8 @@ export default function SaakoukPOS() {
   const [active, setActive] = useState("pos");
   const [sectionPicked, setSectionPicked] = useState(false);
   const live = useLiveData(locationId);
+  // A6: per-permission gate, loaded from role_permissions
+  const { canAccessView } = useRolePermissions(loggedInEmployee?.role, locationId);
   const [products, setProducts] = useState<any[]>([]);
   const { groups: modifierGroups, links: modifierLinks, loading: modifiersLoading, refetch: refetchModifiers, getGroupsForProduct } = useModifiers(locationId);
   const upsellEngine = useUpsellEngine(products, locationId);
@@ -6618,7 +6623,7 @@ export default function SaakoukPOS() {
         <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.35),transparent_70%)] blur-3xl" />
       </div>
 
-      <Sidebar active={active} setActive={(view) => { setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} isPlatformAdmin={isPlatformAdmin} allTenants={allTenants} selectedTenantId={selectedTenantId} onSelectTenant={selectTenant} tenantUnlocked={tenantUnlocked} onUnlockTenant={unlockTenant} onClearTenant={clearTenantSelection} />
+      <Sidebar active={active} setActive={(view) => { if (!canAccessView(view)) { setToast("Geen toegang tot deze sectie"); return; } setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} isPlatformAdmin={isPlatformAdmin} allTenants={allTenants} selectedTenantId={selectedTenantId} onSelectTenant={selectTenant} tenantUnlocked={tenantUnlocked} onUnlockTenant={unlockTenant} onClearTenant={clearTenantSelection} canAccessView={canAccessView} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Glass top bar */}
         <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
@@ -6708,6 +6713,14 @@ export default function SaakoukPOS() {
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
+            {!canAccessView(active) ? (
+              <div className="max-w-md mx-auto mt-24 rounded-3xl border border-white/70 bg-white/70 backdrop-blur-2xl p-8 text-center shadow-[0_30px_80px_rgba(162,178,226,0.18)]">
+                <Lock className="h-10 w-10 mx-auto text-slate-400 mb-3" />
+                <h2 className="text-lg font-semibold text-slate-900 mb-1">Geen toegang</h2>
+                <p className="text-sm text-slate-500 mb-4">Je rol ({loggedInEmployee.role}) heeft geen toestemming voor deze sectie. Vraag de eigenaar om je permissies aan te passen.</p>
+                <button onClick={() => setActive("pos")} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">Terug naar POS</button>
+              </div>
+            ) : (<>
             {active === "dashboard" && (
               <Tabs defaultValue="overview" className="space-y-3">
                 <TabsList className="rounded-xl">
@@ -6832,6 +6845,7 @@ export default function SaakoukPOS() {
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
+            </>)}
           </div>
         </div>
       </main>
