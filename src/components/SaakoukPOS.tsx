@@ -6720,8 +6720,8 @@ export default function SaakoukPOS() {
                 <p className="text-sm text-slate-500 mb-4">Je rol ({loggedInEmployee.role}) heeft geen toestemming voor deze sectie. Vraag de eigenaar om je permissies aan te passen.</p>
                 <button onClick={() => setActive("pos")} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">Terug naar POS</button>
               </div>
-            ) : null}
-            {canAccessView(active) && active === "dashboard" && (
+            ) : (<>
+            {active === "dashboard" && (
               <Tabs defaultValue="overview" className="space-y-3">
                 <TabsList className="rounded-xl">
                   <TabsTrigger value="overview">Overzicht</TabsTrigger>
@@ -6845,6 +6845,7 @@ export default function SaakoukPOS() {
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
             {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
+            </>)}
           </div>
         </div>
       </main>
