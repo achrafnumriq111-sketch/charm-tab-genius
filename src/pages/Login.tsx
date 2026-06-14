@@ -18,10 +18,13 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
   const usernameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const mfaRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { login, loginOwner, isAuthenticated } = useAuth();
+  const { login, loginOwner, verifyOwnerMfa, isAuthenticated } = useAuth();
   const { tenant, isPlatformLevel } = useTenant();
 
   useEffect(() => {
@@ -29,13 +32,25 @@ const Login = () => {
   }, [isAuthenticated, navigate, isPlatformLevel]);
 
   useEffect(() => {
-    if (mode === "owner") emailRef.current?.focus();
+    if (mfaFactorId) mfaRef.current?.focus();
+    else if (mode === "owner") emailRef.current?.focus();
     else usernameRef.current?.focus();
-  }, [mode]);
+  }, [mode, mfaFactorId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // MFA challenge step
+    if (mfaFactorId) {
+      if (!/^\d{6}$/.test(mfaCode)) { setError("Voer 6 cijfers in"); return; }
+      setLoading(true);
+      const result = await verifyOwnerMfa(mfaFactorId, mfaCode, rememberMe);
+      setLoading(false);
+      if (result.error) { setError(result.error); setMfaCode(""); return; }
+      navigate(isPlatformLevel ? "/app" : "/", { replace: true });
+      return;
+    }
 
     if (mode === "owner") {
       if (!email.trim() || !password) {
@@ -48,6 +63,8 @@ const Login = () => {
       if (result.error) {
         setError(result.error);
         setPassword("");
+      } else if (result.mfaRequired) {
+        setMfaFactorId(result.mfaRequired.factorId);
       } else {
         navigate(isPlatformLevel ? "/app" : "/", { replace: true });
       }
@@ -137,32 +154,69 @@ const Login = () => {
             backdropFilter: "blur(14px)",
           }}
         >
-          {/* Mode tabs */}
-          <div
-            className="flex p-1 rounded-xl mb-5"
-            style={{ background: "rgba(0,0,0,0.04)" }}
-          >
-            {(["owner", "employee"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); setError(""); }}
-                className="flex-1 h-9 rounded-lg text-xs font-semibold transition-all"
-                style={{
-                  background: mode === m
-                    ? "linear-gradient(135deg, rgba(172,155,255,0.9), rgba(140,120,220,0.95))"
-                    : "transparent",
-                  color: mode === m ? "#fff" : "#8b8b9e",
-                  boxShadow: mode === m ? "0 2px 10px rgba(172,155,255,0.25)" : "none",
-                }}
-              >
-                {m === "owner" ? "Eigenaar" : "Medewerker"}
-              </button>
-            ))}
-          </div>
+          {/* Mode tabs (hidden during MFA challenge) */}
+          {!mfaFactorId && (
+            <div
+              className="flex p-1 rounded-xl mb-5"
+              style={{ background: "rgba(0,0,0,0.04)" }}
+            >
+              {(["owner", "employee"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setMode(m); setError(""); }}
+                  className="flex-1 h-9 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: mode === m
+                      ? "linear-gradient(135deg, rgba(172,155,255,0.9), rgba(140,120,220,0.95))"
+                      : "transparent",
+                    color: mode === m ? "#fff" : "#8b8b9e",
+                    boxShadow: mode === m ? "0 2px 10px rgba(172,155,255,0.25)" : "none",
+                  }}
+                >
+                  {m === "owner" ? "Eigenaar" : "Medewerker"}
+                </button>
+              ))}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {mode === "owner" ? (
+            {mfaFactorId ? (
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                  Tweestapsverificatie (6 cijfers)
+                </label>
+                <input
+                  ref={mfaRef}
+                  value={mfaCode}
+                  onChange={(e) => { setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="••••••"
+                  disabled={loading}
+                  className="w-full h-14 px-4 rounded-xl text-center outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.5)",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                    color: "#2a2a3a",
+                    fontSize: 26,
+                    letterSpacing: "0.4em",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                />
+                <p className="text-[11px] mt-2" style={{ color: "#9b9bab" }}>
+                  Open je authenticator-app en voer de huidige code in.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setMfaFactorId(null); setMfaCode(""); setPassword(""); setError(""); }}
+                  className="text-[11px] underline mt-1"
+                  style={{ color: "#7c6bc4" }}
+                >
+                  Annuleer
+                </button>
+              </div>
+            ) : mode === "owner" ? (
               <>
                 {/* Email */}
                 <div>
@@ -329,9 +383,11 @@ const Login = () => {
               type="submit"
               disabled={
                 loading ||
-                (mode === "owner"
-                  ? !email.trim() || !password
-                  : !username.trim() || pin.length !== 6)
+                (mfaFactorId
+                  ? mfaCode.length !== 6
+                  : mode === "owner"
+                    ? !email.trim() || !password
+                    : !username.trim() || pin.length !== 6)
               }
               className="w-full h-12 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-35"
               style={{
@@ -340,7 +396,7 @@ const Login = () => {
                 boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
               }}
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Inloggen"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : mfaFactorId ? "Verifiëren" : "Inloggen"}
             </button>
           </form>
         </div>

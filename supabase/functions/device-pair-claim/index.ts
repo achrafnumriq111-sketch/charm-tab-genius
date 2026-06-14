@@ -26,6 +26,30 @@ Deno.serve(async (req) => {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const ua = req.headers.get("user-agent") || "unknown";
 
+    // IP rate limit: max 10 failed pair attempts per 10 minutes
+    const since = new Date(Date.now() - 10 * 60_000).toISOString();
+    const { count: recentFails } = await admin
+      .from("security_events")
+      .select("id", { count: "exact", head: true })
+      .eq("event_type", "device_pair_invalid")
+      .eq("ip_address", ip)
+      .gte("occurred_at", since);
+
+    if ((recentFails ?? 0) >= 10) {
+      await admin.from("security_events").insert({
+        event_type: "device_pair_blocked",
+        severity: "critical",
+        source: "edge:device-pair-claim",
+        ip_address: ip,
+        user_agent: ua,
+        metadata: { reason: "rate_limit_10_per_10min" },
+      });
+      return new Response(JSON.stringify({ error: "Te veel pogingen. Wacht 10 minuten." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: pair, error } = await admin
       .from("device_pairing_codes")
       .select("*")
@@ -33,10 +57,18 @@ Deno.serve(async (req) => {
       .is("used_at", null)
       .maybeSingle();
 
-    // Constant-ish delay
+    // Constant-ish delay against timing attacks
     await new Promise((r) => setTimeout(r, 250 + Math.random() * 150));
 
     if (error || !pair) {
+      await admin.from("security_events").insert({
+        event_type: "device_pair_invalid",
+        severity: "warning",
+        source: "edge:device-pair-claim",
+        ip_address: ip,
+        user_agent: ua,
+        metadata: { reason: "code_not_found" },
+      });
       return new Response(JSON.stringify({ error: "Ongeldige of verlopen code" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -44,8 +76,36 @@ Deno.serve(async (req) => {
     }
 
     if (new Date(pair.expires_at) < new Date()) {
+      await admin.from("security_events").insert({
+        event_type: "device_pair_invalid",
+        severity: "warning",
+        source: "edge:device-pair-claim",
+        ip_address: ip,
+        user_agent: ua,
+        metadata: { reason: "expired", code_id: pair.id },
+      });
       return new Response(JSON.stringify({ error: "Code is verlopen" }), {
         status: 410,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Per-code attempt limit (defense in depth): max 5 attempts
+    if ((pair.attempts ?? 0) >= 5) {
+      await admin
+        .from("device_pairing_codes")
+        .update({ used_at: new Date().toISOString() }) // burn the code
+        .eq("id", pair.id);
+      await admin.from("security_events").insert({
+        event_type: "device_pair_blocked",
+        severity: "critical",
+        source: "edge:device-pair-claim",
+        ip_address: ip,
+        user_agent: ua,
+        metadata: { reason: "code_attempt_limit", code_id: pair.id },
+      });
+      return new Response(JSON.stringify({ error: "Code geblokkeerd. Vraag een nieuwe." }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

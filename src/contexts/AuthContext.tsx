@@ -14,7 +14,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, pin: string, rememberMe: boolean) => Promise<{ error?: string }>;
-  loginOwner: (email: string, password: string, rememberMe: boolean) => Promise<{ error?: string }>;
+  loginOwner: (email: string, password: string, rememberMe: boolean) => Promise<{ error?: string; mfaRequired?: { factorId: string } }>;
+  verifyOwnerMfa: (factorId: string, code: string, rememberMe: boolean) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -180,11 +181,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [slug]);
 
+  const finalizeOwnerLogin = useCallback(async (userId: string, rememberMe: boolean): Promise<{ error?: string }> => {
+    const { data: emp } = await supabase
+      .from("employees")
+      .select("id, full_name, role, location_id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!emp) {
+      await supabase.auth.signOut();
+      return { error: "Geen actieve zaak gekoppeld aan dit account" };
+    }
+
+    const employee: Employee = {
+      id: emp.id,
+      full_name: emp.full_name,
+      role: emp.role,
+      location_id: emp.location_id ?? undefined,
+    };
+    setEmployee(employee);
+
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem("pos_employee", JSON.stringify(employee));
+    if (!rememberMe) localStorage.removeItem("pos_employee");
+    return {};
+  }, []);
+
   const loginOwner = useCallback(async (
     email: string,
     password: string,
     rememberMe: boolean,
-  ): Promise<{ error?: string }> => {
+  ): Promise<{ error?: string; mfaRequired?: { factorId: string } }> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -194,39 +222,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: error?.message || "Ongeldige inloggegevens" };
       }
 
-      // Fetch the matching employee row (created by setup_tenant_onboarding)
-      const { data: emp } = await supabase
-        .from("employees")
-        .select("id, full_name, role, location_id")
-        .eq("user_id", data.session.user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (!emp) {
-        await supabase.auth.signOut();
-        return { error: "Geen actieve zaak gekoppeld aan dit account" };
+      // Check if MFA is required (user has verified TOTP factor)
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal?.currentLevel === "aal1" && aal?.nextLevel === "aal2") {
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const totp = factors?.totp?.find((f) => f.status === "verified");
+        if (totp) {
+          // Do NOT finalize yet — caller must call verifyOwnerMfa
+          return { mfaRequired: { factorId: totp.id } };
+        }
       }
 
-      const employee: Employee = {
-        id: emp.id,
-        full_name: emp.full_name,
-        role: emp.role,
-        location_id: emp.location_id ?? undefined,
-      };
-      setEmployee(employee);
-
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem("pos_employee", JSON.stringify(employee));
-      if (!rememberMe) localStorage.removeItem("pos_employee");
-
-      return {};
+      return await finalizeOwnerLogin(data.session.user.id, rememberMe);
     } catch (e) {
       return { error: (e as Error).message || "Verbinding mislukt" };
     }
-  }, []);
+  }, [finalizeOwnerLogin]);
+
+  const verifyOwnerMfa = useCallback(async (
+    factorId: string,
+    code: string,
+    rememberMe: boolean,
+  ): Promise<{ error?: string }> => {
+    try {
+      const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
+      if (chErr || !ch) return { error: chErr?.message || "Challenge mislukt" };
+      const { error: vErr } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: ch.id,
+        code,
+      });
+      if (vErr) return { error: vErr.message };
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: "Sessie verlopen" };
+      return await finalizeOwnerLogin(user.id, rememberMe);
+    } catch (e) {
+      return { error: (e as Error).message || "Verificatie mislukt" };
+    }
+  }, [finalizeOwnerLogin]);
 
   return (
-    <AuthContext.Provider value={{ employee, isAuthenticated: !!employee, isLoading, login, loginOwner, logout }}>
+    <AuthContext.Provider value={{ employee, isAuthenticated: !!employee, isLoading, login, loginOwner, verifyOwnerMfa, logout }}>
       {children}
     </AuthContext.Provider>
   );
