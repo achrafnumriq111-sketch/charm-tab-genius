@@ -10,6 +10,10 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
+import AcceptInvite from "./pages/AcceptInvite.tsx";
+import TeamInvites from "./pages/TeamInvites.tsx";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
@@ -31,8 +35,12 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/accept-invite/:token" element={<AcceptInvite />} />
         <Route path="/admin" element={<PlatformAdmin />} />
         <Route path="/menu/:tableId" element={<Menu />} />
+        <Route path="/team" element={<ProtectedRoute><TeamInvites /></ProtectedRoute>} />
         {isPlatformLevel ? (
           <>
             <Route path="/" element={<MarketingHome />} />

@@ -260,8 +260,13 @@ const Login = () => {
           </form>
         </div>
 
-        {/* Signup link */}
-        <div className="text-center mt-4">
+        {/* Links */}
+        <div className="text-center mt-4 space-y-1.5">
+          <p className="text-[11px]" style={{ color: "#9b9bab" }}>
+            <button onClick={() => navigate("/forgot-password")} className="font-medium underline" style={{ color: "#7c6bc4" }}>
+              Wachtwoord vergeten?
+            </button>
+          </p>
           <p className="text-[11px]" style={{ color: "#9b9bab" }}>
             Nog geen account?{" "}
             <button onClick={() => navigate("/signup")} className="font-medium underline" style={{ color: "#7c6bc4" }}>
