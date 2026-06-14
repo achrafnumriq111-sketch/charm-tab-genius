@@ -40,6 +40,7 @@ const AppRoutes = () => {
         <Route path="/accept-invite/:token" element={<AcceptInvite />} />
         <Route path="/admin" element={<PlatformAdmin />} />
         <Route path="/menu/:tableId" element={<Menu />} />
+        <Route path="/team" element={<ProtectedRoute><TeamInvites /></ProtectedRoute>} />
         {isPlatformLevel ? (
           <>
             <Route path="/" element={<MarketingHome />} />
