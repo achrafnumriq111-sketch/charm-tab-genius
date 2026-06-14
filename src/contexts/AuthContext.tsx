@@ -92,7 +92,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const stored = localStorage.getItem("pos_employee") || sessionStorage.getItem("pos_employee");
         if (stored) {
           try {
-            setEmployee(JSON.parse(stored));
+            const cached: Employee = JSON.parse(stored);
+            // Re-fetch authoritative role from DB — never trust the cached role
+            // (a tampered localStorage value would otherwise unlock owner-only UI).
+            const { data: fresh } = await supabase
+              .from("employees")
+              .select("id, full_name, role, location_id")
+              .eq("user_id", session.user.id)
+              .eq("is_active", true)
+              .maybeSingle();
+            if (fresh) {
+              const merged: Employee = {
+                id: fresh.id,
+                full_name: fresh.full_name,
+                role: fresh.role,
+                location_id: fresh.location_id ?? undefined,
+              };
+              setEmployee(merged);
+              const store = localStorage.getItem("pos_employee") ? localStorage : sessionStorage;
+              store.setItem("pos_employee", JSON.stringify(merged));
+            } else {
+              setEmployee(cached);
+            }
           } catch {
             clearSession();
           }
