@@ -18,10 +18,13 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
   const usernameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const mfaRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { login, loginOwner, isAuthenticated } = useAuth();
+  const { login, loginOwner, verifyOwnerMfa, isAuthenticated } = useAuth();
   const { tenant, isPlatformLevel } = useTenant();
 
   useEffect(() => {
@@ -29,13 +32,25 @@ const Login = () => {
   }, [isAuthenticated, navigate, isPlatformLevel]);
 
   useEffect(() => {
-    if (mode === "owner") emailRef.current?.focus();
+    if (mfaFactorId) mfaRef.current?.focus();
+    else if (mode === "owner") emailRef.current?.focus();
     else usernameRef.current?.focus();
-  }, [mode]);
+  }, [mode, mfaFactorId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // MFA challenge step
+    if (mfaFactorId) {
+      if (!/^\d{6}$/.test(mfaCode)) { setError("Voer 6 cijfers in"); return; }
+      setLoading(true);
+      const result = await verifyOwnerMfa(mfaFactorId, mfaCode, rememberMe);
+      setLoading(false);
+      if (result.error) { setError(result.error); setMfaCode(""); return; }
+      navigate(isPlatformLevel ? "/app" : "/", { replace: true });
+      return;
+    }
 
     if (mode === "owner") {
       if (!email.trim() || !password) {
@@ -48,6 +63,8 @@ const Login = () => {
       if (result.error) {
         setError(result.error);
         setPassword("");
+      } else if (result.mfaRequired) {
+        setMfaFactorId(result.mfaRequired.factorId);
       } else {
         navigate(isPlatformLevel ? "/app" : "/", { replace: true });
       }
