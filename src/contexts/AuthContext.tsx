@@ -14,6 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, pin: string, rememberMe: boolean) => Promise<{ error?: string }>;
+  loginOwner: (email: string, password: string, rememberMe: boolean) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -176,8 +177,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [slug]);
 
+  const loginOwner = useCallback(async (
+    email: string,
+    password: string,
+    rememberMe: boolean,
+  ): Promise<{ error?: string }> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error || !data.session) {
+        return { error: error?.message || "Ongeldige inloggegevens" };
+      }
+
+      // Fetch the matching employee row (created by setup_tenant_onboarding)
+      const { data: emp } = await supabase
+        .from("employees")
+        .select("id, full_name, role, location_id")
+        .eq("user_id", data.session.user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (!emp) {
+        await supabase.auth.signOut();
+        return { error: "Geen actieve zaak gekoppeld aan dit account" };
+      }
+
+      const employee: Employee = {
+        id: emp.id,
+        full_name: emp.full_name,
+        role: emp.role,
+        location_id: emp.location_id ?? undefined,
+      };
+      setEmployee(employee);
+
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("pos_employee", JSON.stringify(employee));
+      if (!rememberMe) localStorage.removeItem("pos_employee");
+
+      return {};
+    } catch (e) {
+      return { error: (e as Error).message || "Verbinding mislukt" };
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ employee, isAuthenticated: !!employee, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ employee, isAuthenticated: !!employee, isLoading, login, loginOwner, logout }}>
       {children}
     </AuthContext.Provider>
   );

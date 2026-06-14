@@ -455,26 +455,12 @@ const Signup = () => {
                 </p>
               </div>
 
-              {result?.slug && (
-                <div
-                  className="rounded-xl p-3 text-sm"
-                  style={{ background: "rgba(172,155,255,0.08)", border: "1px solid rgba(172,155,255,0.2)" }}
-                >
-                  <div className="text-[10px] uppercase tracking-widest font-semibold mb-1" style={{ color: "#8b8b9e" }}>
-                    Jouw POS URL
-                  </div>
-                  <div className="font-mono font-bold" style={{ color: "#5a5a72" }}>
-                    {result.slug}.saakouk.app
-                  </div>
-                </div>
-              )}
-
-              <p className="text-xs" style={{ color: "#9b9bab" }}>
-                Controleer je e-mail om je account te bevestigen. Daarna kun je direct inloggen.
+              <p className="text-sm" style={{ color: "#5a5a72" }}>
+                Je bent direct ingelogd als <strong>eigenaar</strong>. Je medewerkers kunnen later via "Medewerker" inloggen met hun naam en 6-cijferige PIN.
               </p>
 
               <button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/app", { replace: true })}
                 className="w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
                 style={{
                   background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
@@ -482,7 +468,7 @@ const Signup = () => {
                   boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
                 }}
               >
-                Naar inloggen <ArrowRight className="w-4 h-4" />
+                Naar dashboard <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
