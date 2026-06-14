@@ -551,6 +551,63 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_employee_id: string | null
+          created_at: string
+          expires_at: string
+          full_name: string
+          id: string
+          invited_by: string | null
+          location_id: string
+          role: Database["public"]["Enums"]["employee_role"]
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_employee_id?: string | null
+          created_at?: string
+          expires_at?: string
+          full_name: string
+          id?: string
+          invited_by?: string | null
+          location_id: string
+          role?: Database["public"]["Enums"]["employee_role"]
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_employee_id?: string | null
+          created_at?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          invited_by?: string | null
+          location_id?: string
+          role?: Database["public"]["Enums"]["employee_role"]
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_invites_accepted_employee_id_fkey"
+            columns: ["accepted_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_invites_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           created_at: string
