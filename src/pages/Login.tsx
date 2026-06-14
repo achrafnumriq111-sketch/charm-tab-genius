@@ -137,88 +137,152 @@ const Login = () => {
             backdropFilter: "blur(14px)",
           }}
         >
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Username */}
-            <div>
-              <label
-                className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5"
-                style={{ color: "#8b8b9e" }}
-              >
-                Gebruikersnaam
-              </label>
-              <input
-                ref={usernameRef}
-                type="text"
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); setError(""); }}
-                placeholder="Voornaam Achternaam"
-                autoComplete="username"
-                disabled={loading}
-                className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all duration-200"
+          {/* Mode tabs */}
+          <div
+            className="flex p-1 rounded-xl mb-5"
+            style={{ background: "rgba(0,0,0,0.04)" }}
+          >
+            {(["owner", "employee"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setMode(m); setError(""); }}
+                className="flex-1 h-9 rounded-lg text-xs font-semibold transition-all"
                 style={{
-                  background: "rgba(255,255,255,0.5)",
-                  border: "1px solid rgba(0,0,0,0.06)",
-                  color: "#2a2a3a",
-                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                  background: mode === m
+                    ? "linear-gradient(135deg, rgba(172,155,255,0.9), rgba(140,120,220,0.95))"
+                    : "transparent",
+                  color: mode === m ? "#fff" : "#8b8b9e",
+                  boxShadow: mode === m ? "0 2px 10px rgba(172,155,255,0.25)" : "none",
                 }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(172,155,255,0.5)";
-                  e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(172,155,255,0.12)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
-                  e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04)";
-                }}
-              />
-            </div>
-
-            {/* PIN */}
-            <div>
-              <label
-                className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5"
-                style={{ color: "#8b8b9e" }}
               >
-                Wachtwoord
-              </label>
-              <div className="relative">
-                <input
-                  type={showPin ? "text" : "password"}
-                  value={pin}
-                  onChange={(e) => handlePinChange(e.target.value)}
-                  placeholder="••••••"
-                  inputMode="numeric"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  autoComplete="current-password"
-                  disabled={loading}
-                  className="w-full h-12 px-4 pr-11 rounded-xl text-sm outline-none transition-all duration-200"
-                  style={{
-                    background: "rgba(255,255,255,0.5)",
-                    border: "1px solid rgba(0,0,0,0.06)",
-                    color: "#2a2a3a",
-                    boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
-                    letterSpacing: showPin ? "normal" : "0.25em",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(172,155,255,0.5)";
-                    e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04), 0 0 0 3px rgba(172,155,255,0.12)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(0,0,0,0.06)";
-                    e.currentTarget.style.boxShadow = "inset 0 1px 2px rgba(0,0,0,0.04)";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPin(!showPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors hover:bg-black/5"
-                  style={{ color: "#9b9bab" }}
-                  tabIndex={-1}
-                >
-                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+                {m === "owner" ? "Eigenaar" : "Medewerker"}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {mode === "owner" ? (
+              <>
+                {/* Email */}
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                    E-mailadres
+                  </label>
+                  <input
+                    ref={emailRef}
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                    placeholder="jouw@email.nl"
+                    autoComplete="email"
+                    disabled={loading}
+                    className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all duration-200"
+                    style={{
+                      background: "rgba(255,255,255,0.5)",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                      color: "#2a2a3a",
+                      boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                    }}
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                    Wachtwoord
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                      placeholder="Minimaal 8 tekens"
+                      autoComplete="current-password"
+                      disabled={loading}
+                      className="w-full h-12 px-4 pr-11 rounded-xl text-sm outline-none transition-all duration-200"
+                      style={{
+                        background: "rgba(255,255,255,0.5)",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        color: "#2a2a3a",
+                        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-black/5"
+                      style={{ color: "#9b9bab" }}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Username */}
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                    Gebruikersnaam
+                  </label>
+                  <input
+                    ref={usernameRef}
+                    type="text"
+                    value={username}
+                    onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                    placeholder="Voornaam Achternaam"
+                    autoComplete="username"
+                    disabled={loading}
+                    className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all duration-200"
+                    style={{
+                      background: "rgba(255,255,255,0.5)",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                      color: "#2a2a3a",
+                      boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                    }}
+                  />
+                </div>
+
+                {/* PIN */}
+                <div>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                    PIN (6 cijfers)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPin ? "text" : "password"}
+                      value={pin}
+                      onChange={(e) => handlePinChange(e.target.value)}
+                      placeholder="••••••"
+                      inputMode="numeric"
+                      pattern="\d{6}"
+                      maxLength={6}
+                      autoComplete="current-password"
+                      disabled={loading}
+                      className="w-full h-12 px-4 pr-11 rounded-xl text-sm outline-none transition-all duration-200"
+                      style={{
+                        background: "rgba(255,255,255,0.5)",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        color: "#2a2a3a",
+                        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
+                        letterSpacing: showPin ? "normal" : "0.25em",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPin(!showPin)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-black/5"
+                      style={{ color: "#9b9bab" }}
+                      tabIndex={-1}
+                    >
+                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Remember me */}
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
@@ -239,11 +303,7 @@ const Login = () => {
                   </svg>
                 )}
               </div>
-              <span
-                className="text-xs"
-                style={{ color: "#8b8b9e" }}
-                onClick={() => setRememberMe(!rememberMe)}
-              >
+              <span className="text-xs" style={{ color: "#8b8b9e" }} onClick={() => setRememberMe(!rememberMe)}>
                 Onthoud mij
               </span>
             </label>
@@ -267,7 +327,12 @@ const Login = () => {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading || !username.trim() || pin.length !== 6}
+              disabled={
+                loading ||
+                (mode === "owner"
+                  ? !email.trim() || !password
+                  : !username.trim() || pin.length !== 6)
+              }
               className="w-full h-12 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-35"
               style={{
                 background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
@@ -275,11 +340,7 @@ const Login = () => {
                 boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
               }}
             >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-              ) : (
-                "Inloggen"
-              )}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Inloggen"}
             </button>
           </form>
         </div>
