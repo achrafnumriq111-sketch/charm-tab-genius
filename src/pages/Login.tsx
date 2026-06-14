@@ -154,32 +154,69 @@ const Login = () => {
             backdropFilter: "blur(14px)",
           }}
         >
-          {/* Mode tabs */}
-          <div
-            className="flex p-1 rounded-xl mb-5"
-            style={{ background: "rgba(0,0,0,0.04)" }}
-          >
-            {(["owner", "employee"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); setError(""); }}
-                className="flex-1 h-9 rounded-lg text-xs font-semibold transition-all"
-                style={{
-                  background: mode === m
-                    ? "linear-gradient(135deg, rgba(172,155,255,0.9), rgba(140,120,220,0.95))"
-                    : "transparent",
-                  color: mode === m ? "#fff" : "#8b8b9e",
-                  boxShadow: mode === m ? "0 2px 10px rgba(172,155,255,0.25)" : "none",
-                }}
-              >
-                {m === "owner" ? "Eigenaar" : "Medewerker"}
-              </button>
-            ))}
-          </div>
+          {/* Mode tabs (hidden during MFA challenge) */}
+          {!mfaFactorId && (
+            <div
+              className="flex p-1 rounded-xl mb-5"
+              style={{ background: "rgba(0,0,0,0.04)" }}
+            >
+              {(["owner", "employee"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => { setMode(m); setError(""); }}
+                  className="flex-1 h-9 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    background: mode === m
+                      ? "linear-gradient(135deg, rgba(172,155,255,0.9), rgba(140,120,220,0.95))"
+                      : "transparent",
+                    color: mode === m ? "#fff" : "#8b8b9e",
+                    boxShadow: mode === m ? "0 2px 10px rgba(172,155,255,0.25)" : "none",
+                  }}
+                >
+                  {m === "owner" ? "Eigenaar" : "Medewerker"}
+                </button>
+              ))}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {mode === "owner" ? (
+            {mfaFactorId ? (
+              <div>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                  Tweestapsverificatie (6 cijfers)
+                </label>
+                <input
+                  ref={mfaRef}
+                  value={mfaCode}
+                  onChange={(e) => { setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="••••••"
+                  disabled={loading}
+                  className="w-full h-14 px-4 rounded-xl text-center outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.5)",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                    color: "#2a2a3a",
+                    fontSize: 26,
+                    letterSpacing: "0.4em",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                />
+                <p className="text-[11px] mt-2" style={{ color: "#9b9bab" }}>
+                  Open je authenticator-app en voer de huidige code in.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setMfaFactorId(null); setMfaCode(""); setPassword(""); setError(""); }}
+                  className="text-[11px] underline mt-1"
+                  style={{ color: "#7c6bc4" }}
+                >
+                  Annuleer
+                </button>
+              </div>
+            ) : mode === "owner" ? (
               <>
                 {/* Email */}
                 <div>
