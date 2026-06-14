@@ -18,21 +18,27 @@ function isPreviewHost(host: string): boolean {
   );
 }
 
-async function unregisterMatching(): Promise<void> {
-  if (!("serviceWorker" in navigator)) return;
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(
-      regs
-        .filter((r) =>
-          (r.active?.scriptURL ?? r.installing?.scriptURL ?? r.waiting?.scriptURL ?? "")
-            .endsWith(SW_PATH),
-        )
-        .map((r) => r.unregister()),
-    );
-  } catch {
-    /* ignore */
+async function purgeAll(): Promise<boolean> {
+  let hadSomething = false;
+  if ("serviceWorker" in navigator) {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      if (regs.length) hadSomething = true;
+      await Promise.all(regs.map((r) => r.unregister()));
+    } catch {
+      /* ignore */
+    }
   }
+  if ("caches" in window) {
+    try {
+      const keys = await caches.keys();
+      if (keys.length) hadSomething = true;
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    } catch {
+      /* ignore */
+    }
+  }
+  return hadSomething;
 }
 
 export async function registerServiceWorker(): Promise<void> {
@@ -47,7 +53,16 @@ export async function registerServiceWorker(): Promise<void> {
     url.searchParams.get("sw") === "off";
 
   if (refused) {
-    await unregisterMatching();
+    const hadSomething = await purgeAll();
+    // If a stale SW was controlling this page, reload once so the fresh
+    // (network-served) HTML + chunks take over instead of cached broken ones.
+    if (hadSomething && navigator.serviceWorker.controller) {
+      const KEY = "__sw_purge_reloaded";
+      if (!sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+      }
+    }
     return;
   }
 
