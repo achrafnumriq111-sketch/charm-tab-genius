@@ -383,9 +383,11 @@ const Login = () => {
               type="submit"
               disabled={
                 loading ||
-                (mode === "owner"
-                  ? !email.trim() || !password
-                  : !username.trim() || pin.length !== 6)
+                (mfaFactorId
+                  ? mfaCode.length !== 6
+                  : mode === "owner"
+                    ? !email.trim() || !password
+                    : !username.trim() || pin.length !== 6)
               }
               className="w-full h-12 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-35"
               style={{
@@ -394,7 +396,7 @@ const Login = () => {
                 boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
               }}
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Inloggen"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : mfaFactorId ? "Verifiëren" : "Inloggen"}
             </button>
           </form>
         </div>
