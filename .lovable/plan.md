@@ -1,73 +1,94 @@
-# Fase 6 — QA matrix run
 
-Doel: bewijs leveren dat de hardening uit fase 1-5 echt werkt. Geen "het draait", maar een test-rapport per scenario uit de matrix in `.lovable/plan.md`.
+# Offline-First POS — Implementation Plan
 
-## Aanpak
+Volledig offline-first met PWA service worker, IndexedDB cache (Dexie) en outbox queue met UUID idempotency. Last-write-wins sync.
 
-Twee sporen naast elkaar, want UI-tests dekken geen RLS en RLS-tests dekken geen route-guards:
+## Architectuur
 
-1. **Server-side pen-test** via `supabase--read_query` met aparte JWT's per testgebruiker → bewijst tenant-isolatie op DB-niveau.
-2. **Frontend RBAC + flow-test** via Vitest + Testing Library voor unit-niveau, en browser-tool voor 3 end-to-end smoke flows.
+```text
+┌─────────────────────────────────────────────────┐
+│ React UI                                        │
+│   ↓ reads/writes via offlineRepo (Dexie)        │
+├─────────────────────────────────────────────────┤
+│ Dexie (IndexedDB)                               │
+│  • cache: products, modifiers, tables,          │
+│    employees, customers, location_settings,     │
+│    discounts, inventory_items, vat_rates        │
+│  • outbox: pending mutations (UUID + payload)   │
+│  • meta: last_sync_at per table                 │
+├─────────────────────────────────────────────────┤
+│ SyncEngine                                      │
+│  • online detector (navigator.onLine + ping)    │
+│  • pull: delta-sync via updated_at since meta   │
+│  • push: drain outbox FIFO, retry w/ backoff    │
+│  • BackgroundSync API + interval fallback       │
+├─────────────────────────────────────────────────┤
+│ Service Worker (vite-plugin-pwa, generateSW)    │
+│  • app-shell NetworkFirst                       │
+│  • Supabase REST: NetworkOnly (geen cache)      │
+│  • assets CacheFirst                            │
+└─────────────────────────────────────────────────┘
+```
 
-Eén rapport aan het eind: `QA-REPORT.md` in repo-root met per testcase status + bewijs (query output / screenshot / assertion).
+## Stappen (volgorde van uitvoering)
 
-## Test-matrix
+### 1. Foundation — PWA + Dexie skeleton
+- `vite-plugin-pwa` met `generateSW`, `injectRegister: null`, `devOptions.enabled: false`
+- Guarded registration wrapper (`src/lib/pwa/register.ts`) — refuse in Lovable preview/iframe/dev/`?sw=off`
+- Manifest + icons (hergebruik bestaande SAAKOUK branding)
+- Dexie schema (`src/lib/offline/db.ts`): tabellen `cache_*`, `outbox`, `sync_meta`
+- Online-state hook `useOnlineStatus()` (ping `/rest/v1/` elke 30s, niet alleen `navigator.onLine`)
 
-| # | Test | Methode | Verwacht |
-|---|---|---|---|
-| 1 | User tenant A query tenant B `products` | SQL met JWT-A | 0 rows |
-| 2 | User tenant A query tenant B `pos_transactions` | SQL met JWT-A | 0 rows |
-| 3 | User tenant A query tenant B `customers` | SQL met JWT-A | 0 rows |
-| 4 | User tenant A insert in tenant B `location_id` | SQL met JWT-A | RLS reject |
-| 5 | Sales rol → `useRolePermissions.canAccessView('settings')` | Vitest | false |
-| 6 | Sales rol → `canAccessView('analytics')` zonder grant | Vitest | false |
-| 7 | Manager rol → `canAccessView('menu')` | Vitest | true |
-| 8 | `RoleGate` blokkeert directe view-switch naar settings als sales | Vitest + RTL | "Geen toegang" UI |
-| 9 | Inactive employee login via `pos-login` | curl edge function | 403 |
-| 10 | Logout wist alle `saakouk_*` / `pos_*` storage keys | Vitest + jsdom | beide storages leeg |
-| 11 | Login redirect na logout | browser-tool | `/login` |
-| 12 | `LocationContext` met onbekende `activeLocationId` | Vitest | reset naar eerste valid |
-| 13 | Nieuwe POS-order krijgt automatisch correct `tenant_id` | SQL insert + select | match user's tenant |
-| 14 | Subdomain login (`?tenant=foo`) met user uit andere tenant | edge function call | 403 |
-| 15 | Invite-accept met expired token | curl `invite-accept` | error "expired" |
-| 16 | Marketing site bereikbaar op platform-level, niet op tenant-subdomein | route assertion | conditional render OK |
+### 2. Cache layer — read-side
+- `src/lib/offline/repo.ts` — `getProducts()`, `getTables()`, etc. die eerst Dexie lezen, dan in achtergrond verversen
+- Initial bulk-load bij login: fetch alles van tenant, opslaan met `updated_at`
+- Delta-sync: `SELECT * WHERE updated_at > sync_meta.last_sync_at`
+- UI-componenten (POS, Menu, Floor, Employees) overschakelen op repo
 
-## Deliverables
+### 3. Outbox — write-side
+- Alle mutaties (orders, cash closings, stock movements, qr orders) gaan via `outbox.enqueue({type, uuid, payload})`
+- UUID v4 client-generated; servers dedupen op `idempotency_key` kolom
+- DB migratie: kolom `idempotency_key uuid unique` toevoegen aan `pos_transactions`, `cash_closings`, `stock_movements`, `qr_orders`
+- Edge functions / inserts respecteren `ON CONFLICT (idempotency_key) DO NOTHING RETURNING`
 
-1. **`scripts/qa/rls-pentest.ts`** — Deno/Node script dat met twee service-role-getekende JWTs (1 per test-tenant) elk SQL-scenario draait en JSON-output schrijft.
-2. **Vitest suites**:
-   - `src/hooks/useRolePermissions.test.ts` — cases 5/6/7
-   - `src/contexts/AuthContext.test.tsx` — case 10
-   - `src/contexts/LocationContext.test.tsx` — case 12
-   - `src/components/RoleGate.test.tsx` — case 8 (component bestaat al in `SaakoukPOS` als inline guard; extracten naar losse `RoleGate` voor testbaarheid — minimale refactor, geen gedragsverandering).
-3. **Edge function tests** via `supabase--test_edge_functions` voor cases 9, 14, 15.
-4. **Browser-tool smoke** voor case 11 + visuele check van marketing site (case 16).
-5. **`QA-REPORT.md`** — markdown tabel met per case: status (✅/❌), bewijs (output snippet of screenshot pad), eventueel fix-actie.
+### 4. Sync engine
+- `SyncEngine.start()` bij login: registreert online/offline listeners + interval (10s)
+- Push: drain outbox FIFO, op fail → exponential backoff, na 5 fails → DLQ-tabel in Dexie + toast aan manager
+- Pull: per cache-tabel delta sinds laatste sync
+- BackgroundSync API registratie waar beschikbaar (Chrome/Android); iPad Safari valt terug op interval
 
-## Wat ik nodig heb van jou voordat ik start
+### 5. UI indicators
+- Statusbalk in header: `Online` / `Offline · X pending` / `Syncing...`
+- Per ticket badge "wacht op sync" zolang in outbox
+- Settings-pagina `/admin/offline` met outbox-inhoud, force-sync knop, cache-reset knop
 
-- **Test-data**: mag ik 2 throwaway test-tenants aanmaken via `setup_tenant_onboarding` (slugs `qa-tenant-a`, `qa-tenant-b`) met elk 1 owner + 1 sales employee? Wordt aan het eind opgeruimd via DELETE-migratie.
-- **Of**: heb je liever dat ik bestaande data gebruik en lees-only test? Dan vervallen cases 4 en 13 (insert-paden).
+### 6. Conflict & edge cases
+- Idempotency keys voorkomen dubbele orders na retry
+- Cash drawer (WebUSB) blijft werken offline (lokaal hardware-commando)
+- ESC/POS bonprinter blijft werken offline
+- Auth: PIN-login moet offline kunnen → employee cache + lokale PIN-hash check (server her-valideert bij sync)
+- Tafel-status: optimistic update lokaal, last-write-wins bij conflict (UI re-renders na pull)
+- Reservations en QR orders: alleen lezen offline, schrijven blokkeren met duidelijke melding (te risicovol qua double-booking)
 
-Geen code-wijzigingen behalve:
-- Mini-refactor `RoleGate` extracten uit `SaakoukPOS` (pure verplaatsing, geen logica-wijziging).
-- Nieuwe test-files (geen prod-code raakvlak).
-- QA-script onder `scripts/qa/` (niet in prod-bundle).
+### 7. Testing
+- Vitest: outbox enqueue/drain, dedupe, backoff
+- Playwright/handmatig: Chrome DevTools → offline toggle, maak order, ga online, verifieer DB
+- E2E: 2 iPads tegelijk offline → zelfde order UUID retry → 1 row in DB
 
-## Volgorde
+### 8. Documentatie
+- `OFFLINE-MODE.md`: wat werkt offline, wat niet, troubleshooting, force-reset procedure
+- Memory entry `mem://features/offline-mode`
 
-1. Jij keurt scope + test-data aanpak goed
-2. Ik maak test-tenants + run RLS pentest
-3. Vitest suites + edge function tests
-4. Browser smoke
-5. `QA-REPORT.md` opleveren
-6. Cleanup test-tenants
+## Scope-grenzen (NIET in deze iteratie)
+- Multi-device CRDT merge (alleen LWW)
+- Offline analytics dashboard (alleen live)
+- Offline AI weather forecasting (vereist WeatherKit live call)
+- Offline PassKit uitgifte (vereist Apple servers)
 
-## Out of scope (expliciet)
+## Geschatte oplevering
+- Stap 1-2 (foundation + read cache): turn 1
+- Stap 3-4 (outbox + sync): turn 2
+- Stap 5-6 (UI + edge cases): turn 3
+- Stap 7-8 (tests + docs): turn 4
 
-- Performance/load tests (ander traject)
-- Penetration test op auth-flow zelf (Supabase eigen verantwoordelijkheid)
-- Visuele regressie van bestaande POS views (niet aangeraakt sinds fase 3)
-- Wijzigen van bestaande RLS-policies; fase 6 is bewijs, geen reparatie. Als een test faalt → bevinding in rapport, fix in losse vervolgactie.
-
-Akkoord op deze aanpak + test-tenant strategie?
+Na akkoord start ik met stap 1.
