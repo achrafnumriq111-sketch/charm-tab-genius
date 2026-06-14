@@ -34,6 +34,9 @@ const AppRoutes = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/accept-invite/:token" element={<AcceptInvite />} />
         <Route path="/admin" element={<PlatformAdmin />} />
         <Route path="/menu/:tableId" element={<Menu />} />
         {isPlatformLevel ? (
