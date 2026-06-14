@@ -97,6 +97,7 @@ export const CACHE_TABLES = [
 export type CacheTableName = (typeof CACHE_TABLES)[number];
 
 export function cacheTable(name: CacheTableName): Table<CacheRow, string> {
-  // @ts-expect-error dynamic table lookup is intentional
-  return offlineDb[`cache_${name}`] as Table<CacheRow, string>;
+  return (offlineDb as unknown as Record<string, Table<CacheRow, string>>)[
+    `cache_${name}`
+  ];
 }
