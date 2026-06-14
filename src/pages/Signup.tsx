@@ -48,12 +48,8 @@ const Signup = () => {
     }
     const timer = setTimeout(async () => {
       setCheckingSlug(true);
-      const { data } = await supabase
-        .from("tenants")
-        .select("id")
-        .eq("slug", slug)
-        .maybeSingle();
-      setSlugAvailable(!data);
+      const { data } = await supabase.rpc("is_slug_available", { _slug: slug });
+      setSlugAvailable(data === true);
       setCheckingSlug(false);
     }, 500);
     return () => clearTimeout(timer);
