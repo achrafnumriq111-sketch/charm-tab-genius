@@ -21,6 +21,8 @@ const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin.tsx"));
 const QAReport = lazy(() => import("./pages/QAReport.tsx"));
 const SecurityEvents = lazy(() => import("./pages/SecurityEvents.tsx"));
 const OfflineAdmin = lazy(() => import("./pages/OfflineAdmin.tsx"));
+const Pair = lazy(() => import("./pages/Pair.tsx"));
+const Devices = lazy(() => import("./pages/Devices.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const MarketingHome = lazy(() => import("./pages/marketing/Home.tsx"));
@@ -41,6 +43,8 @@ const AppRoutes = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+        <Route path="/pair" element={<Pair />} />
+        <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
         <Route path="/admin" element={<PlatformAdmin />} />
         <Route path="/admin/qa-report" element={<QAReport />} />
         <Route path="/admin/security-events" element={<SecurityEvents />} />
