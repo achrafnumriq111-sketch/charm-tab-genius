@@ -14,6 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, pin: string, rememberMe: boolean) => Promise<{ error?: string }>;
+  loginOwner: (email: string, password: string, rememberMe: boolean) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
 }
 
