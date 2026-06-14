@@ -1,9 +1,14 @@
-# QA Report — Phase 6
+# QA Report — Phase 6 + E2E Invite Coverage
 
 **Datum:** 2026-06-14
-**Scope:** verificatie van fases 1–5 (tenant isolatie, RBAC, auth flows, session hygiëne, marketing routing)
-**Methode:** server-side pen-test edge function (throwaway test-tenants A/B) + Vitest suites + handmatige browser-checks
-**Result:** **17/17 geautomatiseerde testcases groen.** 2 cases (#11, #16) zijn manueel verifieerbaar (zie onderaan).
+**Scope:** verificatie van fases 1–5 (tenant isolatie, RBAC, auth flows, session hygiëne, marketing routing) + complete invite lifecycle.
+**Methode:** `qa-invite-tests` edge function (CI-grade, herhaalbaar) + ad-hoc `qa-pentest` (eenmalig, daarna verwijderd) + Vitest suites + handmatige browser-checks.
+**Result:** **29/29 geautomatiseerde testcases groen** (10 Vitest + 7 RLS pentest + 12 invite E2E). 2 cases (#11, #16) zijn manueel verifieerbaar.
+
+### Bug gevonden tijdens fase 6
+`supabase/functions/employee-invite/index.ts` las de request body twee keer (`req.json()` gevolgd door `req.clone().json()`), wat in Deno een `TypeError: Body is unusable` veroorzaakte. **Owners konden in productie geen invites aanmaken via de UI.** Gefixt door één parse van `await req.json()`. Verified door I1/I11/I12 die nu groen draaien.
+
+
 
 ---
 
@@ -76,3 +81,35 @@ Functie + bron zijn na succesvolle run **verwijderd** zodat ze niet als attack-s
 ## Conclusie
 
 De hardening uit fases 1–5 doet wat ze belooft: **echte multi-tenant isolatie op DB-niveau**, **werkende RBAC-gate**, **logout wist alle session state**, **expired invites worden geweigerd**, en **cross-tenant logins lukken niet**. Geen open issues. Klaar voor productie multi-tenant rollout.
+
+---
+
+## Invite lifecycle E2E (qa-invite-tests, 12/12 ✅)
+
+| # | Test | Verwacht | Werkelijk | Status |
+|---|---|---|---|---|
+| I1 | Owner `employee-invite create` | 201 + token | 201, token present | ✅ |
+| I2 | `invite-accept info` op valid token | 200 + naam match | 200, full_name OK | ✅ |
+| I3 | `invite-accept accept` met malformed PIN | 400 + "6 cijfers" | 400 — PIN moet exact 6 cijfers zijn | ✅ |
+| I4 | `invite-accept accept` met valid token + PIN | 200 + employee aangemaakt | 200, success=true | ✅ |
+| I5 | Hergebruik van geaccepteerde token | 410 + "al gebruikt" | 410 — Uitnodiging al gebruikt | ✅ |
+| I6 | `info` op al gebruikte token | 410 + "al gebruikt" | 410 — Uitnodiging al gebruikt | ✅ |
+| I7 | `info` op verlopen token | 410 + "verlopen" | 410 — Uitnodiging is verlopen | ✅ |
+| I8 | `accept` op verlopen token | 410 + "verlopen" | 410 — Uitnodiging is verlopen | ✅ |
+| I9 | `info` op onbekende token | 404 | 404 — Uitnodiging niet gevonden | ✅ |
+| I10 | `info` met lege token | 400 | 400 — Ongeldige uitnodiging | ✅ |
+| I11 | Owner `revoke` → daarna `info` 404 | revoke 200, info 404 | revoke=200, info=404 | ✅ |
+| I12 | Non-owner probeert invite te maken | 403 | 403 — Alleen owners kunnen uitnodigen | ✅ |
+
+**Edge function:** `supabase/functions/qa-invite-tests/index.ts` — self-contained, herhaalbaar, ruimt zichzelf op. Live request-id: `019ec694-5565-794f-86fb-fb35e98af202`.
+
+---
+
+## Quick wins toegevoegd (deze sessie)
+
+| Feature | Locatie |
+|---|---|
+| E2E invite tests (12 cases) | `supabase/functions/qa-invite-tests/` — deployed |
+| QA Report viewer + PDF/HTML/MD download | `/admin/qa-report` route, gebruikt browser print → PDF |
+| CI pipeline (Vitest + pentest) | `.github/workflows/ci.yml` |
+| CI setup-gids | `CI-SETUP.md` (instructies voor QA Supabase project + GitHub secrets) |
