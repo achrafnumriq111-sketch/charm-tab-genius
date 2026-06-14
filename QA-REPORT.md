@@ -1,9 +1,14 @@
-# QA Report — Phase 6
+# QA Report — Phase 6 + E2E Invite Coverage
 
 **Datum:** 2026-06-14
-**Scope:** verificatie van fases 1–5 (tenant isolatie, RBAC, auth flows, session hygiëne, marketing routing)
-**Methode:** server-side pen-test edge function (throwaway test-tenants A/B) + Vitest suites + handmatige browser-checks
-**Result:** **17/17 geautomatiseerde testcases groen.** 2 cases (#11, #16) zijn manueel verifieerbaar (zie onderaan).
+**Scope:** verificatie van fases 1–5 (tenant isolatie, RBAC, auth flows, session hygiëne, marketing routing) + complete invite lifecycle.
+**Methode:** `qa-invite-tests` edge function (CI-grade, herhaalbaar) + ad-hoc `qa-pentest` (eenmalig, daarna verwijderd) + Vitest suites + handmatige browser-checks.
+**Result:** **29/29 geautomatiseerde testcases groen** (10 Vitest + 7 RLS pentest + 12 invite E2E). 2 cases (#11, #16) zijn manueel verifieerbaar.
+
+### Bug gevonden tijdens fase 6
+`supabase/functions/employee-invite/index.ts` las de request body twee keer (`req.json()` gevolgd door `req.clone().json()`), wat in Deno een `TypeError: Body is unusable` veroorzaakte. **Owners konden in productie geen invites aanmaken via de UI.** Gefixt door één parse van `await req.json()`. Verified door I1/I11/I12 die nu groen draaien.
+
+
 
 ---
 
