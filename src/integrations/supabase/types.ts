@@ -2450,6 +2450,7 @@ export type Database = {
       }
       get_tenant_id_for_user: { Args: { _user_id: string }; Returns: string }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_slug_available: { Args: { _slug: string }; Returns: boolean }
       location_in_user_tenant: {
         Args: { _location_id: string; _user_id: string }
         Returns: boolean
