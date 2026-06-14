@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "vitest";
-// @ts-expect-error fake-indexeddb/auto exports side effects only
 import "fake-indexeddb/auto";
 import { offlineDb } from "./db";
 import { enqueueMutation, pendingCount, newUuid } from "./outbox";
