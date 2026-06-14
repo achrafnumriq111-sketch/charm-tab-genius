@@ -45,31 +45,20 @@ export async function registerServiceWorker(): Promise<void> {
   if (typeof window === "undefined") return;
   if (!("serviceWorker" in navigator)) return;
 
-  const url = new URL(window.location.href);
-  const refused =
-    !import.meta.env.PROD ||
-    window.self !== window.top ||
-    isPreviewHost(window.location.hostname) ||
-    url.searchParams.get("sw") === "off";
-
-  if (refused) {
-    const hadSomething = await purgeAll();
-    // If a stale SW was controlling this page, reload once so the fresh
-    // (network-served) HTML + chunks take over instead of cached broken ones.
-    if (hadSomething && navigator.serviceWorker.controller) {
-      const KEY = "__sw_purge_reloaded";
-      if (!sessionStorage.getItem(KEY)) {
-        sessionStorage.setItem(KEY, "1");
-        window.location.reload();
-      }
+  // TEMPORARY: SW registration is disabled on every host (preview AND production)
+  // because earlier builds installed a SW that now serves stale chunks
+  // (causing "cannot reach /login" / blank screens). We aggressively purge any
+  // existing SW + cache on every visit so users self-heal on next load.
+  const hadSomething = await purgeAll();
+  if (hadSomething && navigator.serviceWorker.controller) {
+    const KEY = "__sw_purge_reloaded";
+    if (!sessionStorage.getItem(KEY)) {
+      sessionStorage.setItem(KEY, "1");
+      window.location.reload();
     }
-    return;
-  }
-
-  try {
-    await navigator.serviceWorker.register(SW_PATH, { scope: "/" });
-  } catch (err) {
-    // Non-fatal: app still works online without SW
-    console.warn("[pwa] SW registration failed", err);
   }
 }
+
+// Kept for future re-enable. Currently unused.
+void SW_PATH;
+void isPreviewHost;
