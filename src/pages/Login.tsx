@@ -5,28 +5,56 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+type Mode = "owner" | "employee";
+
 const Login = () => {
+  const [mode, setMode] = useState<Mode>("owner");
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPin, setShowPin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const usernameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const { tenant, isPlatformLevel, loading: tenantLoading, error: tenantError } = useTenant();
+  const { login, loginOwner, isAuthenticated } = useAuth();
+  const { tenant, isPlatformLevel } = useTenant();
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/", { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated) navigate(isPlatformLevel ? "/app" : "/", { replace: true });
+  }, [isAuthenticated, navigate, isPlatformLevel]);
 
   useEffect(() => {
-    usernameRef.current?.focus();
-  }, []);
+    if (mode === "owner") emailRef.current?.focus();
+    else usernameRef.current?.focus();
+  }, [mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    if (mode === "owner") {
+      if (!email.trim() || !password) {
+        setError("Vul email en wachtwoord in");
+        return;
+      }
+      setLoading(true);
+      const result = await loginOwner(email.trim(), password, rememberMe);
+      setLoading(false);
+      if (result.error) {
+        setError(result.error);
+        setPassword("");
+      } else {
+        navigate(isPlatformLevel ? "/app" : "/", { replace: true });
+      }
+      return;
+    }
+
+    // Employee mode
     if (!username.trim() || !pin.trim()) {
       setError("Vul alle velden in");
       return;
@@ -35,18 +63,14 @@ const Login = () => {
       setError("PIN moet exact 6 cijfers zijn");
       return;
     }
-
-    setError("");
     setLoading(true);
-
     const result = await login(username.trim(), pin, rememberMe);
     setLoading(false);
-
     if (result.error) {
       setError(result.error);
       setPin("");
     } else {
-      navigate("/", { replace: true });
+      navigate(isPlatformLevel ? "/app" : "/", { replace: true });
     }
   };
 
