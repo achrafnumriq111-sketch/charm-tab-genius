@@ -1,105 +1,73 @@
-# Anti-fuzz SaaS hardening plan
+# Fase 6 — QA matrix run
 
-Veel van wat je vraagt staat er al. Ik ga niets dubbel bouwen of slopen — eerst auditen, dan alleen de echte gaten dichten.
+Doel: bewijs leveren dat de hardening uit fase 1-5 echt werkt. Geen "het draait", maar een test-rapport per scenario uit de matrix in `.lovable/plan.md`.
 
-## Wat er al staat (niet opnieuw bouwen)
+## Aanpak
 
-- **Tenants laag**: `tenants` (= companies), `locations`, `employees` (= company_users), `platform_admins`.
-- **Helpers in DB**: `get_tenant_id_for_user`, `location_in_user_tenant`, `modifier_group_in_user_tenant`, `is_platform_admin`, `setup_tenant_onboarding`.
-- **Auth**: 6-digit PIN login via `pos-login` edge function, Supabase Auth JWT, 30 min auto-logout, audit logs, HIBP, rate limiting + lockout.
-- **Routing/context**: `TenantProvider` (subdomain slug), `AuthProvider`, `LocationProvider` met tenant-switch + PIN-unlock, `ProtectedRoute`.
-- **Tenant-scoped RLS** op 40+ tabellen, realtime, GRANTs.
-- **Onboarding**: `/signup` self-service, slug-check, atomic setup RPC.
-- **Platform admin**: `/admin`, impersonation met audit log.
-- **Live data**: products, floor plan, reservations, vat, discounts, activity logs etc. al in DB via `useLiveData`. Geen hardcoded testdata meer in POS.
-- **RBAC**: rollen `owner/manager/sales` + `role_permissions` matrix per locatie (jouw eigen keuze, blijft zo — geen rename naar cashier/viewer want dat breekt enums, employees, edge functions en login).
+Twee sporen naast elkaar, want UI-tests dekken geen RLS en RLS-tests dekken geen route-guards:
 
-## Fase 1 — Audit (read-only, geen code wijzigingen)
+1. **Server-side pen-test** via `supabase--read_query` met aparte JWT's per testgebruiker → bewijst tenant-isolatie op DB-niveau.
+2. **Frontend RBAC + flow-test** via Vitest + Testing Library voor unit-niveau, en browser-tool voor 3 end-to-end smoke flows.
 
-Ik lever een rapport met concrete bevindingen op deze punten:
+Eén rapport aan het eind: `QA-REPORT.md` in repo-root met per testcase status + bewijs (query output / screenshot / assertion).
 
-1. **DB-scope check** (via `supabase--read_query` + `supabase--linter`):
-   - Elke `public` tabel met business-data → heeft `tenant_id` of `location_id`?
-   - RLS aan op elke tabel? Policy verwijst naar `get_tenant_id_for_user` / `location_in_user_tenant` / `has_role`?
-   - GRANTs correct (geen onnodige `anon`-grants op user-data)?
-   - Indexes op `tenant_id` / `location_id` / FK kolommen?
-2. **Query-scope check** in `src/`:
-   - `rg "supabase.from\("` → elke read/write heeft tenant- of location-filter (of vertrouwt op RLS én is daadwerkelijk gecovered).
-   - `useLiveData` en alle hooks: filteren altijd op `locationId`?
-   - Geen client-side role checks zonder server-side equivalent.
-3. **Route guard check**:
-   - `ProtectedRoute` checkt alleen `isAuthenticated`. Per-pagina rol-permissies komen uit `role_permissions` via sidebar → check of er routes/views zijn die de permission-gate omzeilen (deeplink, hash, URL-param).
-4. **Session hygiëne**:
-   - `logout()` wist `pos_employee`, impersonation key, `saakouk_active_location_id`, `saakouk_admin_selected_tenant`?
-   - Bij removed/inactive employee: edge function `pos-login` blokkeert al → check ook lopende sessies (revoke pad).
-5. **Cross-tenant pen-test queries** (read-only met service role): probeer als user A een row van tenant B te SELECTen — moet 0 rows geven.
+## Test-matrix
 
-Output: tabel met **bevinding → severity → fix in fase 2/3**.
+| # | Test | Methode | Verwacht |
+|---|---|---|---|
+| 1 | User tenant A query tenant B `products` | SQL met JWT-A | 0 rows |
+| 2 | User tenant A query tenant B `pos_transactions` | SQL met JWT-A | 0 rows |
+| 3 | User tenant A query tenant B `customers` | SQL met JWT-A | 0 rows |
+| 4 | User tenant A insert in tenant B `location_id` | SQL met JWT-A | RLS reject |
+| 5 | Sales rol → `useRolePermissions.canAccessView('settings')` | Vitest | false |
+| 6 | Sales rol → `canAccessView('analytics')` zonder grant | Vitest | false |
+| 7 | Manager rol → `canAccessView('menu')` | Vitest | true |
+| 8 | `RoleGate` blokkeert directe view-switch naar settings als sales | Vitest + RTL | "Geen toegang" UI |
+| 9 | Inactive employee login via `pos-login` | curl edge function | 403 |
+| 10 | Logout wist alle `saakouk_*` / `pos_*` storage keys | Vitest + jsdom | beide storages leeg |
+| 11 | Login redirect na logout | browser-tool | `/login` |
+| 12 | `LocationContext` met onbekende `activeLocationId` | Vitest | reset naar eerste valid |
+| 13 | Nieuwe POS-order krijgt automatisch correct `tenant_id` | SQL insert + select | match user's tenant |
+| 14 | Subdomain login (`?tenant=foo`) met user uit andere tenant | edge function call | 403 |
+| 15 | Invite-accept met expired token | curl `invite-accept` | error "expired" |
+| 16 | Marketing site bereikbaar op platform-level, niet op tenant-subdomein | route assertion | conditional render OK |
 
-## Fase 2 — DB-gaten dichten (alleen wat fase 1 vindt)
+## Deliverables
 
-Per bevinding één migratie. Verwachte kandidaten op basis van wat ik nu zie:
+1. **`scripts/qa/rls-pentest.ts`** — Deno/Node script dat met twee service-role-getekende JWTs (1 per test-tenant) elk SQL-scenario draait en JSON-output schrijft.
+2. **Vitest suites**:
+   - `src/hooks/useRolePermissions.test.ts` — cases 5/6/7
+   - `src/contexts/AuthContext.test.tsx` — case 10
+   - `src/contexts/LocationContext.test.tsx` — case 12
+   - `src/components/RoleGate.test.tsx` — case 8 (component bestaat al in `SaakoukPOS` als inline guard; extracten naar losse `RoleGate` voor testbaarheid — minimale refactor, geen gedragsverandering).
+3. **Edge function tests** via `supabase--test_edge_functions` voor cases 9, 14, 15.
+4. **Browser-tool smoke** voor case 11 + visuele check van marketing site (case 16).
+5. **`QA-REPORT.md`** — markdown tabel met per case: status (✅/❌), bewijs (output snippet of screenshot pad), eventueel fix-actie.
 
-- Eventueel ontbrekende `tenant_id` op tabellen die nu alleen `location_id` hebben → toegevoegd via FK, gevuld via `locations.tenant_id`, NOT NULL na backfill.
-- Ontbrekende indexes op `(tenant_id)`, `(location_id)`, en samengestelde keys op hot queries (orders, transacties, activity_logs).
-- RLS-policies strakker: SELECT/INSERT/UPDATE/DELETE expliciet gescheiden waar nu één `FOR ALL` policy staat met te brede `USING`.
-- DELETE-rechten beperken tot `owner` via `has_role` (waar nog niet zo).
-- Soft-delete kolom `deleted_at` toevoegen op kritieke tabellen (products, customers, orders) i.p.v. hard delete waar UI dat doet.
+## Wat ik nodig heb van jou voordat ik start
 
-## Fase 3 — Frontend route-guard hardening
+- **Test-data**: mag ik 2 throwaway test-tenants aanmaken via `setup_tenant_onboarding` (slugs `qa-tenant-a`, `qa-tenant-b`) met elk 1 owner + 1 sales employee? Wordt aan het eind opgeruimd via DELETE-migratie.
+- **Of**: heb je liever dat ik bestaande data gebruik en lees-only test? Dan vervallen cases 4 en 13 (insert-paden).
 
-- Nieuwe `RoleGate` component: wraps view-render in `SaakoukPOS` switch en blokkeert op `role_permissions` server-side check (niet alleen sidebar-filter).
-- `logout()` uitbreiden: wist álle `saakouk_*` / `pos_*` keys uit beide storages + `supabase.auth.signOut({ scope: 'local' })`.
-- Bij elke mount van een view: `useLiveData` query faalt → toon "geen toegang" pagina i.p.v. lege UI.
-- `LocationContext`: bij refetch checken of huidige `activeLocationId` nog in resultaat zit; zo niet → forceer reselect, geen stale id.
+Geen code-wijzigingen behalve:
+- Mini-refactor `RoleGate` extracten uit `SaakoukPOS` (pure verplaatsing, geen logica-wijziging).
+- Nieuwe test-files (geen prod-code raakvlak).
+- QA-script onder `scripts/qa/` (niet in prod-bundle).
 
-## Fase 4 — Public marketing site (nieuw, niet aanwezig)
+## Volgorde
 
-Dit ontbreekt echt. Toevoegen onder dezelfde Vite-app, **alleen actief op platform-domein** (geen tenant-slug):
+1. Jij keurt scope + test-data aanpak goed
+2. Ik maak test-tenants + run RLS pentest
+3. Vitest suites + edge function tests
+4. Browser smoke
+5. `QA-REPORT.md` opleveren
+6. Cleanup test-tenants
 
-- `/` Home, `/features`, `/pricing`, `/contact`, `/demo`
-- `TenantProvider.isPlatformLevel === true` → marketing routes mounten
-- `isPlatformLevel === false` (subdomein) → huidige POS-app flow ongewijzigd
-- CTA's linken naar `/signup` en `/login`
-- Design: strak SaaS, consistent met huidige luxe pastel/glas stijl
+## Out of scope (expliciet)
 
-## Fase 5 — Auth-flow aanvullen
+- Performance/load tests (ander traject)
+- Penetration test op auth-flow zelf (Supabase eigen verantwoordelijkheid)
+- Visuele regressie van bestaande POS views (niet aangeraakt sinds fase 3)
+- Wijzigen van bestaande RLS-policies; fase 6 is bewijs, geen reparatie. Als een test faalt → bevinding in rapport, fix in losse vervolgactie.
 
-- `/forgot-password` + `/reset-password` pagina's (Supabase `resetPasswordForEmail` + recovery handler) — voor **owners** (email/password). PIN-flow voor medewerkers blijft.
-- `/accept-invite?token=…` pagina: owner nodigt employee uit via bestaande `employee-manage` edge function → invite mail → setup PIN.
-- Geen wijziging aan `pos-login`/PIN-systeem.
-
-## Fase 6 — QA matrix
-
-Geautomatiseerd waar mogelijk, anders manueel script:
-
-| Test | Verwacht |
-|---|---|
-| User tenant A query tenant B data | 0 rows |
-| Sales-rol opent `/?view=settings` direct | RoleGate blokkeert |
-| Sales-rol opent rapporten | Blokkeert |
-| Manager wijzigt product | OK |
-| Inactive employee login | 403 |
-| Logout → terug-knop op /app | Redirect /login |
-| Manipulatie `location_id` in insert payload | RLS reject |
-| Nieuwe order/product/voorraad | `tenant_id` + `location_id` automatisch correct |
-
-## Wat ik **niet** doe (en waarom)
-
-- **Rollen hernoemen** naar cashier/viewer: enum `employee_role` is in gebruik door employees, edge functions, RLS policies en `role_permissions`. Jouw huidige `owner/manager/sales` dekt dezelfde scopes via de permission-matrix. Rename = high-risk, geen functionele winst.
-- **`companies` tabel** los van `tenants`: identiek concept, dubbele tabel = bug-bron.
-- **`profiles` tabel**: `employees` bevat al `full_name`, `role`, `user_id`. Aparte `profiles` voegt niks toe in deze app.
-- **Globale rebuild van POS pagina's**: blijft intact, alleen `RoleGate` wrap + logout-fix.
-
-## Volgorde & checkpoints
-
-Na **elke fase**: app draait, geen regressies, korte status met diff.
-
-1. Fase 1 audit-rapport → jij keurt prioriteit goed
-2. Fase 2 DB migraties (één per bevinding, jij keurt elk goed)
-3. Fase 3 frontend hardening
-4. Fase 4 marketing site
-5. Fase 5 password-reset + invite
-6. Fase 6 QA-run + rapport
-
-Akkoord op deze aanpak? Dan start ik fase 1 (read-only audit, geen risico).
+Akkoord op deze aanpak + test-tenant strategie?
