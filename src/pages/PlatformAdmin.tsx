@@ -646,6 +646,14 @@ const PlatformAdmin = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/admin/security-events")}
+              className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-white/50"
+              style={{ color: "#dc2626" }}
+              title="Security Events"
+            >
+              <Shield className="w-3.5 h-3.5" /> Security
+            </button>
             <button onClick={fetchTenants} className="h-9 w-9 rounded-xl flex items-center justify-center transition-colors hover:bg-white/50" style={{ color: "#8b8b9e" }}>
               <RefreshCw className="w-4 h-4" />
             </button>

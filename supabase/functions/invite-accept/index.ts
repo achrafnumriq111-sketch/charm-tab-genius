@@ -34,11 +34,25 @@ Deno.serve(async (req) => {
       });
     }
     if (invite.accepted_at) {
+      await admin.from("security_events").insert({
+        event_type: "invite_token_reuse",
+        severity: "warning",
+        source: "edge:invite-accept",
+        target_resource: invite.id,
+        metadata: { token_prefix: token.slice(0, 8), accepted_at: invite.accepted_at },
+      });
       return new Response(JSON.stringify({ error: "Uitnodiging al gebruikt" }), {
         status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     if (new Date(invite.expires_at).getTime() < Date.now()) {
+      await admin.from("security_events").insert({
+        event_type: "invite_token_expired",
+        severity: "info",
+        source: "edge:invite-accept",
+        target_resource: invite.id,
+        metadata: { token_prefix: token.slice(0, 8), expires_at: invite.expires_at },
+      });
       return new Response(JSON.stringify({ error: "Uitnodiging is verlopen" }), {
         status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

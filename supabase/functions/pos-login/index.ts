@@ -62,6 +62,17 @@ Deno.serve(async (req) => {
         user_agent: ua,
         details: { reason: "user_not_found" },
       });
+      // If tenant_slug was provided, this could be a cross-tenant probing attempt
+      if (tenant_slug) {
+        await admin.from("security_events").insert({
+          event_type: "cross_tenant_login_attempt",
+          severity: "warning",
+          source: "edge:pos-login",
+          ip_address: ip,
+          user_agent: ua,
+          metadata: { username: normalizedUsername, tenant_slug },
+        });
+      }
       // Constant-time delay to prevent timing attacks
       await new Promise((r) => setTimeout(r, 300 + Math.random() * 200));
       return new Response(JSON.stringify({ error: "Ongeldige inloggegevens" }), {

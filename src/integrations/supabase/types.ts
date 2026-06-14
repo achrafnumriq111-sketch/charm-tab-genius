@@ -1707,6 +1707,110 @@ export type Database = {
           },
         ]
       }
+      security_alert_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_triggered_at: string | null
+          min_severity: Database["public"]["Enums"]["security_event_severity"]
+          notify_email: string
+          scope: string
+          tenant_id: string | null
+          threshold_per_hour: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_triggered_at?: string | null
+          min_severity?: Database["public"]["Enums"]["security_event_severity"]
+          notify_email: string
+          scope?: string
+          tenant_id?: string | null
+          threshold_per_hour?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_triggered_at?: string | null
+          min_severity?: Database["public"]["Enums"]["security_event_severity"]
+          notify_email?: string
+          scope?: string
+          tenant_id?: string | null
+          threshold_per_hour?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alert_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_events: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          occurred_at: string
+          request_path: string | null
+          severity: Database["public"]["Enums"]["security_event_severity"]
+          source: string
+          target_resource: string | null
+          target_table: string | null
+          tenant_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          occurred_at?: string
+          request_path?: string | null
+          severity?: Database["public"]["Enums"]["security_event_severity"]
+          source?: string
+          target_resource?: string | null
+          target_table?: string | null
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          occurred_at?: string
+          request_path?: string | null
+          severity?: Database["public"]["Enums"]["security_event_severity"]
+          source?: string
+          target_resource?: string | null
+          target_table?: string | null
+          tenant_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       stock_counts: {
         Row: {
           adjustment_reason: string | null
@@ -2338,6 +2442,22 @@ export type Database = {
         Args: { _location_id: string; _user_id: string }
         Returns: boolean
       }
+      log_security_event: {
+        Args: {
+          _error_code?: string
+          _error_message?: string
+          _event_type: string
+          _ip_address?: string
+          _metadata?: Json
+          _request_path?: string
+          _severity?: Database["public"]["Enums"]["security_event_severity"]
+          _source?: string
+          _target_resource?: string
+          _target_table?: string
+          _user_agent?: string
+        }
+        Returns: string
+      }
       modifier_group_in_user_tenant: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
@@ -2357,6 +2477,19 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      security_events_summary: {
+        Args: { _since?: string }
+        Returns: {
+          critical: number
+          cross_tenant: number
+          info: number
+          rls_rejects: number
+          total: number
+          unique_tenants: number
+          unique_users: number
+          warning: number
         }[]
       }
       setup_tenant_onboarding: {
@@ -2388,6 +2521,7 @@ export type Database = {
         | "waste"
         | "count_adjustment"
         | "refund_restore"
+      security_event_severity: "info" | "warning" | "critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2532,6 +2666,7 @@ export const Constants = {
         "count_adjustment",
         "refund_restore",
       ],
+      security_event_severity: ["info", "warning", "critical"],
     },
   },
 } as const
