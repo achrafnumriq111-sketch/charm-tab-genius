@@ -301,6 +301,7 @@ export type Database = {
           expense_receipts: number
           float_amount: number
           id: string
+          idempotency_key: string | null
           location_id: string | null
           primary_employee_id: string
           primary_employee_name: string
@@ -321,6 +322,7 @@ export type Database = {
           expense_receipts?: number
           float_amount?: number
           id?: string
+          idempotency_key?: string | null
           location_id?: string | null
           primary_employee_id: string
           primary_employee_name: string
@@ -341,6 +343,7 @@ export type Database = {
           expense_receipts?: number
           float_amount?: number
           id?: string
+          idempotency_key?: string | null
           location_id?: string | null
           primary_employee_id?: string
           primary_employee_name?: string
@@ -1285,6 +1288,7 @@ export type Database = {
           gift_card_deduction: number
           gift_card_id: string | null
           id: string
+          idempotency_key: string | null
           items: Json
           location_id: string | null
           loyalty_id: string | null
@@ -1309,6 +1313,7 @@ export type Database = {
           gift_card_deduction?: number
           gift_card_id?: string | null
           id?: string
+          idempotency_key?: string | null
           items?: Json
           location_id?: string | null
           loyalty_id?: string | null
@@ -1333,6 +1338,7 @@ export type Database = {
           gift_card_deduction?: number
           gift_card_id?: string | null
           id?: string
+          idempotency_key?: string | null
           items?: Json
           location_id?: string | null
           loyalty_id?: string | null
@@ -1553,6 +1559,7 @@ export type Database = {
           customer_name: string
           customer_phone: string
           id: string
+          idempotency_key: string | null
           items: Json
           location_id: string | null
           status: string
@@ -1565,6 +1572,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string
           id?: string
+          idempotency_key?: string | null
           items?: Json
           location_id?: string | null
           status?: string
@@ -1577,6 +1585,7 @@ export type Database = {
           customer_name?: string
           customer_phone?: string
           id?: string
+          idempotency_key?: string | null
           items?: Json
           location_id?: string | null
           status?: string
@@ -1934,6 +1943,7 @@ export type Database = {
           employee_id: string | null
           employee_name: string | null
           id: string
+          idempotency_key: string | null
           inventory_item_id: string
           location_id: string | null
           movement_type: Database["public"]["Enums"]["movement_type"]
@@ -1949,6 +1959,7 @@ export type Database = {
           employee_id?: string | null
           employee_name?: string | null
           id?: string
+          idempotency_key?: string | null
           inventory_item_id: string
           location_id?: string | null
           movement_type: Database["public"]["Enums"]["movement_type"]
@@ -1964,6 +1975,7 @@ export type Database = {
           employee_id?: string | null
           employee_name?: string | null
           id?: string
+          idempotency_key?: string | null
           inventory_item_id?: string
           location_id?: string | null
           movement_type?: Database["public"]["Enums"]["movement_type"]

@@ -20,6 +20,7 @@ const Menu = lazy(() => import("./pages/Menu.tsx"));
 const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin.tsx"));
 const QAReport = lazy(() => import("./pages/QAReport.tsx"));
 const SecurityEvents = lazy(() => import("./pages/SecurityEvents.tsx"));
+const OfflineAdmin = lazy(() => import("./pages/OfflineAdmin.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const MarketingHome = lazy(() => import("./pages/marketing/Home.tsx"));
@@ -43,6 +44,7 @@ const AppRoutes = () => {
         <Route path="/admin" element={<PlatformAdmin />} />
         <Route path="/admin/qa-report" element={<QAReport />} />
         <Route path="/admin/security-events" element={<SecurityEvents />} />
+        <Route path="/admin/offline" element={<ProtectedRoute><OfflineAdmin /></ProtectedRoute>} />
         <Route path="/menu/:tableId" element={<Menu />} />
         <Route path="/team" element={<ProtectedRoute><TeamInvites /></ProtectedRoute>} />
         {isPlatformLevel ? (
