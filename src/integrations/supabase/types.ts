@@ -423,6 +423,77 @@ export type Database = {
           },
         ]
       }
+      device_pairing_codes: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          created_by: string | null
+          device_name: string
+          expires_at: string
+          id: string
+          location_id: string
+          tenant_id: string
+          used_at: string | null
+          used_by_device_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          created_by?: string | null
+          device_name: string
+          expires_at: string
+          id?: string
+          location_id: string
+          tenant_id: string
+          used_at?: string | null
+          used_by_device_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          device_name?: string
+          expires_at?: string
+          id?: string
+          location_id?: string
+          tenant_id?: string
+          used_at?: string | null
+          used_by_device_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_pairing_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_pairing_codes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_pairing_codes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_pairing_codes_used_by_device_id_fkey"
+            columns: ["used_by_device_id"]
+            isOneToOne: false
+            referencedRelation: "trusted_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discounts: {
         Row: {
           created_at: string
@@ -2095,6 +2166,83 @@ export type Database = {
         }
         Relationships: []
       }
+      trusted_devices: {
+        Row: {
+          created_at: string
+          device_name: string
+          device_token: string
+          id: string
+          last_ip: string | null
+          last_seen_at: string | null
+          location_id: string
+          paired_by: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          tenant_id: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_name: string
+          device_token?: string
+          id?: string
+          last_ip?: string | null
+          last_seen_at?: string | null
+          location_id: string
+          paired_by?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          device_token?: string
+          id?: string
+          last_ip?: string | null
+          last_seen_at?: string | null
+          location_id?: string
+          paired_by?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trusted_devices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trusted_devices_paired_by_fkey"
+            columns: ["paired_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trusted_devices_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trusted_devices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       upsell_rules: {
         Row: {
           active_from: string | null
@@ -2438,6 +2586,14 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      get_device_context: {
+        Args: { _token: string }
+        Returns: {
+          device_id: string
+          location_id: string
+          tenant_id: string
+        }[]
       }
       get_employee_location_id: { Args: { _user_id: string }; Returns: string }
       get_employee_role: {

@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { username, pin, tenant_slug } = await req.json();
+    const { username, pin, tenant_slug, device_token } = await req.json();
 
     // Input validation
     if (!username || typeof username !== "string" || !pin || typeof pin !== "string") {
@@ -40,15 +40,45 @@ Deno.serve(async (req) => {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const ua = req.headers.get("user-agent") || "unknown";
 
+    // If a trusted device token was provided, resolve tenant from device (server-trusted)
+    let scopedTenantSlug: string | null = null;
+    if (device_token && typeof device_token === "string") {
+      const { data: device } = await admin
+        .from("trusted_devices")
+        .select("id, tenant_id, location_id, tenants:tenant_id(slug)")
+        .eq("device_token", device_token)
+        .is("revoked_at", null)
+        .maybeSingle();
+      if (device) {
+        // deno-lint-ignore no-explicit-any
+        scopedTenantSlug = (device as any).tenants?.slug ?? null;
+        // Touch last_seen
+        await admin
+          .from("trusted_devices")
+          .update({ last_seen_at: new Date().toISOString(), last_ip: ip, user_agent: ua })
+          .eq("id", device.id);
+      } else {
+        await admin.from("security_events").insert({
+          event_type: "invalid_device_token",
+          severity: "warning",
+          source: "edge:pos-login",
+          ip_address: ip,
+          user_agent: ua,
+          metadata: { username: normalizedUsername },
+        });
+      }
+    }
+
+    const effectiveTenantSlug = scopedTenantSlug || (typeof tenant_slug === "string" ? tenant_slug : null);
+
     // Build employee query - optionally scoped to tenant
     let empQuery = admin
       .from("employees")
       .select("*, locations!inner(tenant_id, tenants!inner(slug))")
       .eq("username_normalized", normalizedUsername);
 
-    // If tenant_slug provided, scope to that tenant
-    if (tenant_slug && typeof tenant_slug === "string") {
-      empQuery = empQuery.eq("locations.tenants.slug", tenant_slug);
+    if (effectiveTenantSlug) {
+      empQuery = empQuery.eq("locations.tenants.slug", effectiveTenantSlug);
     }
 
     const { data: employee, error: lookupError } = await empQuery.single();

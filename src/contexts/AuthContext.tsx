@@ -136,9 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, pin: string, rememberMe: boolean): Promise<{ error?: string }> => {
     try {
+      const { getDeviceToken } = await import("@/lib/device");
+      const deviceToken = getDeviceToken();
       const body: Record<string, string> = { username, pin };
-      // Pass tenant slug for tenant-scoped login
-      if (slug) body.tenant_slug = slug;
+      // Trusted device token takes precedence; falls back to URL slug.
+      if (deviceToken) body.device_token = deviceToken;
+      else if (slug) body.tenant_slug = slug;
 
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pos-login`,

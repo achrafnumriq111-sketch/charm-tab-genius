@@ -1,94 +1,78 @@
 
-# Offline-First POS — Implementation Plan
+# Auth Hardening — Tebi/Lightspeed-stijl multi-laag
 
-Volledig offline-first met PWA service worker, IndexedDB cache (Dexie) en outbox queue met UUID idempotency. Last-write-wins sync.
+Geen aparte URL per zaak (zoals `saakouk.app/cafe1`) — die laag bestaat al via tenant_id isolatie en is voor cross-tenant beveiliging niet nodig. In plaats daarvan: **QR Device Pairing + Trusted Devices + Owner MFA** toevoegen. Dit is exact het patroon van Tebi en Lightspeed.
 
-## Architectuur
+## Wat er al staat (niet aanraken)
+- Laag 1 — Owner login: email + wachtwoord (`loginOwner` in AuthContext) ✓
+- Laag 2 — Tenant isolatie: `tenant_id` op alle tabellen + `get_tenant_id_for_user()` + RLS ✓
+- Laag 4 — Medewerker PIN: 6-cijfer via `pos-login` edge function ✓
+- Audit: `login_audit_logs` + `security_events` ✓
 
-```text
-┌─────────────────────────────────────────────────┐
-│ React UI                                        │
-│   ↓ reads/writes via offlineRepo (Dexie)        │
-├─────────────────────────────────────────────────┤
-│ Dexie (IndexedDB)                               │
-│  • cache: products, modifiers, tables,          │
-│    employees, customers, location_settings,     │
-│    discounts, inventory_items, vat_rates        │
-│  • outbox: pending mutations (UUID + payload)   │
-│  • meta: last_sync_at per table                 │
-├─────────────────────────────────────────────────┤
-│ SyncEngine                                      │
-│  • online detector (navigator.onLine + ping)    │
-│  • pull: delta-sync via updated_at since meta   │
-│  • push: drain outbox FIFO, retry w/ backoff    │
-│  • BackgroundSync API + interval fallback       │
-├─────────────────────────────────────────────────┤
-│ Service Worker (vite-plugin-pwa, generateSW)    │
-│  • app-shell NetworkFirst                       │
-│  • Supabase REST: NetworkOnly (geen cache)      │
-│  • assets CacheFirst                            │
-└─────────────────────────────────────────────────┘
-```
+## Wat erbij komt
 
-## Stappen (volgorde van uitvoering)
+### Laag 3 — QR Device Pairing
+Eigenaar opent op telefoon `/devices` → klikt "Nieuw apparaat koppelen" → server genereert eenmalige `pairing_code` (6 cijfers, 5 min geldig). iPad opent `/pair` → typt code → server stempelt iPad als `trusted_device` voor die tenant/locatie.
 
-### 1. Foundation — PWA + Dexie skeleton
-- `vite-plugin-pwa` met `generateSW`, `injectRegister: null`, `devOptions.enabled: false`
-- Guarded registration wrapper (`src/lib/pwa/register.ts`) — refuse in Lovable preview/iframe/dev/`?sw=off`
-- Manifest + icons (hergebruik bestaande SAAKOUK branding)
-- Dexie schema (`src/lib/offline/db.ts`): tabellen `cache_*`, `outbox`, `sync_meta`
-- Online-state hook `useOnlineStatus()` (ping `/rest/v1/` elke 30s, niet alleen `navigator.onLine`)
+Nieuwe tabel `trusted_devices`:
+- `device_token` (uuid, opgeslagen in localStorage op iPad)
+- `tenant_id`, `location_id`, `device_name`, `last_seen_at`, `revoked_at`
 
-### 2. Cache layer — read-side
-- `src/lib/offline/repo.ts` — `getProducts()`, `getTables()`, etc. die eerst Dexie lezen, dan in achtergrond verversen
-- Initial bulk-load bij login: fetch alles van tenant, opslaan met `updated_at`
-- Delta-sync: `SELECT * WHERE updated_at > sync_meta.last_sync_at`
-- UI-componenten (POS, Menu, Floor, Employees) overschakelen op repo
+Nieuwe tabel `device_pairing_codes`:
+- `code` (6 digits), `tenant_id`, `location_id`, `created_by`, `expires_at`, `used_at`
 
-### 3. Outbox — write-side
-- Alle mutaties (orders, cash closings, stock movements, qr orders) gaan via `outbox.enqueue({type, uuid, payload})`
-- UUID v4 client-generated; servers dedupen op `idempotency_key` kolom
-- DB migratie: kolom `idempotency_key uuid unique` toevoegen aan `pos_transactions`, `cash_closings`, `stock_movements`, `qr_orders`
-- Edge functions / inserts respecteren `ON CONFLICT (idempotency_key) DO NOTHING RETURNING`
+Twee edge functions:
+- `device-pair-start` (auth required, eigenaar/manager) → maakt code
+- `device-pair-claim` (anon) → wisselt code voor `device_token`
 
-### 4. Sync engine
-- `SyncEngine.start()` bij login: registreert online/offline listeners + interval (10s)
-- Push: drain outbox FIFO, op fail → exponential backoff, na 5 fails → DLQ-tabel in Dexie + toast aan manager
-- Pull: per cache-tabel delta sinds laatste sync
-- BackgroundSync API registratie waar beschikbaar (Chrome/Android); iPad Safari valt terug op interval
+### Laag 6 — Trusted Device flow
+Login pagina checkt eerst `localStorage.saakouk_device_token`:
+- **Trusted device** → toon alleen medewerkerslijst + PIN-pad (geen username typen, geen owner-tab)
+- **Ongekoppelde browser/iPad** → toon huidige owner + employee tabs
 
-### 5. UI indicators
-- Statusbalk in header: `Online` / `Offline · X pending` / `Syncing...`
-- Per ticket badge "wacht op sync" zolang in outbox
-- Settings-pagina `/admin/offline` met outbox-inhoud, force-sync knop, cache-reset knop
+`pos-login` krijgt optioneel `device_token` parameter. Edge function valideert device_token → tenant_id wordt server-side uit device gehaald i.p.v. subdomain → cross-tenant onmogelijk.
 
-### 6. Conflict & edge cases
-- Idempotency keys voorkomen dubbele orders na retry
-- Cash drawer (WebUSB) blijft werken offline (lokaal hardware-commando)
-- ESC/POS bonprinter blijft werken offline
-- Auth: PIN-login moet offline kunnen → employee cache + lokale PIN-hash check (server her-valideert bij sync)
-- Tafel-status: optimistic update lokaal, last-write-wins bij conflict (UI re-renders na pull)
-- Reservations en QR orders: alleen lezen offline, schrijven blokkeren met duidelijke melding (te risicovol qua double-booking)
+Nieuw scherm `/pair` (geen auth) voor ongekoppelde iPad.
+Nieuw scherm `/devices` (owner/manager) om devices te bekijken/intrekken.
 
-### 7. Testing
-- Vitest: outbox enqueue/drain, dedupe, backoff
-- Playwright/handmatig: Chrome DevTools → offline toggle, maak order, ga online, verifieer DB
-- E2E: 2 iPads tegelijk offline → zelfde order UUID retry → 1 row in DB
+### Laag 5 — Owner MFA (TOTP)
+Supabase Auth heeft native TOTP MFA. Aanzetten + UI:
+- `/settings/security` voor eigenaar → "MFA inschakelen" → QR voor Google Authenticator → 6-cijfer challenge
+- `loginOwner` flow uitbreiden: na `signInWithPassword` checken op `aal1` vs `aal2`; bij MFA-enrolled user → challenge scherm tonen
+- Optioneel afdwingen voor rol `owner` via `mfa_required` flag
 
-### 8. Documentatie
-- `OFFLINE-MODE.md`: wat werkt offline, wat niet, troubleshooting, force-reset procedure
-- Memory entry `mem://features/offline-mode`
+## Technische details
 
-## Scope-grenzen (NIET in deze iteratie)
-- Multi-device CRDT merge (alleen LWW)
-- Offline analytics dashboard (alleen live)
-- Offline AI weather forecasting (vereist WeatherKit live call)
-- Offline PassKit uitgifte (vereist Apple servers)
+**Files (nieuw):**
+- `supabase/migrations/...` — `trusted_devices`, `device_pairing_codes` + RLS + GRANTs
+- `supabase/functions/device-pair-start/index.ts`
+- `supabase/functions/device-pair-claim/index.ts`
+- `src/pages/Pair.tsx` — 6-digit invoer voor iPad
+- `src/pages/Devices.tsx` — beheer (owner/manager)
+- `src/pages/MFASetup.tsx` — TOTP enrollment
+- `src/lib/device.ts` — `getDeviceToken()`, `clearDeviceToken()`
+- `src/components/MFAChallenge.tsx`
 
-## Geschatte oplevering
-- Stap 1-2 (foundation + read cache): turn 1
-- Stap 3-4 (outbox + sync): turn 2
-- Stap 5-6 (UI + edge cases): turn 3
-- Stap 7-8 (tests + docs): turn 4
+**Files (wijzigen):**
+- `supabase/functions/pos-login/index.ts` — accepteer `device_token`, leid tenant af van device, log untrusted-device-attempts
+- `src/contexts/AuthContext.tsx` — `loginOwner` MFA branch, device_token doorgeven aan PIN login
+- `src/pages/Login.tsx` — trusted-device modus (alleen employee picker + PIN)
+- `src/App.tsx` — routes `/pair`, `/devices`, `/settings/security`
 
-Na akkoord start ik met stap 1.
+**Security garanties:**
+- `device_token` is per-device random UUID, ingetrokken bij verlies via `/devices`
+- Pairing code: 6 digits + 5 min TTL + single-use → brute force window < 1000 pogingen
+- PIN login zonder device_token blijft mogelijk (fallback), maar wordt gelogd als `untrusted_device_login`
+- MFA optioneel per gebruiker, kan door platform admin afgedwongen worden via flag
+
+## Buiten scope (bewust niet doen)
+- Magic-link login (overlapt met email/password, voegt geen veiligheid toe)
+- Eigen subdomain per tenant (`cafe1.saakouk.app/login`) — `tenant_id` isolatie + RLS dekt dit al af, en custom domain `cafepos.saakouk.nl` blijft één login URL zoals Tebi
+- WebAuthn/passkeys (later, na TOTP)
+
+## Volgorde van uitvoer
+1. Migration: `trusted_devices` + `device_pairing_codes` + RLS
+2. Edge functions: `device-pair-start`, `device-pair-claim`, update `pos-login`
+3. UI: `/pair` (eenvoudig, eerst testen), dan `/devices`
+4. AuthContext: trusted-device modus in Login
+5. MFA: enrollment + challenge (los uit te brengen na 1-4)
