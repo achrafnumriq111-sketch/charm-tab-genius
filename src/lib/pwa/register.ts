@@ -53,7 +53,16 @@ export async function registerServiceWorker(): Promise<void> {
     url.searchParams.get("sw") === "off";
 
   if (refused) {
-    await unregisterMatching();
+    const hadSomething = await purgeAll();
+    // If a stale SW was controlling this page, reload once so the fresh
+    // (network-served) HTML + chunks take over instead of cached broken ones.
+    if (hadSomething && navigator.serviceWorker.controller) {
+      const KEY = "__sw_purge_reloaded";
+      if (!sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+      }
+    }
     return;
   }
 
