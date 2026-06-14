@@ -42,7 +42,6 @@ Deno.serve(async (req) => {
 
     // If a trusted device token was provided, resolve tenant from device (server-trusted)
     let scopedTenantSlug: string | null = null;
-    let trustedDeviceId: string | null = null;
     if (device_token && typeof device_token === "string") {
       const { data: device } = await admin
         .from("trusted_devices")
@@ -53,7 +52,6 @@ Deno.serve(async (req) => {
       if (device) {
         // deno-lint-ignore no-explicit-any
         scopedTenantSlug = (device as any).tenants?.slug ?? null;
-        trustedDeviceId = device.id;
         // Touch last_seen
         await admin
           .from("trusted_devices")
