@@ -45,8 +45,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action } = await req.json().then((b) => ({ action: b.action, ...b })).catch(() => ({ action: null }));
-    const body = await req.clone().json().catch(() => ({}));
+    // Parse body once — a previous version read it twice via .clone() which
+    // throws "Body is unusable" because the first .json() already consumed it.
+    const body = await req.json().catch(() => ({}));
 
     if (body.action === "create") {
       const { full_name, role, location_id } = body;
