@@ -136,28 +136,31 @@ async function seedRow(admin: SupabaseClient, table: string, locationId: string)
       Object.assign(base, { name: "QA Product", price: 1, vat_rate: 9 });
       break;
     case "inventory_items":
-      Object.assign(base, { name: "QA Item", category: "ingredient", unit_type: "g" });
+      Object.assign(base, { item_name: `QA Item ${crypto.randomUUID().slice(0,6)}`, category: "ingredient", unit_type: "g" });
       break;
     case "customers":
       Object.assign(base, { full_name: "QA Customer", source: "manual" });
       break;
     case "qr_orders":
       Object.assign(base, {
+        table_id: `qa-table-${crypto.randomUUID().slice(0,6)}`,
         items: [], total: 0, status: "pending",
         idempotency_key: crypto.randomUUID(),
       });
       break;
     case "cash_closings":
       Object.assign(base, {
-        primary_employee_name: "QA", counted_cash: 0, expected_cash: 0,
-        difference: 0, status: "open", idempotency_key: crypto.randomUUID(),
+        primary_employee_id: "qa", primary_employee_name: "QA",
+        second_checker_id: "qa2", second_checker_name: "QA2",
+        envelope_code: `ENV-${crypto.randomUUID().slice(0,6)}`,
+        counted_cash: 0, expected_cash_revenue: 0, difference: 0, status: "open",
+        idempotency_key: crypto.randomUUID(),
       });
       break;
     case "stock_movements":
-      // requires inventory_item_id; seed one inline
       {
         const { data: inv, error: iErr } = await admin.from("inventory_items")
-          .insert({ location_id: locationId, name: "QA Inv for mv", category: "ingredient", unit_type: "g" })
+          .insert({ location_id: locationId, item_name: `QA Inv mv ${crypto.randomUUID().slice(0,6)}`, category: "ingredient", unit_type: "g" })
           .select("id").single();
         if (iErr || !inv) throw new Error(`seed inv for movement: ${iErr?.message}`);
         Object.assign(base, {
@@ -167,18 +170,16 @@ async function seedRow(admin: SupabaseClient, table: string, locationId: string)
       }
       break;
     case "employees":
-      // Already created during tenant setup — return existing
       {
         const { data } = await admin.from("employees").select("id").eq("location_id", locationId).limit(1).single();
         return data?.id as string;
       }
     case "modifier_groups":
-      Object.assign(base, { name: "QA Group", is_required: false });
+      Object.assign(base, { name: `QA Group ${crypto.randomUUID().slice(0,8)}`, is_required: false });
       break;
     case "modifiers": {
-      // requires group_id
       const { data: g, error: gErr } = await admin.from("modifier_groups")
-        .insert({ location_id: locationId, name: "QA G", is_required: false }).select("id").single();
+        .insert({ location_id: locationId, name: `QA G ${crypto.randomUUID().slice(0,8)}`, is_required: false }).select("id").single();
       if (gErr || !g) throw new Error(`seed group for mod: ${gErr?.message}`);
       Object.assign(base, { group_id: g.id, name: "QA Mod", extra_price: 0, cost_price: 0 });
       break;
@@ -192,14 +193,14 @@ async function seedRow(admin: SupabaseClient, table: string, locationId: string)
       break;
     case "floor_tables": {
       const { data: z, error: zErr } = await admin.from("floor_zones")
-        .insert({ location_id: locationId, name: "QA Zone" }).select("id").single();
+        .insert({ location_id: locationId, name: `QA Zone ${crypto.randomUUID().slice(0,6)}` }).select("id").single();
       if (zErr || !z) throw new Error(`seed zone: ${zErr?.message}`);
       Object.assign(base, { zone_id: z.id, name: "QA T", seats: 2, shape: "square", x: 0, y: 0, w: 50, h: 50 });
       break;
     }
     case "reservations":
       Object.assign(base, {
-        guest_name: "QA", guest_count: 2, status: "confirmed",
+        guest_name: "QA", guests: 2, status: "confirmed",
         reservation_date: new Date().toISOString().split("T")[0], reservation_time: "12:00",
       });
       break;
