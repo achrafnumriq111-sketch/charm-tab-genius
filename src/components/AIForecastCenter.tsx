@@ -18,8 +18,8 @@ import type {
   WeatherSummary,
 } from "@/lib/weather/weatherIntelligence";
 import {
-  getSchedule, isOpenHour, getOpenHours, getTotalOpenHours, formatSchedule,
-  normalizeSchedule, getDefaultSchedule, type LocationSchedule,
+  getOpenHoursForDate, getTotalOpenHoursForDate, formatScheduleForDate, getScheduleForDate,
+  normalizeScheduleConfig, getDefaultScheduleConfig, type ScheduleConfig,
 } from "@/lib/businessHours";
 import { useLocation_ } from "@/contexts/LocationContext";
 
@@ -71,7 +71,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
 
   // Per-location opening hours (drives "open hours only" forecast logic)
   const { activeLocation } = useLocation_();
-  const [schedule, setSchedule] = useState<LocationSchedule>(() => getDefaultSchedule());
+  const [schedule, setSchedule] = useState<ScheduleConfig>(() => getDefaultScheduleConfig());
   useEffect(() => {
     const locId = activeLocation?.id;
     if (!locId) return;
@@ -83,7 +83,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         .eq("location_id", locId)
         .maybeSingle();
       if (cancelled) return;
-      setSchedule(normalizeSchedule((data as any)?.opening_hours));
+      setSchedule(normalizeScheduleConfig((data as any)?.opening_hours));
     })();
     return () => { cancelled = true; };
   }, [activeLocation?.id]);
@@ -246,17 +246,19 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
   currentWeather: NormalizedCurrentWeather | null; weatherSource: "live" | "fallback";
   weatherLoading: boolean; liveTime: Date; lastUpdated: Date | null;
   fetchWeather: (silent?: boolean) => Promise<void>;
-  schedule: LocationSchedule;
+  schedule: ScheduleConfig;
 }) {
   const todayStr = getAmsterdamDateStr();
   const currentHour = getAmsterdamHour();
-  const currentDow = getAmsterdamDayOfWeek();
+  const today = getAmsterdamNow();
+  const currentDow = today.getDay();
 
-  const todayOpenHours = useMemo(() => {
-    const s = getSchedule(currentDow, schedule);
-    if (s.closed || s.close <= s.open) return [];
-    return hourly.filter(h => h.date === todayStr && h.localHour >= currentHour && h.localHour >= s.open && h.localHour < s.close);
-  }, [hourly, todayStr, currentHour, currentDow, schedule]);
+  const openHoursToday = useMemo(() => new Set(getOpenHoursForDate(today, schedule)), [schedule, todayStr]);
+  // Show full 0-23 for today (mark closed hours visually) so user sees what's excluded.
+  const todayHourly = useMemo(
+    () => hourly.filter(h => h.date === todayStr && h.localHour >= currentHour),
+    [hourly, todayStr, currentHour]
+  );
 
   return (
     <Card className="rounded-2xl">
@@ -313,23 +315,32 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
           </div>
         )}
 
-        {todayOpenHours.length > 0 && (
+        {todayHourly.length > 0 && (
           <div className="mt-2 pt-2 border-t border-border/50">
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-[10px] font-medium text-muted-foreground">Resterende open uren ({formatSchedule(currentDow, schedule)})</span>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-[10px] font-medium text-muted-foreground">Resterende uren ({formatScheduleForDate(today, schedule)})</span>
+              <span className="text-[9px] text-muted-foreground/70 flex items-center gap-2">
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500/70" />open</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/30" />gesloten</span>
+              </span>
             </div>
             <div className="flex gap-1 overflow-x-auto pb-1">
-              {todayOpenHours.map((h) => {
+              {todayHourly.map((h) => {
                 const isCurrent = h.localHour === currentHour;
+                const isOpen = openHoursToday.has(h.localHour);
                 return (
                   <div key={h.localHour} className={cn(
                     "flex flex-col items-center min-w-[40px] text-center rounded-lg px-1 py-1 transition-all",
-                    isCurrent ? "bg-card border border-foreground/20 shadow-sm" : ""
-                  )}>
-                    <span className={cn("text-[9px]", isCurrent ? "text-foreground font-semibold" : "text-muted-foreground")}>{isCurrent ? "Nu" : `${h.localHour}:00`}</span>
+                    isCurrent ? "bg-card border border-foreground/20 shadow-sm" : "",
+                    !isOpen && "opacity-40 grayscale"
+                  )} title={isOpen ? "Open" : "Buiten openingstijden"}>
+                    <span className={cn("text-[9px]", isCurrent ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                      {isCurrent ? "Nu" : `${h.localHour}:00`}
+                    </span>
                     <span className="text-xs">{h.icon}</span>
                     <span className={cn("text-[10px] font-medium")}>{h.temperatureC}°</span>
                     {h.precipitationChance > 30 && <span className="text-[8px] text-blue-500 flex items-center gap-0.5"><Droplets className="h-2 w-2" />{h.precipitationChance}%</span>}
+                    {!isOpen && <span className="text-[8px] text-muted-foreground">dicht</span>}
                   </div>
                 );
               })}
@@ -718,11 +729,12 @@ function StockTab({ data }: { data: any }) {
 
 // ─── Staffing Tab ────────────────────────────────────────────────────────────
 
-function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: LocationSchedule }) {
+function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: ScheduleConfig }) {
   const patterns = data?.patterns || [];
   const hasStaffData = data?.hasStaffData || false;
-  const todayDow = getAmsterdamDayOfWeek();
-  const openHrs = getOpenHours(todayDow, schedule);
+  const today = getAmsterdamNow();
+  const todayDow = today.getDay();
+  const openHrs = getOpenHoursForDate(today, schedule);
 
   // Filter patterns for today's weekday
   const todayPatterns = patterns
@@ -800,10 +812,16 @@ function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: Norm
         </CardContent></Card>
         <Card className="rounded-2xl"><CardContent className="p-4">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Open uren</div>
-          <div className="text-xl font-bold">{formatSchedule(todayDow, schedule)}</div>
-          <div className="text-xs text-muted-foreground">{getTotalOpenHours(todayDow, schedule)} uur</div>
+          <div className="text-xl font-bold">{formatScheduleForDate(today, schedule)}</div>
+          <div className="text-xs text-muted-foreground">{getTotalOpenHoursForDate(today, schedule)} uur</div>
         </CardContent></Card>
       </div>
+
+      <Card className="rounded-2xl"><CardContent className="p-3 text-[10px] text-muted-foreground flex items-center gap-2">
+        <Info className="h-3 w-3 shrink-0" />
+        Uren buiten {formatScheduleForDate(today, schedule)} worden niet meegerekend in dit personeelsadvies.
+      </CardContent></Card>
+
 
       <Card className="rounded-2xl">
         <CardHeader className="p-4 pb-2"><CardTitle className="text-sm flex items-center gap-2">

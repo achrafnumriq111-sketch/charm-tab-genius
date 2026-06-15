@@ -36,7 +36,15 @@ import {
   ChevronRight, ChevronLeft, Banknote, Building2,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
   ClipboardCheck, BarChart3, Loader2,
+  Copy, AlertTriangle, CalendarPlus,
 } from "lucide-react";
+import {
+  normalizeScheduleConfig, validateScheduleConfig, formatDayHours,
+  DAY_LABELS_LONG, type ScheduleConfig, type ScheduleException,
+} from "@/lib/businessHours";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 /**
  * DOTTS POS — Full Lovable-ready single-file build (v2 — all flows wired)
@@ -4433,15 +4441,10 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
     { dow: 4, label: "Donderdag" }, { dow: 5, label: "Vrijdag" }, { dow: 6, label: "Zaterdag" },
     { dow: 0, label: "Zondag" },
   ];
-  const DEFAULT: Record<number, { open: number; close: number; closed: boolean }> = {
-    0: { open: 12, close: 24, closed: false }, 1: { open: 10, close: 22, closed: false },
-    2: { open: 10, close: 22, closed: false }, 3: { open: 10, close: 22, closed: false },
-    4: { open: 10, close: 22, closed: false }, 5: { open: 10, close: 24, closed: false },
-    6: { open: 10, close: 24, closed: false },
-  };
-  const [hours, setHours] = useState<Record<number, { open: number; close: number; closed: boolean }>>(DEFAULT);
+  const [cfg, setCfg] = useState<ScheduleConfig>(() => normalizeScheduleConfig(null));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [newExcDate, setNewExcDate] = useState<string>("");
 
   useEffect(() => {
     if (!locationId) return;
@@ -4450,28 +4453,24 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
       setLoading(true);
       const { data } = await supabase.from("location_settings").select("opening_hours").eq("location_id", locationId).maybeSingle();
       if (cancelled) return;
-      const raw = (data as any)?.opening_hours;
-      if (raw && typeof raw === "object") {
-        const merged: any = { ...DEFAULT };
-        for (let d = 0; d < 7; d++) {
-          const e = raw[d] ?? raw[String(d)];
-          if (e) merged[d] = { open: Number(e.open ?? 0), close: Number(e.close ?? 0), closed: !!e.closed };
-        }
-        setHours(merged);
-      }
+      setCfg(normalizeScheduleConfig((data as any)?.opening_hours));
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [locationId]);
 
+  const warnings = useMemo(() => validateScheduleConfig(cfg), [cfg]);
+  const hasErrors = warnings.some(w => w.severity === "error");
+
   async function save() {
     if (!locationId) return;
+    if (hasErrors) { onToast?.("Los eerst de fouten op."); return; }
     setSaving(true);
     try {
-      // Upsert (row may not exist yet for fresh locations)
+      const payload = { days: cfg.days, exceptions: cfg.exceptions };
       const { error } = await supabase
         .from("location_settings")
-        .upsert({ location_id: locationId, opening_hours: hours as any }, { onConflict: "location_id" });
+        .upsert({ location_id: locationId, opening_hours: payload as any }, { onConflict: "location_id" });
       if (error) throw error;
       onToast?.("Openingstijden opgeslagen");
     } catch (e: any) {
@@ -4481,11 +4480,42 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
     }
   }
 
-  function update(dow: number, patch: Partial<{ open: number; close: number; closed: boolean }>) {
-    setHours(prev => ({ ...prev, [dow]: { ...prev[dow], ...patch } }));
+  function updateDay(dow: number, patch: Partial<{ open: number; close: number; closed: boolean }>) {
+    setCfg(prev => ({ ...prev, days: { ...prev.days, [dow]: { ...prev.days[dow], ...patch } } }));
+  }
+  function set24h(dow: number) { updateDay(dow, { open: 0, close: 24, closed: false }); }
+  function copyDayTo(srcDow: number, targetDows: number[]) {
+    setCfg(prev => {
+      const src = prev.days[srcDow];
+      const days = { ...prev.days };
+      for (const t of targetDows) days[t] = { ...src, label: prev.days[t].label };
+      return { ...prev, days };
+    });
+    onToast?.(`Gekopieerd van ${DAY_LABELS_LONG[srcDow]}`);
   }
 
-  function set24h(dow: number) { update(dow, { open: 0, close: 24, closed: false }); }
+  function addException() {
+    if (!newExcDate || !/^\d{4}-\d{2}-\d{2}$/.test(newExcDate)) {
+      onToast?.("Kies een geldige datum"); return;
+    }
+    setCfg(prev => ({
+      ...prev,
+      exceptions: { ...prev.exceptions, [newExcDate]: { open: 10, close: 18, closed: false, label: "" } }
+    }));
+    setNewExcDate("");
+  }
+  function updateException(date: string, patch: Partial<ScheduleException>) {
+    setCfg(prev => ({ ...prev, exceptions: { ...prev.exceptions, [date]: { ...prev.exceptions[date], ...patch } } }));
+  }
+  function removeException(date: string) {
+    setCfg(prev => {
+      const { [date]: _, ...rest } = prev.exceptions;
+      return { ...prev, exceptions: rest };
+    });
+  }
+
+  const dayWarning = (dow: number) => warnings.find(w => w.scope === "day" && w.key === String(dow));
+  const excWarning = (d: string) => warnings.find(w => w.scope === "exception" && w.key === d);
 
   return (
     <Card className="rounded-2xl">
@@ -4493,9 +4523,11 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
         <CardTitle className="text-sm flex items-center gap-2">
           <Clock className="h-4 w-4" /> Openingstijden
         </CardTitle>
-        <p className="text-xs text-muted-foreground">Bepaalt voor welke uren AI Forecast bezettingsadvies geeft.</p>
+        <p className="text-xs text-muted-foreground">
+          Bepaalt voor welke uren AI Forecast bezettingsadvies geeft. Sluitingsuur &gt; 24 = volgende dag (bv. 26 = 02:00).
+        </p>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         {loading ? (
           <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
             <Loader2 className="h-3 w-3 animate-spin" /> Laden…
@@ -4503,41 +4535,119 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
         ) : (
           <>
             {DAYS.map(({ dow, label }) => {
-              const h = hours[dow];
+              const h = cfg.days[dow];
               const is24 = !h.closed && h.open === 0 && h.close === 24;
+              const w = dayWarning(dow);
               return (
-                <div key={dow} className="flex items-center gap-2 py-1.5 border-b last:border-0">
-                  <div className="w-24 text-sm font-medium">{label}</div>
-                  <Switch
-                    checked={!h.closed}
-                    onCheckedChange={(v) => update(dow, { closed: !v })}
-                  />
-                  <span className="text-xs text-muted-foreground w-14">{h.closed ? "Gesloten" : "Open"}</span>
-                  {!h.closed && (
-                    <>
-                      <Input
-                        type="number" min={0} max={23} value={h.open}
-                        onChange={(e) => update(dow, { open: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })}
-                        className="w-16 h-8 text-center"
-                      />
-                      <span className="text-xs text-muted-foreground">–</span>
-                      <Input
-                        type="number" min={1} max={24} value={h.close}
-                        onChange={(e) => update(dow, { close: Math.max(1, Math.min(24, parseInt(e.target.value) || 1)) })}
-                        className="w-16 h-8 text-center"
-                      />
-                      <span className="text-[10px] text-muted-foreground">u</span>
-                      <Button variant={is24 ? "default" : "outline"} size="sm" className="h-7 text-[10px] ml-auto" onClick={() => set24h(dow)}>
-                        24u
-                      </Button>
-                    </>
+                <div key={dow} className={`py-1.5 border-b last:border-0 ${w?.severity === "error" ? "bg-red-50/40" : ""}`}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="w-20 text-sm font-medium">{label}</div>
+                    <Switch checked={!h.closed} onCheckedChange={(v) => updateDay(dow, { closed: !v })} />
+                    <span className="text-xs text-muted-foreground w-14">{h.closed ? "Gesloten" : "Open"}</span>
+                    {!h.closed && (
+                      <>
+                        <Input
+                          type="number" min={0} max={23} value={h.open}
+                          onChange={(e) => updateDay(dow, { open: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })}
+                          className="w-16 h-8 text-center"
+                        />
+                        <span className="text-xs text-muted-foreground">–</span>
+                        <Input
+                          type="number" min={1} max={30} value={h.close}
+                          onChange={(e) => updateDay(dow, { close: Math.max(1, Math.min(30, parseInt(e.target.value) || 1)) })}
+                          className="w-16 h-8 text-center"
+                        />
+                        <span className="text-[10px] text-muted-foreground w-24">{formatDayHours(h)}</span>
+                        <Button variant={is24 ? "default" : "outline"} size="sm" className="h-7 text-[10px]" onClick={() => set24h(dow)}>24u</Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-7 text-[10px] ml-auto"><Copy className="h-3 w-3 mr-1" />Kopieer</Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel className="text-[10px]">Kopieer {label} naar…</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {DAYS.filter(d => d.dow !== dow).map(d => (
+                              <DropdownMenuItem key={d.dow} onSelect={() => copyDayTo(dow, [d.dow])}>{d.label}</DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => copyDayTo(dow, DAYS.filter(d => d.dow !== dow).map(d => d.dow))}>Alle andere dagen</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => copyDayTo(dow, [1,2,3,4,5].filter(d => d !== dow))}>Ma–Vr (werkweek)</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => copyDayTo(dow, [0,6].filter(d => d !== dow))}>Za &amp; Zo (weekend)</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    )}
+                  </div>
+                  {w && (
+                    <div className={`flex items-start gap-1 text-[10px] mt-1 ${w.severity === "error" ? "text-red-600" : "text-amber-600"}`}>
+                      <AlertTriangle className="h-3 w-3 mt-px shrink-0" /> {w.message}
+                    </div>
                   )}
                 </div>
               );
             })}
+
+            <div className="pt-3 mt-2 border-t">
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <div>
+                  <div className="text-xs font-semibold flex items-center gap-1"><CalendarPlus className="h-3 w-3" /> Uitzonderingsdagen</div>
+                  <div className="text-[10px] text-muted-foreground">Feestdagen of speciale dagen die afwijken van het normale schema.</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Input type="date" value={newExcDate} onChange={(e) => setNewExcDate(e.target.value)} className="h-8 w-36 text-xs" />
+                  <Button size="sm" variant="outline" className="h-8" onClick={addException}><Plus className="h-3 w-3 mr-1" />Toevoegen</Button>
+                </div>
+              </div>
+              {Object.keys(cfg.exceptions).length === 0 && (
+                <div className="text-[10px] text-muted-foreground italic py-2">Nog geen uitzonderingen. Voeg bv. 25-12 toe voor 1e Kerstdag.</div>
+              )}
+              {Object.entries(cfg.exceptions).sort(([a],[b]) => a.localeCompare(b)).map(([date, exc]) => {
+                const w = excWarning(date);
+                return (
+                  <div key={date} className={`py-1.5 border-b last:border-0 ${w?.severity === "error" ? "bg-red-50/40" : ""}`}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="w-24 text-xs font-mono">{date}</div>
+                      <Switch checked={!exc.closed} onCheckedChange={(v) => updateException(date, { closed: !v })} />
+                      <span className="text-xs text-muted-foreground w-14">{exc.closed ? "Gesloten" : "Open"}</span>
+                      {!exc.closed && (
+                        <>
+                          <Input type="number" min={0} max={23} value={exc.open}
+                            onChange={(e) => updateException(date, { open: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })}
+                            className="w-16 h-8 text-center" />
+                          <span className="text-xs text-muted-foreground">–</span>
+                          <Input type="number" min={1} max={30} value={exc.close}
+                            onChange={(e) => updateException(date, { close: Math.max(1, Math.min(30, parseInt(e.target.value) || 1)) })}
+                            className="w-16 h-8 text-center" />
+                          <span className="text-[10px] text-muted-foreground w-24">{formatDayHours(exc)}</span>
+                        </>
+                      )}
+                      <Input placeholder="Label (bv. Kerst)" value={exc.label || ""}
+                        onChange={(e) => updateException(date, { label: e.target.value })}
+                        className="h-8 text-xs flex-1 min-w-[120px]" />
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeException(date)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                    {w && (
+                      <div className={`flex items-start gap-1 text-[10px] mt-1 ${w.severity === "error" ? "text-red-600" : "text-amber-600"}`}>
+                        <AlertTriangle className="h-3 w-3 mt-px shrink-0" /> {w.message}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {warnings.length > 0 && (
+              <div className="rounded-lg border bg-amber-50/50 p-2 text-[10px] space-y-0.5">
+                <div className="font-semibold text-amber-800 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> {warnings.length} {warnings.length === 1 ? "waarschuwing" : "waarschuwingen"}</div>
+                {warnings.map((w, i) => (
+                  <div key={i} className={w.severity === "error" ? "text-red-700" : "text-amber-700"}>• {w.message}</div>
+                ))}
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[10px] text-muted-foreground">Tip: zet sluitingsuur op 24 voor middernacht. Bv. 10–24 = 10:00 tot 00:00.</span>
-              <Button onClick={save} disabled={saving} size="sm">
+              <span className="text-[10px] text-muted-foreground">Tip: 24 = middernacht. Voor 07:00–02:00 zet je sluitingsuur op 26.</span>
+              <Button onClick={save} disabled={saving || hasErrors} size="sm">
                 {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                 Opslaan
               </Button>
