@@ -71,7 +71,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
 
   // Per-location opening hours (drives "open hours only" forecast logic)
   const { activeLocation } = useLocation_();
-  const [schedule, setSchedule] = useState<LocationSchedule>(() => getDefaultSchedule());
+  const [schedule, setSchedule] = useState<ScheduleConfig>(() => getDefaultScheduleConfig());
   useEffect(() => {
     const locId = activeLocation?.id;
     if (!locId) return;
@@ -83,7 +83,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         .eq("location_id", locId)
         .maybeSingle();
       if (cancelled) return;
-      setSchedule(normalizeSchedule((data as any)?.opening_hours));
+      setSchedule(normalizeScheduleConfig((data as any)?.opening_hours));
     })();
     return () => { cancelled = true; };
   }, [activeLocation?.id]);
