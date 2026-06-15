@@ -308,6 +308,7 @@ export type Database = {
           second_checker_id: string
           second_checker_name: string
           status: string
+          tenant_id: string
         }
         Insert: {
           closing_date?: string
@@ -329,6 +330,7 @@ export type Database = {
           second_checker_id: string
           second_checker_name: string
           status?: string
+          tenant_id: string
         }
         Update: {
           closing_date?: string
@@ -350,6 +352,7 @@ export type Database = {
           second_checker_id?: string
           second_checker_name?: string
           status?: string
+          tenant_id?: string
         }
         Relationships: [
           {
@@ -357,6 +360,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_closings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -375,6 +385,7 @@ export type Database = {
           passkit_member_id: string | null
           phone: string | null
           source: string
+          tenant_id: string
           total_spent: number
           updated_at: string
           visit_count: number
@@ -392,6 +403,7 @@ export type Database = {
           passkit_member_id?: string | null
           phone?: string | null
           source?: string
+          tenant_id: string
           total_spent?: number
           updated_at?: string
           visit_count?: number
@@ -409,6 +421,7 @@ export type Database = {
           passkit_member_id?: string | null
           phone?: string | null
           source?: string
+          tenant_id?: string
           total_spent?: number
           updated_at?: string
           visit_count?: number
@@ -419,6 +432,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -693,6 +713,7 @@ export type Database = {
           location_id: string | null
           locked_until: string | null
           role: Database["public"]["Enums"]["employee_role"]
+          tenant_id: string
           updated_at: string
           user_id: string | null
           username_normalized: string
@@ -707,6 +728,7 @@ export type Database = {
           location_id?: string | null
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
+          tenant_id: string
           updated_at?: string
           user_id?: string | null
           username_normalized: string
@@ -721,6 +743,7 @@ export type Database = {
           location_id?: string | null
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
+          tenant_id?: string
           updated_at?: string
           user_id?: string | null
           username_normalized?: string
@@ -731,6 +754,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -977,6 +1007,7 @@ export type Database = {
           reorder_level: number
           sku: string | null
           supplier: string | null
+          tenant_id: string
           unit_type: string
           updated_at: string
           waste_percentage: number
@@ -1000,6 +1031,7 @@ export type Database = {
           reorder_level?: number
           sku?: string | null
           supplier?: string | null
+          tenant_id: string
           unit_type?: string
           updated_at?: string
           waste_percentage?: number
@@ -1023,6 +1055,7 @@ export type Database = {
           reorder_level?: number
           sku?: string | null
           supplier?: string | null
+          tenant_id?: string
           unit_type?: string
           updated_at?: string
           waste_percentage?: number
@@ -1033,6 +1066,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1370,6 +1410,7 @@ export type Database = {
           status: string
           subtotal: number
           table_id: string | null
+          tenant_id: string
           tip: number
           total: number
         }
@@ -1395,6 +1436,7 @@ export type Database = {
           status?: string
           subtotal?: number
           table_id?: string | null
+          tenant_id: string
           tip?: number
           total?: number
         }
@@ -1420,6 +1462,7 @@ export type Database = {
           status?: string
           subtotal?: number
           table_id?: string | null
+          tenant_id?: string
           tip?: number
           total?: number
         }
@@ -1429,6 +1472,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transactions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1580,6 +1630,7 @@ export type Database = {
           section: string
           sort_order: number
           tags: string[] | null
+          tenant_id: string
           updated_at: string
           vat_rate: number | null
         }
@@ -1595,6 +1646,7 @@ export type Database = {
           section?: string
           sort_order?: number
           tags?: string[] | null
+          tenant_id: string
           updated_at?: string
           vat_rate?: number | null
         }
@@ -1610,6 +1662,7 @@ export type Database = {
           section?: string
           sort_order?: number
           tags?: string[] | null
+          tenant_id?: string
           updated_at?: string
           vat_rate?: number | null
         }
@@ -1619,6 +1672,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1635,6 +1695,7 @@ export type Database = {
           location_id: string | null
           status: string
           table_id: string
+          tenant_id: string
           total: number
         }
         Insert: {
@@ -1648,6 +1709,7 @@ export type Database = {
           location_id?: string | null
           status?: string
           table_id: string
+          tenant_id: string
           total?: number
         }
         Update: {
@@ -1661,6 +1723,7 @@ export type Database = {
           location_id?: string | null
           status?: string
           table_id?: string
+          tenant_id?: string
           total?: number
         }
         Relationships: [
@@ -1669,6 +1732,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2023,6 +2093,7 @@ export type Database = {
           product_sold: string | null
           quantity: number
           source: string | null
+          tenant_id: string
           waste_reason: string | null
         }
         Insert: {
@@ -2039,6 +2110,7 @@ export type Database = {
           product_sold?: string | null
           quantity?: number
           source?: string | null
+          tenant_id: string
           waste_reason?: string | null
         }
         Update: {
@@ -2055,6 +2127,7 @@ export type Database = {
           product_sold?: string | null
           quantity?: number
           source?: string | null
+          tenant_id?: string
           waste_reason?: string | null
         }
         Relationships: [
@@ -2070,6 +2143,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
