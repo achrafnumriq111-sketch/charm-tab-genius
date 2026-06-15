@@ -1,3 +1,7 @@
+// Staff PIN login — STRICTLY device-gated.
+// Requires a valid `device_token` from a trusted_devices row.
+// Without it the request is rejected, so the function cannot
+// be used as a generic public credential probe.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -9,228 +13,154 @@ const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { username, pin, tenant_slug, device_token } = await req.json();
+    const { username, pin, device_token } = await req.json();
 
-    // Input validation
     if (!username || typeof username !== "string" || !pin || typeof pin !== "string") {
-      return new Response(JSON.stringify({ error: "Ongeldige inloggegevens" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Ongeldige inloggegevens" }, 400);
     }
-
-    // PIN format validation (exactly 6 digits)
     if (!/^\d{6}$/.test(pin)) {
-      return new Response(JSON.stringify({ error: "Ongeldige inloggegevens" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Ongeldige inloggegevens" }, 400);
+    }
+    if (!device_token || typeof device_token !== "string") {
+      return json({ error: "Dit apparaat is niet gekoppeld. Vraag de eigenaar om een koppelcode." }, 403);
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const admin = createClient(supabaseUrl, serviceRoleKey);
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const srv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(url, srv);
 
-    const normalizedUsername = username.trim().toLowerCase().replace(/\s+/g, " ");
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const ua = req.headers.get("user-agent") || "unknown";
+    const normalizedUsername = username.trim().toLowerCase().replace(/\s+/g, " ");
 
-    // If a trusted device token was provided, resolve tenant from device (server-trusted)
-    let scopedTenantSlug: string | null = null;
-    if (device_token && typeof device_token === "string") {
-      const { data: device } = await admin
-        .from("trusted_devices")
-        .select("id, tenant_id, location_id, tenants:tenant_id(slug)")
-        .eq("device_token", device_token)
-        .is("revoked_at", null)
-        .maybeSingle();
-      if (device) {
-        // deno-lint-ignore no-explicit-any
-        scopedTenantSlug = (device as any).tenants?.slug ?? null;
-        // Touch last_seen
-        await admin
-          .from("trusted_devices")
-          .update({ last_seen_at: new Date().toISOString(), last_ip: ip, user_agent: ua })
-          .eq("id", device.id);
-      } else {
-        await admin.from("security_events").insert({
-          event_type: "invalid_device_token",
-          severity: "warning",
-          source: "edge:pos-login",
-          ip_address: ip,
-          user_agent: ua,
-          metadata: { username: normalizedUsername },
-        });
-      }
+    // Resolve device → tenant + location (server-trusted)
+    const { data: device } = await admin
+      .from("trusted_devices")
+      .select("id, tenant_id, location_id, tenants:tenant_id(slug)")
+      .eq("device_token", device_token)
+      .is("revoked_at", null)
+      .maybeSingle();
+
+    if (!device) {
+      await admin.from("security_events").insert({
+        event_type: "invalid_device_token",
+        severity: "warning",
+        source: "edge:pos-login",
+        ip_address: ip,
+        user_agent: ua,
+        metadata: { username: normalizedUsername },
+      });
+      return json({ error: "Apparaat niet (meer) gekoppeld" }, 403);
     }
+    await admin
+      .from("trusted_devices")
+      .update({ last_seen_at: new Date().toISOString(), last_ip: ip, user_agent: ua })
+      .eq("id", device.id);
 
-    const effectiveTenantSlug = scopedTenantSlug || (typeof tenant_slug === "string" ? tenant_slug : null);
-
-    // Build employee query - optionally scoped to tenant
-    let empQuery = admin
+    // Lookup employee — scoped to device's tenant + location
+    const { data: employee } = await admin
       .from("employees")
-      .select("*, locations!inner(tenant_id, tenants!inner(slug))")
-      .eq("username_normalized", normalizedUsername);
+      .select("*")
+      .eq("username_normalized", normalizedUsername)
+      .eq("location_id", device.location_id)
+      .maybeSingle();
 
-    if (effectiveTenantSlug) {
-      empQuery = empQuery.eq("locations.tenants.slug", effectiveTenantSlug);
-    }
-
-    const { data: employee, error: lookupError } = await empQuery.single();
-
-    if (!employee || lookupError) {
-      // Log failed attempt - unknown user
+    if (!employee || !employee.is_active) {
       await admin.from("login_audit_logs").insert({
+        employee_id: employee?.id ?? null,
         event_type: "login_failed",
         username_attempted: normalizedUsername,
         ip_address: ip,
         user_agent: ua,
-        details: { reason: "user_not_found" },
+        details: { reason: employee ? "inactive" : "not_found", device_id: device.id },
       });
-      // If tenant_slug was provided, this could be a cross-tenant probing attempt
-      if (tenant_slug) {
-        await admin.from("security_events").insert({
-          event_type: "cross_tenant_login_attempt",
-          severity: "warning",
-          source: "edge:pos-login",
-          ip_address: ip,
-          user_agent: ua,
-          metadata: { username: normalizedUsername, tenant_slug },
-        });
-      }
-      // Constant-time delay to prevent timing attacks
-      await new Promise((r) => setTimeout(r, 300 + Math.random() * 200));
-      return new Response(JSON.stringify({ error: "Ongeldige inloggegevens" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      await new Promise((r) => setTimeout(r, 250 + Math.random() * 200));
+      return json({ error: "Ongeldige inloggegevens" }, 401);
     }
 
-    // Check if active
-    if (!employee.is_active) {
-      await admin.from("login_audit_logs").insert({
-        employee_id: employee.id,
-        event_type: "login_failed",
-        username_attempted: normalizedUsername,
-        ip_address: ip,
-        user_agent: ua,
-        details: { reason: "account_inactive" },
-      });
-      return new Response(JSON.stringify({ error: "Ongeldige inloggegevens" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Check lockout
     if (employee.locked_until && new Date(employee.locked_until) > new Date()) {
-      const remainingMs = new Date(employee.locked_until).getTime() - Date.now();
-      const remainingMin = Math.ceil(remainingMs / 60000);
-      await admin.from("login_audit_logs").insert({
-        employee_id: employee.id,
-        event_type: "login_failed",
-        username_attempted: normalizedUsername,
-        ip_address: ip,
-        user_agent: ua,
-        details: { reason: "account_locked" },
-      });
-      return new Response(
-        JSON.stringify({
-          error: `Account tijdelijk vergrendeld. Probeer het over ${remainingMin} minuten opnieuw.`,
-        }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const remaining = Math.ceil((new Date(employee.locked_until).getTime() - Date.now()) / 60000);
+      return json({ error: `Account vergrendeld. Probeer over ${remaining} min.` }, 429);
     }
 
-    // Attempt authentication via Supabase Auth
-    const mappedEmail = `${normalizedUsername.replace(/\s+/g, ".")}@pos.saakouk.internal`;
+    // Verify PIN: prefer pin_hash (bcrypt). Fall back to auth password for legacy accounts.
+    let pinValid = false;
+    if (employee.pin_hash) {
+      const { data: ok } = await admin.rpc("verify_employee_pin", { _employee_id: employee.id, _pin: pin });
+      pinValid = ok === true;
+    }
 
-    const { data: authData, error: authError } = await admin.auth.signInWithPassword({
-      email: mappedEmail,
-      password: pin,
-    });
-
-    if (authError || !authData.session) {
-      // Increment failed attempts
-      const newAttempts = (employee.failed_login_attempts || 0) + 1;
-      const updates: Record<string, unknown> = { failed_login_attempts: newAttempts };
-
-      if (newAttempts >= MAX_ATTEMPTS) {
-        updates.locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60 * 1000).toISOString();
-        await admin.from("login_audit_logs").insert({
-          employee_id: employee.id,
-          event_type: "lockout",
-          username_attempted: normalizedUsername,
-          ip_address: ip,
-          user_agent: ua,
-          details: { attempts: newAttempts, lockout_minutes: LOCKOUT_MINUTES },
-        });
+    // Issue Supabase session (still via auth) — needs the auth password kept in sync.
+    let session: { access_token: string; refresh_token: string; expires_at?: number } | null = null;
+    if (pinValid || !employee.pin_hash) {
+      const mappedEmail = `${normalizedUsername.replace(/\s+/g, ".")}@pos.saakouk.internal`;
+      const { data: authData } = await admin.auth.signInWithPassword({ email: mappedEmail, password: pin });
+      if (authData?.session) {
+        session = {
+          access_token: authData.session.access_token,
+          refresh_token: authData.session.refresh_token,
+          expires_at: authData.session.expires_at ?? undefined,
+        };
+        pinValid = true;
       }
+    }
 
-      await admin.from("employees").update(updates).eq("id", employee.id);
-
+    if (!pinValid || !session) {
+      const newAttempts = (employee.failed_login_attempts || 0) + 1;
+      const upd: Record<string, unknown> = { failed_login_attempts: newAttempts };
+      if (newAttempts >= MAX_ATTEMPTS) {
+        upd.locked_until = new Date(Date.now() + LOCKOUT_MINUTES * 60_000).toISOString();
+      }
+      await admin.from("employees").update(upd).eq("id", employee.id);
       await admin.from("login_audit_logs").insert({
         employee_id: employee.id,
         event_type: "login_failed",
         username_attempted: normalizedUsername,
         ip_address: ip,
         user_agent: ua,
-        details: { attempts: newAttempts },
+        details: { attempts: newAttempts, device_id: device.id },
       });
-
-      return new Response(JSON.stringify({ error: "Ongeldige inloggegevens" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Ongeldige inloggegevens" }, 401);
     }
 
-    // Success - reset failed attempts, update last login
     await admin.from("employees").update({
       failed_login_attempts: 0,
       locked_until: null,
       last_login_at: new Date().toISOString(),
     }).eq("id", employee.id);
 
-    // Log successful login
     await admin.from("login_audit_logs").insert({
       employee_id: employee.id,
       event_type: "login_success",
       username_attempted: normalizedUsername,
       ip_address: ip,
       user_agent: ua,
+      details: { device_id: device.id },
     });
 
-    // Resolve tenant info for response
-    const tenantInfo = employee.locations?.tenants;
-
-    return new Response(
-      JSON.stringify({
-        session: {
-          access_token: authData.session.access_token,
-          refresh_token: authData.session.refresh_token,
-          expires_at: authData.session.expires_at,
-        },
-        employee: {
-          id: employee.id,
-          full_name: employee.full_name,
-          role: employee.role,
-          location_id: employee.location_id,
-        },
-        tenant: tenantInfo ? {
-          slug: tenantInfo.slug,
-        } : null,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({
+      session,
+      employee: {
+        id: employee.id,
+        full_name: employee.full_name,
+        role: employee.role,
+        location_id: employee.location_id,
+      },
+      // deno-lint-ignore no-explicit-any
+      tenant: { slug: (device as any).tenants?.slug ?? null },
+      device: { id: device.id, location_id: device.location_id },
+    });
   } catch (err) {
-    console.error("Login error:", err);
-    return new Response(JSON.stringify({ error: "Er ging iets mis. Probeer het opnieuw." }), {
-      status: 500,
+    console.error("staff-pin-login error:", err);
+    return json({ error: "Er ging iets mis." }, 500);
+  }
+
+  function json(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
