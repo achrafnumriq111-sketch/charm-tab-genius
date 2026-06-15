@@ -1133,6 +1133,7 @@ export type Database = {
           feature_qr: boolean
           feature_tips: boolean
           location_id: string
+          opening_hours: Json
           passkit_program_id: string | null
           passkit_tier_id: string | null
           points_per_euro: number
@@ -1149,6 +1150,7 @@ export type Database = {
           feature_qr?: boolean
           feature_tips?: boolean
           location_id: string
+          opening_hours?: Json
           passkit_program_id?: string | null
           passkit_tier_id?: string | null
           points_per_euro?: number
@@ -1165,6 +1167,7 @@ export type Database = {
           feature_qr?: boolean
           feature_tips?: boolean
           location_id?: string
+          opening_hours?: Json
           passkit_program_id?: string | null
           passkit_tier_id?: string | null
           points_per_euro?: number

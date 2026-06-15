@@ -4427,9 +4427,134 @@ function AccountingView({ orders }: any) {
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
-function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, vatRates, setVatRates }: any) {
+function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToast?: (m: string) => void }) {
+  const DAYS = [
+    { dow: 1, label: "Maandag" }, { dow: 2, label: "Dinsdag" }, { dow: 3, label: "Woensdag" },
+    { dow: 4, label: "Donderdag" }, { dow: 5, label: "Vrijdag" }, { dow: 6, label: "Zaterdag" },
+    { dow: 0, label: "Zondag" },
+  ];
+  const DEFAULT: Record<number, { open: number; close: number; closed: boolean }> = {
+    0: { open: 12, close: 24, closed: false }, 1: { open: 10, close: 22, closed: false },
+    2: { open: 10, close: 22, closed: false }, 3: { open: 10, close: 22, closed: false },
+    4: { open: 10, close: 22, closed: false }, 5: { open: 10, close: 24, closed: false },
+    6: { open: 10, close: 24, closed: false },
+  };
+  const [hours, setHours] = useState<Record<number, { open: number; close: number; closed: boolean }>>(DEFAULT);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!locationId) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data } = await supabase.from("location_settings").select("opening_hours").eq("location_id", locationId).maybeSingle();
+      if (cancelled) return;
+      const raw = (data as any)?.opening_hours;
+      if (raw && typeof raw === "object") {
+        const merged: any = { ...DEFAULT };
+        for (let d = 0; d < 7; d++) {
+          const e = raw[d] ?? raw[String(d)];
+          if (e) merged[d] = { open: Number(e.open ?? 0), close: Number(e.close ?? 0), closed: !!e.closed };
+        }
+        setHours(merged);
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [locationId]);
+
+  async function save() {
+    if (!locationId) return;
+    setSaving(true);
+    try {
+      // Upsert (row may not exist yet for fresh locations)
+      const { error } = await supabase
+        .from("location_settings")
+        .upsert({ location_id: locationId, opening_hours: hours as any }, { onConflict: "location_id" });
+      if (error) throw error;
+      onToast?.("Openingstijden opgeslagen");
+    } catch (e: any) {
+      onToast?.(`Opslaan mislukt: ${e.message}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function update(dow: number, patch: Partial<{ open: number; close: number; closed: boolean }>) {
+    setHours(prev => ({ ...prev, [dow]: { ...prev[dow], ...patch } }));
+  }
+
+  function set24h(dow: number) { update(dow, { open: 0, close: 24, closed: false }); }
+
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Clock className="h-4 w-4" /> Openingstijden
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">Bepaalt voor welke uren AI Forecast bezettingsadvies geeft.</p>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {loading ? (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+            <Loader2 className="h-3 w-3 animate-spin" /> Laden…
+          </div>
+        ) : (
+          <>
+            {DAYS.map(({ dow, label }) => {
+              const h = hours[dow];
+              const is24 = !h.closed && h.open === 0 && h.close === 24;
+              return (
+                <div key={dow} className="flex items-center gap-2 py-1.5 border-b last:border-0">
+                  <div className="w-24 text-sm font-medium">{label}</div>
+                  <Switch
+                    checked={!h.closed}
+                    onCheckedChange={(v) => update(dow, { closed: !v })}
+                  />
+                  <span className="text-xs text-muted-foreground w-14">{h.closed ? "Gesloten" : "Open"}</span>
+                  {!h.closed && (
+                    <>
+                      <Input
+                        type="number" min={0} max={23} value={h.open}
+                        onChange={(e) => update(dow, { open: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })}
+                        className="w-16 h-8 text-center"
+                      />
+                      <span className="text-xs text-muted-foreground">–</span>
+                      <Input
+                        type="number" min={1} max={24} value={h.close}
+                        onChange={(e) => update(dow, { close: Math.max(1, Math.min(24, parseInt(e.target.value) || 1)) })}
+                        className="w-16 h-8 text-center"
+                      />
+                      <span className="text-[10px] text-muted-foreground">u</span>
+                      <Button variant={is24 ? "default" : "outline"} size="sm" className="h-7 text-[10px] ml-auto" onClick={() => set24h(dow)}>
+                        24u
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[10px] text-muted-foreground">Tip: zet sluitingsuur op 24 voor middernacht. Bv. 10–24 = 10:00 tot 00:00.</span>
+              <Button onClick={save} disabled={saving} size="sm">
+                {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                Opslaan
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, vatRates, setVatRates, activeLocationId, onToast }: any) {
   return (
     <div className="space-y-4 max-w-2xl">
+      {/* Opening Hours — drives AI forecast open-hour windows */}
+      <OpeningHoursCard locationId={activeLocationId} onToast={onToast} />
+
       {/* PassKit Configuration */}
       {features.passkit && (
         <Card className="rounded-2xl border-green-200 bg-green-50/30">
@@ -6855,7 +6980,7 @@ export default function SaakoukPOS() {
             {/* Dashboard = Overview + AI Forecast (backwards-compat for "aiforecast") */}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
-            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
+            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} activeLocationId={activeLocation?.id} onToast={setToast} />}
             </>)}
           </div>
         </div>

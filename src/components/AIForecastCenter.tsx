@@ -17,7 +17,11 @@ import type {
   NormalizedDailyWeather, NormalizedHourlyWeather, NormalizedCurrentWeather,
   WeatherSummary,
 } from "@/lib/weather/weatherIntelligence";
-import { getSchedule, isOpenHour, getOpenHours, getTotalOpenHours, formatSchedule } from "@/lib/businessHours";
+import {
+  getSchedule, isOpenHour, getOpenHours, getTotalOpenHours, formatSchedule,
+  normalizeSchedule, getDefaultSchedule, type LocationSchedule,
+} from "@/lib/businessHours";
+import { useLocation_ } from "@/contexts/LocationContext";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -64,6 +68,25 @@ type RangeKey = typeof RANGES[number]["key"];
 export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void }) {
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("7d");
+
+  // Per-location opening hours (drives "open hours only" forecast logic)
+  const { activeLocation } = useLocation_();
+  const [schedule, setSchedule] = useState<LocationSchedule>(() => getDefaultSchedule());
+  useEffect(() => {
+    const locId = activeLocation?.id;
+    if (!locId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("location_settings")
+        .select("opening_hours")
+        .eq("location_id", locId)
+        .maybeSingle();
+      if (cancelled) return;
+      setSchedule(normalizeSchedule((data as any)?.opening_hours));
+    })();
+    return () => { cancelled = true; };
+  }, [activeLocation?.id]);
 
   // Weather state
   const [daily, setDaily] = useState<NormalizedDailyWeather[]>([]);
@@ -185,7 +208,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
       {/* Weather Strip */}
       <WeatherStrip daily={daily} hourly={hourly} currentWeather={currentWeather}
         weatherSource={weatherSource} weatherLoading={weatherLoading} liveTime={liveTime}
-        lastUpdated={lastUpdated} fetchWeather={fetchWeather} />
+        lastUpdated={lastUpdated} fetchWeather={fetchWeather} schedule={schedule} />
 
       {/* Content */}
       {forecastLoading && (
@@ -208,7 +231,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
           {segment === "revenue" && <RevenueTab data={forecastData} rangeDays={rangeDays} daily={daily} />}
           {segment === "product" && <ProductTab data={forecastData} rangeDays={rangeDays} />}
           {segment === "stock" && <StockTab data={forecastData} />}
-          {segment === "staffing" && <StaffingTab data={forecastData} daily={daily} hourly={hourly} />}
+          {segment === "staffing" && <StaffingTab data={forecastData} daily={daily} hourly={hourly} schedule={schedule} />}
           {segment === "pricing" && <PricingTab data={forecastData} />}
         </>
       )}
@@ -218,20 +241,22 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
 
 // ─── Weather Strip ───────────────────────────────────────────────────────────
 
-function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoading, liveTime, lastUpdated, fetchWeather }: {
+function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoading, liveTime, lastUpdated, fetchWeather, schedule }: {
   daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[];
   currentWeather: NormalizedCurrentWeather | null; weatherSource: "live" | "fallback";
   weatherLoading: boolean; liveTime: Date; lastUpdated: Date | null;
   fetchWeather: (silent?: boolean) => Promise<void>;
+  schedule: LocationSchedule;
 }) {
   const todayStr = getAmsterdamDateStr();
   const currentHour = getAmsterdamHour();
   const currentDow = getAmsterdamDayOfWeek();
 
   const todayOpenHours = useMemo(() => {
-    const schedule = getSchedule(currentDow);
-    return hourly.filter(h => h.date === todayStr && h.localHour >= currentHour && h.localHour >= schedule.open && h.localHour < schedule.close);
-  }, [hourly, todayStr, currentHour, currentDow]);
+    const s = getSchedule(currentDow, schedule);
+    if (s.closed || s.close <= s.open) return [];
+    return hourly.filter(h => h.date === todayStr && h.localHour >= currentHour && h.localHour >= s.open && h.localHour < s.close);
+  }, [hourly, todayStr, currentHour, currentDow, schedule]);
 
   return (
     <Card className="rounded-2xl">
@@ -291,7 +316,7 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
         {todayOpenHours.length > 0 && (
           <div className="mt-2 pt-2 border-t border-border/50">
             <div className="flex items-center gap-1 mb-1">
-              <span className="text-[10px] font-medium text-muted-foreground">Resterende open uren ({formatSchedule(currentDow)})</span>
+              <span className="text-[10px] font-medium text-muted-foreground">Resterende open uren ({formatSchedule(currentDow, schedule)})</span>
             </div>
             <div className="flex gap-1 overflow-x-auto pb-1">
               {todayOpenHours.map((h) => {
@@ -693,11 +718,11 @@ function StockTab({ data }: { data: any }) {
 
 // ─── Staffing Tab ────────────────────────────────────────────────────────────
 
-function StaffingTab({ data, daily, hourly }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[] }) {
+function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: LocationSchedule }) {
   const patterns = data?.patterns || [];
   const hasStaffData = data?.hasStaffData || false;
   const todayDow = getAmsterdamDayOfWeek();
-  const openHrs = getOpenHours(todayDow);
+  const openHrs = getOpenHours(todayDow, schedule);
 
   // Filter patterns for today's weekday
   const todayPatterns = patterns
@@ -775,8 +800,8 @@ function StaffingTab({ data, daily, hourly }: { data: any; daily: NormalizedDail
         </CardContent></Card>
         <Card className="rounded-2xl"><CardContent className="p-4">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Open uren</div>
-          <div className="text-xl font-bold">{formatSchedule(todayDow)}</div>
-          <div className="text-xs text-muted-foreground">{getTotalOpenHours(todayDow)} uur</div>
+          <div className="text-xl font-bold">{formatSchedule(todayDow, schedule)}</div>
+          <div className="text-xs text-muted-foreground">{getTotalOpenHours(todayDow, schedule)} uur</div>
         </CardContent></Card>
       </div>
 
