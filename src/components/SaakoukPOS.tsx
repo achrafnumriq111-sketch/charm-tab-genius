@@ -4552,6 +4552,9 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
 function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, vatRates, setVatRates, activeLocationId, onToast }: any) {
   return (
     <div className="space-y-4 max-w-2xl">
+      {/* Opening Hours — drives AI forecast open-hour windows */}
+      <OpeningHoursCard locationId={activeLocationId} onToast={onToast} />
+
       {/* PassKit Configuration */}
       {features.passkit && (
         <Card className="rounded-2xl border-green-200 bg-green-50/30">
