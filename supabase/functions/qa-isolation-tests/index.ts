@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
       const { data, error } = await sbAStaff.from(t).select("id").eq("id", seededA_L2[t]);
       assert(
         `A-staff(L1) cannot SELECT A.L2.${t}`,
-        (data?.length ?? 0) === 0,
+        !error && (data?.length ?? -1) === 0,
         error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
     }
