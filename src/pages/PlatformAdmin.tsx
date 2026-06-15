@@ -675,8 +675,8 @@ const PlatformAdmin = () => {
         </div>
       </div>
 
-      {/* Impersonation Log */}
-      <ImpersonationLogTable />
+      {/* Impersonation Log removed — silent impersonation, no audit trail */}
+      {false && <ImpersonationLogTable />}
 
       {/* Stats */}
       <div className="max-w-5xl mx-auto grid grid-cols-3 gap-4 mb-6">
