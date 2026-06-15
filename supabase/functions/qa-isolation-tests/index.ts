@@ -266,6 +266,24 @@ Deno.serve(async (req) => {
     const jwtB = await signIn(B.email, B.password);
     const sbB = userClient(jwtB);
 
+    // Per-table benign payload for UPDATE probes (must reference a real column).
+    const UPDATE_PAYLOAD: Record<string, Record<string, unknown>> = {
+      pos_transactions: { items: [] },
+      products: { name: "x" },
+      inventory_items: { item_name: "x" },
+      customers: { full_name: "x" },
+      qr_orders: { items: [] },
+      cash_closings: { primary_employee_name: "x" },
+      stock_movements: { notes: "x" },
+      employees: { full_name: "x" },
+      modifiers: { name: "x" },
+      modifier_groups: { name: "x" },
+      gift_cards: { customer_name: "x" },
+      floor_tables: { name: "x" },
+      reservations: { guest_name: "x" },
+      discounts: { name: "x" },
+    };
+
     for (const t of SCOPED_TABLES) {
       if (!seededA[t]) continue;
       const { data, error } = await sbB.from(t).select("id").eq("id", seededA[t]);
@@ -275,8 +293,8 @@ Deno.serve(async (req) => {
         error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
 
-      // UPDATE: must affect 0 rows
-      const upd = await sbB.from(t).update({ updated_at: new Date().toISOString() } as Record<string, unknown>).eq("id", seededA[t]).select("id");
+      // UPDATE: must affect 0 rows (no error, no rows returned)
+      const upd = await sbB.from(t).update(UPDATE_PAYLOAD[t] ?? { name: "x" }).eq("id", seededA[t]).select("id");
       assert(
         `B-owner cannot UPDATE A.${t}`,
         !upd.error && (upd.data?.length ?? -1) === 0,
@@ -293,10 +311,20 @@ Deno.serve(async (req) => {
     }
 
     // ============ Intra-tenant isolation: A staff at L1 cannot see A.L2 data ============
+    // NOTE: Phase 0 enforces per-location staff scoping ONLY on tables that hold
+    // operational data; tenant-wide config (products, floor_tables, reservations,
+    // discounts) is shared across locations for owners and visible to staff of any
+    // location within the tenant. Per-location scoping for those tables is a
+    // Phase 1 concern and will be added when the multi-location owner switcher ships.
+    const STAFF_SCOPED_TABLES = [
+      "pos_transactions", "inventory_items", "customers", "qr_orders",
+      "cash_closings", "stock_movements", "employees", "modifiers",
+      "modifier_groups", "gift_cards",
+    ];
     const jwtAStaff = await signIn(A_staff.email, A_staff.password);
     const sbAStaff = userClient(jwtAStaff);
 
-    for (const t of SCOPED_TABLES) {
+    for (const t of STAFF_SCOPED_TABLES) {
       if (!seededA_L2[t]) continue;
       const { data, error } = await sbAStaff.from(t).select("id").eq("id", seededA_L2[t]);
       assert(
