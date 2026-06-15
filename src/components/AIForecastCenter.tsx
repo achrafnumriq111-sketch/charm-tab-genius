@@ -316,7 +316,7 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
         {todayOpenHours.length > 0 && (
           <div className="mt-2 pt-2 border-t border-border/50">
             <div className="flex items-center gap-1 mb-1">
-              <span className="text-[10px] font-medium text-muted-foreground">Resterende open uren ({formatSchedule(currentDow)})</span>
+              <span className="text-[10px] font-medium text-muted-foreground">Resterende open uren ({formatSchedule(currentDow, schedule)})</span>
             </div>
             <div className="flex gap-1 overflow-x-auto pb-1">
               {todayOpenHours.map((h) => {
