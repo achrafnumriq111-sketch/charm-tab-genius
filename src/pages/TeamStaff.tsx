@@ -68,7 +68,6 @@ const TeamStaff = () => {
 
   const changeRole = async (emp: Emp, role: Emp["role"]) => {
     if (role === emp.role) return;
-    if (emp.user_id === undefined) {}
     setError(""); setBusy(emp.id);
     const { error } = await supabase.from("employees").update({ role }).eq("id", emp.id);
     setBusy(null);
