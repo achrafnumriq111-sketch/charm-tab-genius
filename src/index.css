@@ -200,16 +200,24 @@
     box-shadow: 0 0 12px #00827c80;
   }
 
-  /* Card style — pressed-in surface, no shadow */
+  /* Card style — subtle elevation, abyss-tinted shadow */
   .card-auros {
     background: hsl(var(--auros-trench));
     border-radius: 16px;
     padding: 40px;
-    border: 1px solid transparent;
-    transition: border-color 200ms ease;
+    border: 1px solid hsl(var(--auros-ice) / 0.06);
+    box-shadow:
+      0 1px 0 hsl(var(--auros-ice) / 0.04) inset,
+      0 8px 24px -12px hsl(0 0% 0% / 0.55),
+      0 2px 6px -2px hsl(0 0% 0% / 0.35);
+    transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
   }
   .card-auros:hover {
-    border-color: hsl(var(--auros-ice) / 0.12);
+    border-color: hsl(var(--auros-ice) / 0.14);
+    box-shadow:
+      0 1px 0 hsl(var(--auros-ice) / 0.06) inset,
+      0 14px 40px -16px hsl(0 0% 0% / 0.65),
+      0 4px 10px -2px hsl(var(--auros-teal) / 0.18);
   }
 
   /* Bioluminescent particle/glow accent */
@@ -218,16 +226,38 @@
                 0 24px 80px hsl(var(--auros-teal) / 0.22);
   }
 
-  /* Backwards-compat: old .glass utility now reads as the trench surface */
+  /* Backwards-compat: old .glass utility now reads as elevated trench */
   .glass {
     background: hsl(var(--auros-trench));
-    border: 1px solid hsl(var(--border));
+    border: 1px solid hsl(var(--auros-ice) / 0.08);
     backdrop-filter: blur(8px);
+    box-shadow:
+      0 1px 0 hsl(var(--auros-ice) / 0.05) inset,
+      0 10px 30px -14px hsl(0 0% 0% / 0.6);
   }
 
   .soft-tap {
     transform-style: preserve-3d;
     perspective: 1400px;
+  }
+
+  /* ----- Subtle Auros elevation scale ----- */
+  .elevate-1 {
+    box-shadow:
+      0 1px 0 hsl(var(--auros-ice) / 0.04) inset,
+      0 4px 12px -6px hsl(0 0% 0% / 0.45);
+  }
+  .elevate-2 {
+    box-shadow:
+      0 1px 0 hsl(var(--auros-ice) / 0.05) inset,
+      0 8px 24px -12px hsl(0 0% 0% / 0.55),
+      0 2px 6px -2px hsl(0 0% 0% / 0.35);
+  }
+  .elevate-3 {
+    box-shadow:
+      0 1px 0 hsl(var(--auros-ice) / 0.06) inset,
+      0 18px 48px -18px hsl(0 0% 0% / 0.7),
+      0 6px 14px -4px hsl(var(--auros-teal) / 0.18);
   }
 }
 
