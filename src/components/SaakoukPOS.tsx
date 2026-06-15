@@ -4553,9 +4553,14 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
                         />
                         <span className="text-xs text-muted-foreground">–</span>
                         <Input
-                          type="number" min={1} max={30} value={h.close}
-                          onChange={(e) => updateDay(dow, { close: Math.max(1, Math.min(30, parseInt(e.target.value) || 1)) })}
+                          type="number" min={0} max={30} value={h.close}
+                          onChange={(e) => {
+                            const raw = parseInt(e.target.value);
+                            const v = isNaN(raw) ? 24 : raw === 0 ? 24 : Math.max(1, Math.min(30, raw));
+                            updateDay(dow, { close: v });
+                          }}
                           className="w-16 h-8 text-center"
+                          title="0 of 24 = middernacht. 26 = 02:00 volgende dag."
                         />
                         <span className="text-[10px] text-muted-foreground w-24">{formatDayHours(h)}</span>
                         <Button variant={is24 ? "default" : "outline"} size="sm" className="h-7 text-[10px]" onClick={() => set24h(dow)}>24u</Button>
