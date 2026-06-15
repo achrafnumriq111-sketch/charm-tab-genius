@@ -45,10 +45,26 @@ async function setupTenant(admin: ReturnType<typeof createClient>, label: string
   });
   if (eErr) throw new Error(`employees insert owner: ${eErr.message}`);
 
-  // Seed one product per location so cross-reads have something to leak
+  // Seed location-scoped fixtures on BOTH locations so cross-reads have rows to leak.
   await admin.from("products").insert([
     { name: `${label}-prod-1`, location_id: loc1.id, price: 1, vat_rate: 9, is_active: true },
     { name: `${label}-prod-2`, location_id: loc2.id, price: 1, vat_rate: 9, is_active: true },
+  ]);
+
+  const { data: zones } = await admin.from("floor_zones").insert([
+    { name: `${label}-z1`, location_id: loc1.id, sort_order: 1 },
+    { name: `${label}-z2`, location_id: loc2.id, sort_order: 1 },
+  ]).select();
+  const [z1, z2] = (zones ?? []) as any[];
+
+  await admin.from("floor_tables").insert([
+    { name: `${label}-t1`, zone_id: z1.id, location_id: loc1.id, seats: 2, x: 0, y: 0, w: 60, h: 60, shape: "round" },
+    { name: `${label}-t2`, zone_id: z2.id, location_id: loc2.id, seats: 2, x: 0, y: 0, w: 60, h: 60, shape: "round" },
+  ]);
+
+  await admin.from("inventory_items").insert([
+    { name: `${label}-inv-1`, unit: "g", location_id: loc1.id, tenant_id: (tenant as any).id, current_stock: 100, par_level: 50 },
+    { name: `${label}-inv-2`, unit: "g", location_id: loc2.id, tenant_id: (tenant as any).id, current_stock: 100, par_level: 50 },
   ]);
 
   // Staff scoped to loc1 only — separate auth user
