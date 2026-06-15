@@ -13,7 +13,7 @@ const FEATURES = [
   { icon: ChefHat, title: "Prep Station KDS", desc: "Bonkeuken, live timers en routing per station." },
   { icon: CalendarClock, title: "Reserveringen", desc: "Visuele floor plan met realtime tafelstatus." },
   { icon: Cloud, title: "AI Forecasting", desc: "Apple WeatherKit voor omzet- en voorraadprognose." },
-  { icon: Lock, title: "Multi-tenant veilig", desc: "RLS, rollen en activity logs op database-niveau." },
+  { icon: Lock, title: "Veilig per klant", desc: "RLS, rollen en activity logs op database-niveau — strikte data-isolatie." },
   { icon: Users, title: "Team & rollen", desc: "Owner, manager, sales met permission-matrix." },
   { icon: Receipt, title: "Boekhouding", desc: "9% / 21% BTW splitsing en periodieke exports." },
   { icon: Sparkles, title: "Menu engineering", desc: "Dynamische cost, margin matrix en simulatie." },

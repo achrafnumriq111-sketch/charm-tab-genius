@@ -234,7 +234,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
         {isPlatformAdmin && allTenants && allTenants.length > 0 && (
           <div className="px-1.5 py-1.5 border-b border-white/50">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[7px] text-violet-500 font-semibold uppercase tracking-wider">Tenant</span>
+              <span className="text-[7px] text-violet-500 font-semibold uppercase tracking-wider">Customer</span>
               {pendingTenantId && !tenantUnlocked ? (
                 <div className="flex flex-col items-center gap-1 w-full">
                   <span className="text-[7px] text-slate-500">PIN bevestigen</span>
@@ -282,9 +282,9 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
                       }
                     }}
                     className="w-full text-[8px] bg-violet-50/80 border border-violet-200/70 rounded-xl px-1 py-1.5 text-center font-medium text-violet-700 truncate appearance-none cursor-pointer"
-                    title="Selecteer tenant"
+                    title="Selecteer customer"
                   >
-                    <option value="">— Kies tenant —</option>
+                    <option value="">— Kies customer —</option>
                     {allTenants.map((t: any) => (
                       <option key={t.id} value={t.id}>{t.name} {!t.is_active ? "(inactief)" : ""}</option>
                     ))}
@@ -5971,7 +5971,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
           >
             <Shield className="w-8 h-8" style={{ color: "#5a5a72" }} />
           </motion.div>
-          <h1 className="text-xl font-bold tracking-tight" style={{ color: "#2a2a3a" }}>Selecteer Tenant</h1>
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: "#2a2a3a" }}>Selecteer Customer</h1>
           <p className="text-sm mt-1" style={{ color: "#8b8b9e" }}>Kies een klant om hun POS te openen</p>
         </div>
 
@@ -5980,7 +5980,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Zoek tenant..."
+            placeholder="Zoek customer..."
             className="w-full h-11 pl-10 pr-4 rounded-xl text-sm border"
             style={{ background: "rgba(255,255,255,0.8)", borderColor: "rgba(0,0,0,0.08)", backdropFilter: "blur(10px)" }}
           />
@@ -6025,7 +6025,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
             </motion.button>
           ))}
           {filtered.length === 0 && (
-            <div className="text-center py-8 text-sm" style={{ color: "#9b9bab" }}>Geen tenants gevonden</div>
+            <div className="text-center py-8 text-sm" style={{ color: "#9b9bab" }}>Geen customers gevonden</div>
           )}
         </div>
 
@@ -6546,8 +6546,13 @@ export default function SaakoukPOS() {
     return null;
   }
 
-  // Platform admin: show tenant picker if no tenant selected
+  // Platform admin enters DOTTS admin directly (impersonation from /admin lands here with selectedTenantId)
   if (isPlatformAdmin && !selectedTenantId) {
+    if (typeof window !== "undefined") window.location.replace("/admin");
+    return null;
+  }
+  // Legacy picker (kept for fallback only)
+  if (false && isPlatformAdmin && !selectedTenantId) {
     return <PlatformTenantPicker tenants={allTenants} onSelect={async (tenant) => {
       // Trigger impersonation via edge function
       try {

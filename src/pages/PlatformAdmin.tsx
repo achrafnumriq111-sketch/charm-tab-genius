@@ -168,7 +168,7 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
     if (error) {
       toast.error("Opslaan mislukt: " + error.message);
     } else {
-      toast.success("Tenant bijgewerkt");
+      toast.success("Customer bijgewerkt");
       setEditing(false);
       onRefresh();
     }
@@ -276,7 +276,7 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
               </div>
               <div className="flex gap-2">
                 <button onClick={() => onImpersonate(tenant)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 text-white" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
-                  <Eye className="w-3.5 h-3.5" /> Bekijk als tenant
+                  <Eye className="w-3.5 h-3.5" /> Bekijk als customer
                 </button>
                 <button onClick={() => setEditing(true)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors hover:bg-white/60" style={{ color: "#7c6bc4" }}>
                   <Edit2 className="w-3.5 h-3.5" /> Bewerken
@@ -419,7 +419,7 @@ function ImpersonationLogTable() {
           </div>
           <div className="text-left">
             <div className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>Impersonation Log</div>
-            <div className="text-[10px]" style={{ color: "#9b9bab" }}>Overzicht van alle tenant-sessies</div>
+            <div className="text-[10px]" style={{ color: "#9b9bab" }}>Overzicht van alle customer-sessies</div>
           </div>
         </div>
         {open ? <ChevronUp className="w-4 h-4" style={{ color: "#8b8b9e" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#8b8b9e" }} />}
@@ -442,7 +442,7 @@ function ImpersonationLogTable() {
               ) : (
                 <div className="space-y-1.5">
                   <div className="grid grid-cols-4 gap-2 px-3 py-1">
-                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Tenant</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Customer</span>
                     <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Gestart</span>
                     <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Gestopt</span>
                     <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Duur</span>
@@ -642,7 +642,7 @@ const PlatformAdmin = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight" style={{ color: "#2a2a3a" }}>Platform Admin</h1>
-              <p className="text-xs" style={{ color: "#9b9bab" }}>Beheer tenants · feature flags · impersonation</p>
+              <p className="text-xs" style={{ color: "#9b9bab" }}>Beheer customers · feature flags · impersonation</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

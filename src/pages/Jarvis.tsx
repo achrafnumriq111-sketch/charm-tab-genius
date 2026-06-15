@@ -261,7 +261,7 @@ export default function Jarvis() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">Jarvis</h1>
-              <p className="text-xs text-slate-500">Platform observability · isolatie · tenant health</p>
+              <p className="text-xs text-slate-500">Platform observability · isolatie · customer health</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -280,7 +280,7 @@ export default function Jarvis() {
         {/* Fleet KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { label: "Tenants", value: fleet.tenants, icon: Activity, color: "#5a5a72" },
+            { label: "Customers", value: fleet.tenants, icon: Activity, color: "#5a5a72" },
             { label: "Actief", value: fleet.active, icon: CheckCircle2, color: "#16a34a" },
             { label: "Met kritieke events", value: fleet.critical, icon: AlertTriangle, color: fleet.critical > 0 ? "#dc2626" : "#16a34a" },
             { label: "RLS hotspots (24u)", value: fleet.rlsHotspots, icon: ShieldAlert, color: fleet.rlsHotspots > 0 ? "#d97706" : "#16a34a" },
@@ -308,7 +308,7 @@ export default function Jarvis() {
             <Stat label="Events 24u" value={summary.total} color="#5a5a72" />
             <Stat label="Critical" value={summary.critical} color={summary.critical > 0 ? "#dc2626" : "#16a34a"} />
             <Stat label="RLS rejects (42501)" value={summary.rls_rejects} color={summary.rls_rejects > 0 ? "#d97706" : "#16a34a"} />
-            <Stat label="Cross-tenant" value={summary.cross_tenant} color={summary.cross_tenant > 0 ? "#dc2626" : "#16a34a"} />
+            <Stat label="Cross-customer" value={summary.cross_tenant} color={summary.cross_tenant > 0 ? "#dc2626" : "#16a34a"} />
           </div>
         )}
 
@@ -320,9 +320,9 @@ export default function Jarvis() {
                 <BugPlay className="w-5 h-5 text-amber-700" />
               </div>
               <div>
-                <div className="font-bold text-slate-900">Cross-tenant isolatie testsuite</div>
+                <div className="font-bold text-slate-900">Customer data isolation testsuite</div>
                 <div className="text-xs text-slate-500">
-                  Maakt ephemeral tenants, bewijst dat SELECT/UPDATE/DELETE tussen tenants 0 rijen raakt, en ruimt zichzelf op.
+                  Maakt ephemere customers, bewijst dat SELECT/UPDATE/DELETE tussen customers 0 rijen raakt, en ruimt zichzelf op.
                 </div>
               </div>
             </div>
@@ -387,7 +387,7 @@ export default function Jarvis() {
               </div>
               <div>
                 <div className="font-bold text-slate-900">Subscriptions overview</div>
-                <div className="text-xs text-slate-500">MRR · churn · past_due tenants</div>
+                <div className="text-xs text-slate-500">MRR · churn · past due customers</div>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -401,7 +401,7 @@ export default function Jarvis() {
               <div className="mt-4 rounded-xl border border-red-200 bg-red-50/60 p-3">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-red-700 mb-2">
                   <TrendingDown className="w-3.5 h-3.5" />
-                  Past_due tenants ({subs.pastDueTenants.length})
+                  Past due customers ({subs.pastDueTenants.length})
                 </div>
                 <div className="space-y-1">
                   {subs.pastDueTenants.slice(0, 8).map((t, i) => (
@@ -416,21 +416,21 @@ export default function Jarvis() {
           </div>
         )}
 
-        {/* Tenant health table */}
+        {/* Customer health table */}
         <div className="rounded-2xl overflow-hidden mb-6" style={glass}>
           <div className="p-4 border-b border-white/50 flex items-center justify-between">
             <div>
-              <div className="font-bold text-slate-900">Tenant health (24u)</div>
+              <div className="font-bold text-slate-900">Customer health (24u)</div>
               <div className="text-xs text-slate-500">Gerangschikt: kritieke events eerst</div>
             </div>
-            <span className="text-xs text-slate-500">{tenants.length} tenants</span>
+            <span className="text-xs text-slate-500">{tenants.length} customers</span>
           </div>
           <div className="overflow-auto max-h-[600px]">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-white/80 backdrop-blur-sm">
                 <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500">
                   <th className="px-3 py-2 font-semibold">Status</th>
-                  <th className="px-3 py-2 font-semibold">Tenant</th>
+                  <th className="px-3 py-2 font-semibold">Customer</th>
                   <th className="px-3 py-2 font-semibold text-right">Loc</th>
                   <th className="px-3 py-2 font-semibold text-right">Team</th>
                   <th className="px-3 py-2 font-semibold text-right">Events</th>
@@ -444,7 +444,7 @@ export default function Jarvis() {
                   <tr><td colSpan={8} className="p-8 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-400" /></td></tr>
                 )}
                 {!loading && tenants.length === 0 && (
-                  <tr><td colSpan={8} className="p-8 text-center text-slate-400">Geen tenants</td></tr>
+                  <tr><td colSpan={8} className="p-8 text-center text-slate-400">Geen customers</td></tr>
                 )}
                 {tenants.map((t) => {
                   const h = healthScore(t);

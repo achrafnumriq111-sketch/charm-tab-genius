@@ -4,22 +4,17 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 
 const PLANS = [
   {
-    name: "Starter",
-    price: "€0",
-    period: "/maand",
-    desc: "Voor solo-zaken die net beginnen.",
-    cta: "Start gratis",
-    features: ["1 locatie", "POS kassa", "Basis rapporten", "Email support"],
-  },
-  {
     name: "Pro",
-    price: "€49",
+    price: "€80",
     period: "/maand",
-    desc: "Voor groeiende café's met meerdere medewerkers.",
-    cta: "Probeer 14 dagen",
+    yearly: "of €800 per jaar — 2 maanden gratis",
+    desc: "Alles wat je nodig hebt om je zaak te runnen.",
+    cta: "Start 14 dagen gratis",
+    to: "/signup",
     features: [
-      "1 locatie", "QR bestellen", "Inventory + waste", "Loyalty + PassKit",
-      "Prep Station KDS", "Analytics dashboard", "Priority support",
+      "1 locatie", "POS kassa", "QR bestellen", "Inventory + waste",
+      "Loyalty + PassKit", "Prep Station KDS", "Analytics dashboard",
+      "AI weather forecasting", "Email & priority support",
     ],
     highlight: true,
   },
@@ -27,11 +22,14 @@ const PLANS = [
     name: "Scale",
     price: "Op maat",
     period: "",
-    desc: "Voor ketens en multi-location operators.",
-    cta: "Contact",
+    yearly: "Voor ketens & multi-locatie operators",
+    desc: "Custom pricing, SLA en dedicated account manager.",
+    cta: "Contact us",
+    to: "/contact",
     features: [
-      "Onbeperkte locaties", "AI forecasting", "API toegang",
-      "SSO + audit exports", "Dedicated account manager",
+      "Onbeperkte locaties", "Multi-locatie dashboard", "AI forecasting",
+      "API toegang", "SSO + audit exports", "Dedicated account manager",
+      "Custom integraties",
     ],
   },
 ];
@@ -39,12 +37,12 @@ const PLANS = [
 export default function MarketingPricing() {
   return (
     <MarketingLayout>
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-12 text-center">
+      <section className="max-w-5xl mx-auto px-6 pt-20 pb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Eerlijke prijzen.</h1>
         <p className="mt-4 text-lg text-muted-foreground">Geen verborgen kosten. Maandelijks opzegbaar.</p>
       </section>
-      <section className="max-w-6xl mx-auto px-6 pb-24">
-        <div className="grid gap-5 md:grid-cols-3">
+      <section className="max-w-4xl mx-auto px-6 pb-24">
+        <div className="grid gap-5 md:grid-cols-2">
           {PLANS.map((p) => (
             <div
               key={p.name}
@@ -62,6 +60,7 @@ export default function MarketingPricing() {
                 <span className="text-4xl font-semibold tracking-tight">{p.price}</span>
                 <span className="text-muted-foreground text-sm">{p.period}</span>
               </div>
+              {p.yearly && <p className="mt-1 text-xs text-emerald-600 font-medium">{p.yearly}</p>}
               <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
               <ul className="mt-6 space-y-2 text-sm flex-1">
                 {p.features.map((f) => (
@@ -72,7 +71,7 @@ export default function MarketingPricing() {
                 ))}
               </ul>
               <Link
-                to={p.name === "Scale" ? "/contact" : "/signup"}
+                to={p.to}
                 className={`mt-7 text-center px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   p.highlight
                     ? "bg-foreground text-background hover:opacity-90"
