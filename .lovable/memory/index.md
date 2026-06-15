@@ -39,3 +39,4 @@
 - [Modifiers System](mem://features/modifiers-system) — DB-driven modifier groups, options, product assignment, admin CRUD
 - [Upsell Engine](mem://features/upsell-engine) — Smart rule-based upsell prompts with time windows and conversion tracking
 - [Self-Service Onboarding](mem://features/onboarding) — Public signup, plan selection, 14-day trial subscription, demo data seeding
+- [Reporting & Exports](mem://features/reporting-exports) — P&L per location, Moneybird/Exact/generic CSV download, VAT split
