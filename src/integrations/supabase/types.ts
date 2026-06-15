@@ -753,6 +753,7 @@ export type Database = {
           last_login_at: string | null
           location_id: string
           locked_until: string | null
+          pin_hash: string | null
           role: Database["public"]["Enums"]["employee_role"]
           tenant_id: string | null
           updated_at: string
@@ -768,6 +769,7 @@ export type Database = {
           last_login_at?: string | null
           location_id: string
           locked_until?: string | null
+          pin_hash?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
           tenant_id?: string | null
           updated_at?: string
@@ -783,6 +785,7 @@ export type Database = {
           last_login_at?: string | null
           location_id?: string
           locked_until?: string | null
+          pin_hash?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
           tenant_id?: string | null
           updated_at?: string
@@ -3295,6 +3298,10 @@ export type Database = {
           }
       tenant_has_active_subscription: {
         Args: { _tenant_id: string }
+        Returns: boolean
+      }
+      verify_employee_pin: {
+        Args: { _employee_id: string; _pin: string }
         Returns: boolean
       }
     }
