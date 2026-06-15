@@ -12,21 +12,24 @@ async function resolveOrCreateCustomer(
   opts: { email?: string; userId: string; tenantId: string; locationId: string },
 ): Promise<string> {
   if (!/^[a-zA-Z0-9_-]+$/.test(opts.userId)) throw new Error("Invalid userId");
-  const found = await stripe.customers.search({
-    query: `metadata['userId']:'${opts.userId}'`,
-    limit: 1,
-  });
-  if (found.data.length) {
-    const c = found.data[0];
-    // Keep tenant/location metadata fresh
-    await stripe.customers.update(c.id, {
-      metadata: { ...c.metadata, userId: opts.userId, tenant_id: opts.tenantId, location_id: opts.locationId },
+  try {
+    const found = await stripe.customers.search({
+      query: `metadata['userId']:'${opts.userId}'`,
+      limit: 1,
     });
-    return c.id;
+    if (found?.data?.length) {
+      const c = found.data[0];
+      await stripe.customers.update(c.id, {
+        metadata: { ...c.metadata, userId: opts.userId, tenant_id: opts.tenantId, location_id: opts.locationId },
+      });
+      return c.id;
+    }
+  } catch (e) {
+    console.warn("customers.search failed, falling back to email lookup", (e as Error).message);
   }
   if (opts.email) {
     const existing = await stripe.customers.list({ email: opts.email, limit: 1 });
-    if (existing.data.length) {
+    if (existing?.data?.length) {
       const c = existing.data[0];
       await stripe.customers.update(c.id, {
         metadata: { ...c.metadata, userId: opts.userId, tenant_id: opts.tenantId, location_id: opts.locationId },
@@ -77,7 +80,7 @@ Deno.serve(async (req) => {
 
     const stripe = createStripeClient(environment);
     const prices = await stripe.prices.list({ lookup_keys: [priceId], limit: 1 });
-    if (!prices.data.length) throw new Error("Price not found");
+    if (!prices?.data?.length) throw new Error(`Price not found for lookup_key: ${priceId}`);
     const stripePrice = prices.data[0];
     const isRecurring = stripePrice.type === "recurring";
 
