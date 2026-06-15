@@ -14,6 +14,8 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import AcceptInvite from "./pages/AcceptInvite.tsx";
 import TeamInvites from "./pages/TeamInvites.tsx";
+const Locations = lazy(() => import("./pages/Locations.tsx"));
+const TeamStaff = lazy(() => import("./pages/TeamStaff.tsx"));
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
@@ -53,6 +55,8 @@ const AppRoutes = () => {
         <Route path="/admin/offline" element={<ProtectedRoute><OfflineAdmin /></ProtectedRoute>} />
         <Route path="/menu/:tableId" element={<Menu />} />
         <Route path="/team" element={<ProtectedRoute><TeamInvites /></ProtectedRoute>} />
+        <Route path="/team/staff" element={<ProtectedRoute><TeamStaff /></ProtectedRoute>} />
+        <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
         {isPlatformLevel ? (
           <>
             <Route path="/" element={<MarketingHome />} />
