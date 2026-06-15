@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 
 /**
- * SAAKOUK POS — Full Lovable-ready single-file build (v2 — all flows wired)
+ * DOTTS POS — Full Lovable-ready single-file build (v2 — all flows wired)
  *
  * Key fixes over v1:
  * - Cart state lifted to parent — survives navigation between views
@@ -6630,7 +6630,7 @@ export default function SaakoukPOS() {
         {/* Glass top bar */}
         <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
           <div>
-            <h1 className="text-base font-semibold tracking-[-0.02em] text-slate-900 leading-tight">{titles[active] || "Saakouk"}</h1>
+            <h1 className="text-base font-semibold tracking-[-0.02em] text-slate-900 leading-tight">{titles[active] || "DOTTS"}</h1>
             <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}{activeLocation ? ` · ${activeLocation.name}` : ""}</div>
           </div>
           <div className="flex items-center gap-2">

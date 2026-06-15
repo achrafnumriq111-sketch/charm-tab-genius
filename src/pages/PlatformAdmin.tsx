@@ -725,7 +725,7 @@ const PlatformAdmin = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-[11px] font-mono" style={{ color: "#8b8b9e" }}>{t.slug}.saakouk.app</span>
+                        <span className="text-[11px] font-mono" style={{ color: "#8b8b9e" }}>{t.slug}.dotts.app</span>
                         <span className="text-[10px]" style={{ color: "#b5b5c3" }}>{new Date(t.created_at).toLocaleDateString("nl-NL")}</span>
                       </div>
                     </div>
