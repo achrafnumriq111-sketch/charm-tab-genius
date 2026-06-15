@@ -6,7 +6,7 @@ import { ArrowRight, Cloud, ShieldCheck, Sparkles, Zap } from "lucide-react";
 const FEATURES = [
   { icon: Zap, title: "Razendsnelle kassa", desc: "iPad-first interface, gebouwd voor drukke service." },
   { icon: Cloud, title: "Realtime cloud", desc: "Meerdere locaties, één dashboard. Altijd in sync." },
-  { icon: ShieldCheck, title: "Veilig & multi-tenant", desc: "Row-level security, rollen en audit logs standaard." },
+  { icon: ShieldCheck, title: "Veilig per klant", desc: "Row-level security, rollen en audit logs standaard." },
   { icon: Sparkles, title: "AI forecasting", desc: "Weersgedreven omzet- en voorraadvoorspelling." },
 ];
 
@@ -20,7 +20,7 @@ export default function MarketingHome() {
           transition={{ duration: 0.5 }}
         >
           <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Nieuw — multi-tenant SaaS
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Nieuw — multi-locatie SaaS
           </span>
           <h1 className="mt-6 text-5xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
             De kassa voor moderne <br /> specialty horeca.
