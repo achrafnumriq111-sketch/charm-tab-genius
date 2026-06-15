@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
-  Activity, AlertTriangle, ArrowLeft, BugPlay, CheckCircle2, FileText,
-  Loader2, Play, RefreshCw, Shield, ShieldAlert, Sparkles, XCircle,
+  Activity, AlertTriangle, ArrowLeft, BugPlay, CheckCircle2, CreditCard, FileText,
+  Loader2, Play, RefreshCw, Shield, ShieldAlert, Sparkles, TrendingDown, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,6 +44,15 @@ interface SecuritySummary {
   cross_tenant: number;
 }
 
+interface SubsOverview {
+  mrrCents: number;
+  activeCount: number;
+  trialingCount: number;
+  pastDueCount: number;
+  canceledLast30: number;
+  pastDueTenants: { tenant: string; locations: number; lastUpdate: string | null }[];
+}
+
 const glass: React.CSSProperties = {
   background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
   border: "1px solid rgba(255,255,255,0.72)",
@@ -66,6 +75,7 @@ export default function Jarvis() {
   const [summary, setSummary] = useState<SecuritySummary | null>(null);
   const [qa, setQa] = useState<QaResult | null>(null);
   const [qaRunning, setQaRunning] = useState(false);
+  const [subs, setSubs] = useState<SubsOverview | null>(null);
 
   // Gate: platform admin only
   useEffect(() => {
