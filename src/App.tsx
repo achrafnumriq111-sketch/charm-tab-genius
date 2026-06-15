@@ -58,6 +58,8 @@ const AppRoutes = () => {
         <Route path="/team" element={<ProtectedRoute><TeamInvites /></ProtectedRoute>} />
         <Route path="/team/staff" element={<ProtectedRoute><TeamStaff /></ProtectedRoute>} />
         <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
+        <Route path="/settings/features" element={<ProtectedRoute><SettingsFeatures /></ProtectedRoute>} />
+
         {isPlatformLevel ? (
           <>
             <Route path="/" element={<MarketingHome />} />
