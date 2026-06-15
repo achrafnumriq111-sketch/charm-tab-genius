@@ -6980,7 +6980,7 @@ export default function SaakoukPOS() {
             {/* Dashboard = Overview + AI Forecast (backwards-compat for "aiforecast") */}
             {active === "aiforecast" && <AIForecastCenter onToast={setToast} />}
             {active === "employees" && <EmployeesView employees={employees} setEmployees={setEmployees} currentRole={loggedInEmployee.role} locationId={locationId} onToast={(msg) => setToast(msg)} />}
-            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} />}
+            {active === "settings" && <SettingsView features={features} setFeatures={setFeatures} passkitConfig={passkitConfig} setPasskitConfig={setPasskitConfig} vatRates={vatRates} setVatRates={setVatRates} activeLocationId={activeLocation?.id} onToast={setToast} />}
             </>)}
           </div>
         </div>
