@@ -354,7 +354,7 @@ const Signup = () => {
                     className="h-12 px-3 flex items-center rounded-r-xl text-[11px] font-medium"
                     style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", borderLeft: "none", color: "#8b8b9e" }}
                   >
-                    .saakouk.app
+                    .dotts.app
                   </div>
                 </div>
                 {slug.length >= 3 && (

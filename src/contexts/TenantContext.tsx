@@ -22,7 +22,8 @@ const TenantContext = createContext<TenantContextType | null>(null);
 /**
  * Extract tenant slug from hostname.
  * Patterns:
- *   cafe1.saakouk.app → "cafe1"
+ *   cafe1.dotts.app → "cafe1"
+ *   cafe1.saakouk.app → "cafe1"  (legacy support)
  *   id-preview--xxx.lovable.app → null (platform level)
  *   localhost → null (platform level, dev)
  */
@@ -34,12 +35,13 @@ function extractSlug(): string | null {
   const tenantParam = params.get("tenant");
   if (tenantParam) return tenantParam;
 
-  // Production: x.saakouk.app
-  if (hostname.endsWith(".saakouk.app")) {
-    const parts = hostname.replace(".saakouk.app", "").split(".");
-    const sub = parts[0];
-    // Skip www or bare domain
-    if (sub && sub !== "www" && sub !== "saakouk") return sub;
+  // Production: x.dotts.app or legacy x.saakouk.app
+  for (const root of [".dotts.app", ".saakouk.app"]) {
+    if (hostname.endsWith(root)) {
+      const parts = hostname.replace(root, "").split(".");
+      const sub = parts[0];
+      if (sub && sub !== "www" && sub !== "dotts" && sub !== "saakouk") return sub;
+    }
   }
 
   // Lovable preview or localhost → platform level

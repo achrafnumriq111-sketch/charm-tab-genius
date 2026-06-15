@@ -223,7 +223,7 @@ export default function MenuPage() {
       <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Saakouk</h1>
+            <h1 className="text-xl font-bold tracking-tight">Menu</h1>
             <p className="text-xs text-muted-foreground">Tafel {tableId}</p>
           </div>
           <Button variant="outline" size="sm" className="relative" onClick={() => setShowCart(true)}>
