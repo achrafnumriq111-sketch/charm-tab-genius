@@ -45,15 +45,21 @@ Deno.serve(async (req) => {
   for (const emp of emps ?? []) {
     if (!emp.user_id) continue;
     const isOwner = emp.role === "owner";
-    const secret = isOwner ? randomPassword(14) : randomPin();
-    const { error: upErr } = await admin.auth.admin.updateUserById(emp.user_id, { password: secret });
+    // Auth password is ALWAYS a strong random secret (HIBP-safe).
+    // For staff, the *real* credential is the 6-digit PIN stored as bcrypt(pin_hash).
+    const authSecret = randomPassword(20);
+    const userFacing = isOwner ? authSecret : randomPin();
+
+    const { error: upErr } = await admin.auth.admin.updateUserById(emp.user_id, { password: authSecret });
     if (upErr) {
       (out.errors as unknown[]).push({ employee: emp.full_name, error: upErr.message });
       continue;
     }
     if (!isOwner) {
-      const hash = await bcrypt.hash(secret);
-      await admin.from("employees").update({ pin_hash: hash, failed_login_attempts: 0, locked_until: null }).eq("id", emp.id);
+      const hash = await bcrypt.hash(userFacing);
+      await admin.from("employees")
+        .update({ pin_hash: hash, failed_login_attempts: 0, locked_until: null })
+        .eq("id", emp.id);
     }
     (out.reset as unknown[]).push({
       name: emp.full_name,
@@ -61,7 +67,7 @@ Deno.serve(async (req) => {
       username: emp.username_normalized,
       // deno-lint-ignore no-explicit-any
       tenant: (emp as any).locations?.tenants?.slug,
-      new_credential: secret,
+      credential: isOwner ? { type: "password", value: userFacing } : { type: "pin", value: userFacing },
     });
   }
 
