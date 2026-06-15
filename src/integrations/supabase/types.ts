@@ -2885,7 +2885,7 @@ export type Database = {
         | "count_adjustment"
         | "refund_restore"
       security_event_severity: "info" | "warning" | "critical"
-      subscription_plan: "all_in" | "custom" | "trial"
+      subscription_plan: "all_in" | "custom" | "trial" | "pro" | "scale"
       subscription_status:
         | "trialing"
         | "active"
@@ -3037,7 +3037,7 @@ export const Constants = {
         "refund_restore",
       ],
       security_event_severity: ["info", "warning", "critical"],
-      subscription_plan: ["all_in", "custom", "trial"],
+      subscription_plan: ["all_in", "custom", "trial", "pro", "scale"],
       subscription_status: [
         "trialing",
         "active",
