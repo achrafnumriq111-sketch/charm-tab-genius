@@ -7,18 +7,18 @@ import {
   Brain, TrendingUp, TrendingDown, Cloud, Sun, CloudRain,
   Thermometer, Users, Package, DollarSign, BarChart3, Clock, Loader2,
   AlertTriangle, ShieldCheck, Zap, CalendarDays, ArrowUp, ArrowDown,
-  RefreshCw, Droplets, Wind, Info, Tag, Minus,
+  RefreshCw, Droplets, Wind, Info, Tag, Minus, ShoppingCart, MapPin,
+  Building2, Calendar, CheckCircle2, XCircle, Lightbulb, GitCompareArrows,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ComposedChart, Line, Legend, Cell,
+  ResponsiveContainer, ComposedChart, Line, Legend, Cell, Area, AreaChart,
 } from "recharts";
 import type {
   NormalizedDailyWeather, NormalizedHourlyWeather, NormalizedCurrentWeather,
-  WeatherSummary,
 } from "@/lib/weather/weatherIntelligence";
 import {
-  getOpenHoursForDate, getTotalOpenHoursForDate, formatScheduleForDate, getScheduleForDate,
+  getOpenHoursForDate, getTotalOpenHoursForDate, formatScheduleForDate,
   normalizeScheduleConfig, getDefaultScheduleConfig, type ScheduleConfig,
 } from "@/lib/businessHours";
 import { useLocation_ } from "@/contexts/LocationContext";
@@ -26,10 +26,12 @@ import { useLocation_ } from "@/contexts/LocationContext";
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function euro(v: number) {
+  return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+}
+function euro2(v: number) {
   return new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(v);
 }
 function cn(...p: any[]) { return p.filter(Boolean).join(" "); }
-
 function getAmsterdamNow(): Date {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Amsterdam" }));
 }
@@ -38,30 +40,43 @@ function getAmsterdamDateStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 function getAmsterdamHour(): number { return getAmsterdamNow().getHours(); }
-function getAmsterdamDayOfWeek(): number { return getAmsterdamNow().getDay(); }
 function formatAmsterdamTime(d: Date): string {
   return d.toLocaleTimeString("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit" });
+}
+function fmtShortDate(ymd: string): string {
+  const [, m, d] = ymd.split("-");
+  return `${d}/${m}`;
 }
 
 const WEATHER_REFRESH_MS = 15 * 60 * 1000;
 const DAY_LABELS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
+const DAY_LABELS_LONG = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
 
 const SEGMENTS = [
   { key: "revenue", label: "Omzet", icon: TrendingUp },
   { key: "product", label: "Product", icon: Package },
   { key: "stock", label: "Voorraad", icon: BarChart3 },
+  { key: "purchasing", label: "Inkoop", icon: ShoppingCart },
   { key: "staffing", label: "Personeel", icon: Users },
   { key: "pricing", label: "Prijsadvies", icon: Tag },
+  { key: "actual", label: "vs Werkelijk", icon: GitCompareArrows },
+  { key: "multi", label: "Locaties", icon: Building2 },
 ] as const;
 
 const RANGES = [
+  { key: "thisWeek", label: "Deze week", days: 7 },
   { key: "7d", label: "7 dagen", days: 7 },
   { key: "14d", label: "14 dagen", days: 14 },
-  { key: "30d", label: "30 dagen", days: 30 },
+  { key: "21d", label: "21 dagen", days: 21 },
 ] as const;
 
 type SegmentKey = typeof SEGMENTS[number]["key"];
 type RangeKey = typeof RANGES[number]["key"];
+
+// Dispatch action events that SaakoukPOS (or any listener) can react to
+function dispatchForecastAction(action: string, payload: any = {}) {
+  window.dispatchEvent(new CustomEvent("forecast:action", { detail: { action, payload } }));
+}
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
@@ -69,11 +84,14 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("7d");
 
-  // Per-location opening hours (drives "open hours only" forecast logic)
-  const { activeLocation } = useLocation_();
+  // Locations
+  const { activeLocation, locations } = useLocation_();
+  const [locationFilter, setLocationFilter] = useState<string | "all">(activeLocation?.id || "all");
+  useEffect(() => { if (activeLocation?.id) setLocationFilter(activeLocation.id); }, [activeLocation?.id]);
+
   const [schedule, setSchedule] = useState<ScheduleConfig>(() => getDefaultScheduleConfig());
   useEffect(() => {
-    const locId = activeLocation?.id;
+    const locId = locationFilter !== "all" ? locationFilter : activeLocation?.id;
     if (!locId) return;
     let cancelled = false;
     (async () => {
@@ -86,7 +104,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
       setSchedule(normalizeScheduleConfig((data as any)?.opening_hours));
     })();
     return () => { cancelled = true; };
-  }, [activeLocation?.id]);
+  }, [locationFilter, activeLocation?.id]);
 
   // Weather state
   const [daily, setDaily] = useState<NormalizedDailyWeather[]>([]);
@@ -97,20 +115,19 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [liveTime, setLiveTime] = useState<Date>(new Date());
 
-  // Forecast data from edge function
+  // Forecast data
   const [forecastData, setForecastData] = useState<any>(null);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [forecastError, setForecastError] = useState<string | null>(null);
 
   const rangeDays = useMemo(() => RANGES.find(r => r.key === range)?.days || 7, [range]);
+  const isThisWeek = range === "thisWeek";
 
-  // Live clock
   useEffect(() => {
     const tick = setInterval(() => setLiveTime(new Date()), 30_000);
     return () => clearInterval(tick);
   }, []);
 
-  // Fetch weather
   const fetchWeather = useCallback(async (silent = false) => {
     if (!silent) setWeatherLoading(true);
     try {
@@ -138,14 +155,15 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     return () => clearInterval(interval);
   }, [fetchWeather]);
 
-  // Fetch forecast data from edge function
+  // Fetch forecast — pass location + schedule to backend
   const fetchForecast = useCallback(async () => {
     setForecastLoading(true);
     setForecastError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("inventory-forecast", {
-        body: { type: segment, range: rangeDays },
-      });
+      const apiType = segment === "actual" ? "actual_vs_forecast" : segment === "multi" ? "multi_location" : segment;
+      const body: any = { type: apiType, range: rangeDays, schedule };
+      if (segment !== "multi" && locationFilter !== "all") body.location_id = locationFilter;
+      const { data, error } = await supabase.functions.invoke("inventory-forecast", { body });
       if (error) throw new Error("Forecast ophalen mislukt");
       if (data?.error) throw new Error(data.error);
       setForecastData(data?.data || null);
@@ -155,12 +173,9 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
     } finally {
       setForecastLoading(false);
     }
-  }, [segment, rangeDays]);
+  }, [segment, rangeDays, locationFilter, schedule]);
 
   useEffect(() => { fetchForecast(); }, [fetchForecast]);
-
-  const dataQuality = forecastData?.dataQuality;
-  const hasData = dataQuality && (dataQuality.dailyFactDays > 0 || dataQuality.transactionCount > 0);
 
   return (
     <div className="space-y-4">
@@ -171,12 +186,24 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
             <Brain className="h-6 w-6 text-primary" /> AI Forecast & Insights
           </h2>
           <p className="text-sm text-muted-foreground">
-            Weer-gestuurd • Alleen open uren • Live data
+            Weer-gestuurd • Open uren • Feestdagen • Per locatie
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchForecast} disabled={forecastLoading} className="min-h-[44px]">
-          {forecastLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          {locations.length > 1 && (
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="text-xs rounded-lg border border-border bg-background px-3 py-2 min-h-[44px] touch-manipulation"
+            >
+              <option value="all">Alle locaties</option>
+              {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+            </select>
+          )}
+          <Button variant="outline" size="sm" onClick={fetchForecast} disabled={forecastLoading} className="min-h-[44px]">
+            {forecastLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          </Button>
+        </div>
       </div>
 
       {/* Segment Selector */}
@@ -192,18 +219,20 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
         ))}
       </div>
 
-      {/* Range Tabs */}
-      <div className="flex gap-1 overflow-x-auto">
-        {RANGES.map(r => (
-          <button key={r.key} onClick={() => setRange(r.key)}
-            className={cn(
-              "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border min-h-[44px] touch-manipulation",
-              range === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground border-border hover:border-primary/40"
-            )}>
-            {r.label}
-          </button>
-        ))}
-      </div>
+      {/* Range Tabs (hide for some segments) */}
+      {segment !== "stock" && segment !== "pricing" && segment !== "multi" && (
+        <div className="flex gap-1 overflow-x-auto">
+          {RANGES.map(r => (
+            <button key={r.key} onClick={() => setRange(r.key)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap border min-h-[44px] touch-manipulation",
+                range === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground border-border hover:border-primary/40"
+              )}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Weather Strip */}
       <WeatherStrip daily={daily} hourly={hourly} currentWeather={currentWeather}
@@ -228,11 +257,14 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
 
       {!forecastLoading && !forecastError && forecastData && (
         <>
-          {segment === "revenue" && <RevenueTab data={forecastData} rangeDays={rangeDays} daily={daily} />}
+          {segment === "revenue" && <RevenueTab data={forecastData} rangeDays={rangeDays} isThisWeek={isThisWeek} />}
           {segment === "product" && <ProductTab data={forecastData} rangeDays={rangeDays} />}
-          {segment === "stock" && <StockTab data={forecastData} />}
-          {segment === "staffing" && <StaffingTab data={forecastData} daily={daily} hourly={hourly} schedule={schedule} />}
+          {segment === "stock" && <StockTab data={forecastData} onAction={dispatchForecastAction} />}
+          {segment === "purchasing" && <PurchasingTab data={forecastData} rangeDays={rangeDays} onAction={dispatchForecastAction} />}
+          {segment === "staffing" && <StaffingTab data={forecastData} daily={daily} hourly={hourly} schedule={schedule} rangeDays={rangeDays} onAction={dispatchForecastAction} />}
           {segment === "pricing" && <PricingTab data={forecastData} />}
+          {segment === "actual" && <ActualVsForecastTab data={forecastData} rangeDays={rangeDays} />}
+          {segment === "multi" && <MultiLocationTab data={forecastData} rangeDays={rangeDays} />}
         </>
       )}
     </div>
@@ -251,10 +283,8 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
   const todayStr = getAmsterdamDateStr();
   const currentHour = getAmsterdamHour();
   const today = getAmsterdamNow();
-  const currentDow = today.getDay();
 
   const openHoursToday = useMemo(() => new Set(getOpenHoursForDate(today, schedule)), [schedule, todayStr]);
-  // Show full 0-23 for today (mark closed hours visually) so user sees what's excluded.
   const todayHourly = useMemo(
     () => hourly.filter(h => h.date === todayStr && h.localHour >= currentHour),
     [hourly, todayStr, currentHour]
@@ -352,7 +382,7 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
   );
 }
 
-// ─── No Data Component ───────────────────────────────────────────────────────
+// ─── Shared mini components ──────────────────────────────────────────────────
 
 function NoData({ message, details }: { message: string; details?: string }) {
   return (
@@ -364,12 +394,13 @@ function NoData({ message, details }: { message: string; details?: string }) {
   );
 }
 
-function ConfidenceBadge({ level, score }: { level?: string; score?: number }) {
-  const color = level === "high" ? "text-green-600" : level === "medium" ? "text-amber-600" : "text-red-500";
-  const label = level === "high" ? "Hoog" : level === "medium" ? "Gemiddeld" : "Laag";
+function ConfidenceBadge({ confidence }: { confidence?: { score: number; level: string; reasons?: string[] } }) {
+  if (!confidence) return null;
+  const color = confidence.level === "high" ? "text-green-600 border-green-300" : confidence.level === "medium" ? "text-amber-600 border-amber-300" : "text-red-500 border-red-300";
   return (
-    <Badge variant="outline" className={cn("text-[10px] shrink-0", color)}>
-      <ShieldCheck className="h-3 w-3 mr-1" />{score !== undefined ? `${score}%` : label}
+    <Badge variant="outline" className={cn("text-[10px] shrink-0", color)}
+      title={confidence.reasons?.join(" • ")}>
+      <ShieldCheck className="h-3 w-3 mr-1" />Vertrouwen {confidence.score}%
     </Badge>
   );
 }
@@ -390,149 +421,240 @@ function DataQualityNote({ dq }: { dq: any }) {
   );
 }
 
+function InsightsCard({ insights, title = "AI Insights" }: { insights: string[]; title?: string }) {
+  if (!insights?.length) return null;
+  return (
+    <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Lightbulb className="h-4 w-4 text-primary" /> {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 pt-0">
+        <ul className="space-y-1.5">
+          {insights.map((s, i) => (
+            <li key={i} className="text-sm flex items-start gap-2">
+              <span className="text-primary mt-0.5">•</span><span>{s}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Revenue Tab ─────────────────────────────────────────────────────────────
 
-function RevenueTab({ data, rangeDays, daily }: { data: any; rangeDays: number; daily: NormalizedDailyWeather[] }) {
-  if (!data?.weekdayPatterns?.length && !data?.hourlyPatterns?.length) {
+function RevenueTab({ data, rangeDays, isThisWeek }: { data: any; rangeDays: number; isThisWeek: boolean }) {
+  const forecastDays: any[] = data?.forecastDays || [];
+  const previousPeriod: any[] = data?.previousPeriod || [];
+  const insights: string[] = data?.insights || [];
+  const backtest: any[] = data?.backtest || [];
+
+  if (!forecastDays.length && !data?.weekdayPatterns?.length) {
     return <NoData message="Nog niet genoeg data voor betrouwbare omzetforecast." details="Voer bestellingen in via de POS om hier echte grafieken te zien." />;
   }
 
-  const weekdayData = (data.weekdayPatterns || []).map((p: any) => ({
-    dag: DAY_LABELS[p.weekday],
-    gemOmzet: Math.round(p.avgOmzet * 100) / 100,
-    gemOrders: Math.round(p.avgOrders * 10) / 10,
-    samples: p.sampleSize,
+  const forecastTotal = data?.forecastTotal ?? 0;
+  const prevTotal = data?.prevTotal ?? 0;
+  const growthPct = data?.growthPct ?? 0;
+  const trend = data?.trendPct ?? 0;
+
+  // Build chart data per day
+  const prevByDow: Record<number, number> = {};
+  previousPeriod.forEach(p => { prevByDow[p.weekday] = (prevByDow[p.weekday] || 0) + p.actual; });
+
+  const chartData = forecastDays.map((d, i) => ({
+    label: fmtShortDate(d.date),
+    dag: DAY_LABELS[d.weekday],
+    low: Math.round(d.low),
+    expected: Math.round(d.expected),
+    high: Math.round(d.high),
+    band: Math.round(d.high - d.low),
+    prev: previousPeriod[i] ? Math.round(previousPeriod[i].actual) : null,
+    holiday: d.holiday,
+    weatherNote: d.weatherNote,
+    weatherIcon: d.weatherIcon,
+    openLabel: d.openLabel,
   }));
 
-  const hourlyData = (data.hourlyPatterns || []).map((p: any) => ({
-    uur: `${p.hour}:00`,
-    gemOmzet: Math.round(p.avgOmzet * 100) / 100,
-    gemOrders: Math.round(p.avgOrders * 10) / 10,
-    samples: p.sampleSize,
-  }));
+  if (isThisWeek) {
+    // Limit to current week (Mon-Sun)
+    const today = getAmsterdamNow();
+    const dow = today.getDay() || 7; // Sunday = 7
+    const mondayOffset = -(dow - 1);
+    const monday = new Date(today); monday.setDate(monday.getDate() + mondayOffset);
+    const start = monday.toISOString().slice(0, 10);
+    const end = new Date(monday); end.setDate(end.getDate() + 6);
+    const endStr = end.toISOString().slice(0, 10);
+    const filtered = chartData.filter((_, i) => forecastDays[i].date >= start && forecastDays[i].date <= endStr);
+    if (filtered.length > 0) chartData.splice(0, chartData.length, ...filtered);
+  }
 
-  const trend = data.trendPct || 0;
-  const recentAvg = data.recentAvgDaily || 0;
-  const forecastTotal = Math.round(recentAvg * rangeDays * (1 + trend / 200) * 100) / 100;
-  const totalDays = data.totalDays || 0;
-
-  // Confidence
-  const confidence = totalDays >= 21 ? "high" : totalDays >= 7 ? "medium" : "low";
-  const confScore = totalDays >= 21 ? 80 : totalDays >= 14 ? 65 : totalDays >= 7 ? 50 : 30;
-
-  // Weather forecast integration
-  const weatherNotes: string[] = [];
-  const upcomingWeather = data.upcomingWeather || [];
-  const rainyDays = upcomingWeather.filter((w: any) => w.is_rain);
-  const warmDays = upcomingWeather.filter((w: any) => (w.avg_temp_c ?? 15) > 20);
-  if (rainyDays.length > 0) weatherNotes.push(`${rainyDays.length} regendag${rainyDays.length > 1 ? "en" : ""} verwacht — omzet mogelijk lager`);
-  if (warmDays.length > 0) weatherNotes.push(`${warmDays.length} warme dag${warmDays.length > 1 ? "en" : ""} — positief voor verkoop`);
-
-  // Best / worst weekday
-  const bestDay = weekdayData.reduce((b: any, d: any) => d.gemOmzet > b.gemOmzet ? d : b, weekdayData[0]);
-  const worstDay = weekdayData.reduce((w: any, d: any) => d.gemOmzet < w.gemOmzet ? d : w, weekdayData[0]);
-
-  // Summary
-  const summaryParts: string[] = [];
-  summaryParts.push(`Verwachte omzet komende ${rangeDays} dagen: ${euro(forecastTotal)} (op basis van ${totalDays} dagen historische data).`);
-  if (trend > 3) summaryParts.push(`Stijgende trend van +${trend}%.`);
-  else if (trend < -3) summaryParts.push(`Dalende trend van ${trend}%.`);
-  if (bestDay) summaryParts.push(`${bestDay.dag} is historisch de sterkste dag (gem. ${euro(bestDay.gemOmzet)}).`);
-  weatherNotes.forEach(n => summaryParts.push(n));
-  if (confidence === "low") summaryParts.push("Betrouwbaarheid laag — meer data nodig voor nauwkeurigere forecasts.");
-
-  const kpis = [
-    { label: "Forecast totaal", value: euro(forecastTotal), sub: `${rangeDays} dagen`, icon: TrendingUp },
-    { label: "Gem. per dag", value: euro(recentAvg), sub: `${totalDays} dagen gemeten`, icon: CalendarDays },
-    { label: "Trend", value: `${trend > 0 ? "+" : ""}${trend}%`, sub: "recent vs eerder", icon: trend >= 0 ? ArrowUp : ArrowDown },
-    { label: "Sterkste dag", value: bestDay?.dag || "—", sub: bestDay ? euro(bestDay.gemOmzet) : "", icon: Zap },
-  ];
+  const recentMape = data?.mape;
 
   return (
     <div className="space-y-4">
       <DataQualityNote dq={data.dataQuality} />
 
-      {/* Executive Summary */}
-      <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Zap className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Omzet Forecast</div>
-              <p className="text-sm leading-relaxed">{summaryParts.join(" ")}</p>
-            </div>
-            <ConfidenceBadge level={confidence} score={confScore} />
+      {/* KPI Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Forecast totaal</div>
+          <div className="text-xl font-bold">{euro(forecastTotal)}</div>
+          <span className="text-[10px] text-muted-foreground">{rangeDays} dagen</span>
+        </CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Vorige periode</div>
+          <div className="text-xl font-bold">{euro(prevTotal)}</div>
+          <span className={cn("text-[10px] font-semibold", growthPct >= 0 ? "text-green-600" : "text-red-500")}>
+            {growthPct >= 0 ? "+" : ""}{growthPct}% vs voorgaand
+          </span>
+        </CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Trend (7d)</div>
+          <div className="text-xl font-bold flex items-center gap-1">
+            {trend > 0 ? <ArrowUp className="h-4 w-4 text-green-600" /> : trend < 0 ? <ArrowDown className="h-4 w-4 text-red-500" /> : <Minus className="h-4 w-4" />}
+            {trend > 0 ? "+" : ""}{trend}%
+          </div>
+          <span className="text-[10px] text-muted-foreground">recent vs eerder</span>
+        </CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Nauwkeurigheid</div>
+          <div className="text-xl font-bold">{recentMape !== null && recentMape !== undefined ? `${(100 - recentMape).toFixed(0)}%` : "—"}</div>
+          <span className="text-[10px] text-muted-foreground">backtest 14d</span>
+        </CardContent></Card>
+      </div>
+
+      <InsightsCard insights={insights} title="AI Insights" />
+
+      {/* Per-day forecast chart with band */}
+      <Card className="rounded-2xl">
+        <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" /> Per-dag forecast (low/expected/high)
+          </CardTitle>
+          <ConfidenceBadge confidence={data?.confidence} />
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={v => `€${v}`} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", fontSize: 12 }}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const d: any = payload[0]?.payload || {};
+                    return (
+                      <div className="bg-background border rounded-xl p-3 shadow-lg text-xs space-y-1 max-w-[240px]">
+                        <div className="font-semibold flex items-center gap-1">{d.weatherIcon} {label} ({d.dag})</div>
+                        <div className="text-muted-foreground">{d.openLabel}</div>
+                        <div className="flex justify-between gap-3"><span>Low</span><span className="font-medium">€{d.low}</span></div>
+                        <div className="flex justify-between gap-3"><span>Expected</span><span className="font-bold text-primary">€{d.expected}</span></div>
+                        <div className="flex justify-between gap-3"><span>High</span><span className="font-medium">€{d.high}</span></div>
+                        {d.prev !== null && <div className="flex justify-between gap-3 pt-1 border-t"><span>Vorige periode</span><span>€{d.prev}</span></div>}
+                        {d.weatherNote && <div className="text-muted-foreground pt-1 border-t">Weer: {d.weatherNote}</div>}
+                        {d.holiday && <div className="text-amber-600 font-medium">🎉 {d.holiday}</div>}
+                      </div>
+                    );
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="low" stackId="band" fill="transparent" name="" legendType="none" />
+                <Bar dataKey="band" stackId="band" fill="hsl(var(--primary))" fillOpacity={0.2} name="Band low-high" radius={[4, 4, 0, 0]} />
+                <Line type="monotone" dataKey="expected" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 4 }} name="Expected" />
+                <Line type="monotone" dataKey="prev" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} strokeDasharray="4 4" dot={{ r: 2 }} name="Vorige periode" />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+            <Info className="h-3 w-3" /> Forecast = historisch weekdag-gemiddelde × weersimpact × feestdag-factor. Band = ± standaardafwijking.
           </div>
         </CardContent>
       </Card>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {kpis.map((k, i) => (
-          <Card key={i} className="rounded-2xl"><CardContent className="p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{k.label}</span>
-              <k.icon className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            <div className="text-xl font-bold">{k.value}</div>
-            <span className="text-[10px] text-muted-foreground">{k.sub}</span>
-          </CardContent></Card>
-        ))}
-      </div>
+      {/* Per-day table */}
+      <Card className="rounded-2xl">
+        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Dagoverzicht</CardTitle></CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead><tr className="border-b border-border">
+                <th className="text-left py-2 font-medium text-muted-foreground">Dag</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Open</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Low</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Expected</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">High</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Vorige</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Notities</th>
+              </tr></thead>
+              <tbody>
+                {forecastDays.map((d, i) => (
+                  <tr key={i} className={cn("border-b border-border/50", d.holiday && "bg-amber-50/50", !d.open && "opacity-50")}>
+                    <td className="py-2 font-medium">{DAY_LABELS[d.weekday]} {fmtShortDate(d.date)} <span className="ml-1">{d.weatherIcon}</span></td>
+                    <td className="py-2 text-muted-foreground">{d.openLabel}</td>
+                    <td className="text-right py-2">€{Math.round(d.low)}</td>
+                    <td className="text-right py-2 font-semibold">€{Math.round(d.expected)}</td>
+                    <td className="text-right py-2">€{Math.round(d.high)}</td>
+                    <td className="text-right py-2 text-muted-foreground">{previousPeriod[i] ? `€${Math.round(previousPeriod[i].actual)}` : "—"}</td>
+                    <td className="py-2 text-[10px] text-muted-foreground">
+                      {d.holiday && <span className="text-amber-600 font-semibold">🎉 {d.holiday} </span>}
+                      {d.vacation && <span className="text-blue-600">📅 {d.vacation} </span>}
+                      {d.weatherNote}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Weekday chart */}
-      {weekdayData.length > 0 && (
+      {/* Mini Forecast vs Actual */}
+      {backtest.length > 0 && (
         <Card className="rounded-2xl">
-          <CardHeader className="p-4 pb-0"><CardTitle className="text-sm flex items-center gap-2">
-            <CalendarDays className="h-4 w-4" /> Gemiddelde omzet per weekdag
+          <CardHeader className="p-4 pb-2"><CardTitle className="text-sm flex items-center gap-2">
+            <GitCompareArrows className="h-4 w-4" /> Backtest — forecast vs werkelijk (14d)
           </CardTitle></CardHeader>
           <CardContent className="p-4 pt-2">
-            <div className="h-[260px]">
+            <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={weekdayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <ComposedChart data={backtest.map(b => ({ ...b, label: fmtShortDate(b.date) }))} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="dag" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis yAxisId="omzet" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={v => `€${v}`} />
-                  <YAxis yAxisId="orders" orientation="right" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", fontSize: 12 }}
-                    formatter={(v: number, name: string) => [name === "Omzet" ? euro(v) : v, name]} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar yAxisId="omzet" dataKey="gemOmzet" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Omzet" barSize={24} />
-                  <Line yAxisId="orders" type="monotone" dataKey="gemOrders" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ r: 3 }} name="Orders" />
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} />
+                  <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `€${v}`} />
+                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 11 }} formatter={(v: number) => euro(v)} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="forecast" fill="hsl(var(--primary))" fillOpacity={0.5} name="Forecast" />
+                  <Line type="monotone" dataKey="actual" stroke="hsl(var(--accent-foreground))" strokeWidth={2} name="Werkelijk" dot={{ r: 3 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-            <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-              <Info className="h-3 w-3" /> Gemiddelden per weekdag op basis van {totalDays} dagen werkelijke data
-            </div>
+            {data?.mape !== null && data?.mape !== undefined && (
+              <div className="text-[10px] text-muted-foreground mt-2">
+                Gemiddelde forecastfout: <span className="font-semibold">{data.mape}%</span> — nauwkeurigheid: <span className="font-semibold text-primary">{(100 - data.mape).toFixed(1)}%</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Hourly chart */}
-      {hourlyData.length > 0 && (
-        <Card className="rounded-2xl">
-          <CardHeader className="p-4 pb-0"><CardTitle className="text-sm flex items-center gap-2">
-            <Clock className="h-4 w-4" /> Gemiddelde omzet per uur (alleen open uren)
-          </CardTitle></CardHeader>
-          <CardContent className="p-4 pt-2">
-            <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={hourlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="uur" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={v => `€${v}`} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--background))", fontSize: 12 }}
-                    formatter={(v: number) => [euro(v), "Gem. omzet"]} />
-                  <Bar dataKey="gemOmzet" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Actions */}
+      <Card className="rounded-2xl border-primary/20"><CardContent className="p-3 flex flex-wrap gap-2">
+        {growthPct < -5 && (
+          <Button variant="outline" size="sm" onClick={() => dispatchForecastAction("create_promotion", { reason: "decline" })}>
+            <Zap className="h-3.5 w-3.5 mr-1" /> Maak promotie (omzet daalt)
+          </Button>
+        )}
+        {forecastDays.some(d => d.holiday) && (
+          <Button variant="outline" size="sm" onClick={() => dispatchForecastAction("plan_holiday", { dates: forecastDays.filter(d => d.holiday).map(d => d.date) })}>
+            <CalendarDays className="h-3.5 w-3.5 mr-1" /> Plan feestdagen
+          </Button>
+        )}
+      </CardContent></Card>
     </div>
   );
 }
@@ -546,13 +668,12 @@ function ProductTab({ data, rangeDays }: { data: any; rangeDays: number }) {
   }
 
   const totalDays = data.totalDays || 1;
-  const topProducts = products.slice(0, 15);
+  const topProducts = products.slice(0, 25);
 
-  // Compute forecast per product
-  const forecastProducts = topProducts.map((p: any) => {
-    const forecast = Math.round(p.avgDaily * rangeDays);
-    return { ...p, forecast };
-  });
+  const forecastProducts = topProducts.map((p: any) => ({
+    ...p,
+    forecast: Math.round(p.avgDaily * rangeDays),
+  }));
 
   const chartData = forecastProducts.slice(0, 10).map((p: any) => ({
     naam: p.name.length > 16 ? p.name.slice(0, 14) + "…" : p.name,
@@ -572,11 +693,10 @@ function ProductTab({ data, rangeDays }: { data: any; rangeDays: number }) {
               <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Product Forecast</div>
               <p className="text-sm leading-relaxed">
                 {products.length} producten geanalyseerd over {totalDays} verkoopdagen.
-                {topProducts[0] && ` ${topProducts[0].name} is het meest verkocht (${topProducts[0].totalQty} stuks, gem. ${topProducts[0].avgDaily}/dag).`}
-                {totalDays < 7 && " Meer data nodig voor betrouwbare trends."}
+                {topProducts[0] && ` ${topProducts[0].name} is het meest verkocht (${topProducts[0].totalQty} stuks).`}
               </p>
             </div>
-            <ConfidenceBadge level={totalDays >= 14 ? "high" : totalDays >= 5 ? "medium" : "low"} />
+            <ConfidenceBadge confidence={data?.confidence} />
           </div>
         </CardContent>
       </Card>
@@ -606,25 +726,36 @@ function ProductTab({ data, rangeDays }: { data: any; rangeDays: number }) {
 
       {/* Product table */}
       <Card className="rounded-2xl">
-        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Productoverzicht</CardTitle></CardHeader>
+        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Productoverzicht (met groei %)</CardTitle></CardHeader>
         <CardContent className="p-4 pt-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead><tr className="border-b border-border">
                 <th className="text-left py-2 font-medium text-muted-foreground">Product</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">Verkocht</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">Gem/dag</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">Omzet</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Totaal</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Vorige helft</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Recente helft</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Groei</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Forecast {rangeDays}d</th>
+                <th className="text-center py-2 font-medium text-muted-foreground">Vertrouwen</th>
               </tr></thead>
               <tbody>
                 {forecastProducts.map((p: any, i: number) => (
                   <tr key={i} className="border-b border-border/50">
                     <td className="py-2 font-medium max-w-[150px] truncate">{p.name}</td>
                     <td className="text-right py-2">{p.totalQty}</td>
-                    <td className="text-right py-2">{p.avgDaily}</td>
-                    <td className="text-right py-2">{euro(p.totalRevenue)}</td>
+                    <td className="text-right py-2 text-muted-foreground">{p.prevQty}</td>
+                    <td className="text-right py-2">{p.recentQty}</td>
+                    <td className={cn("text-right py-2 font-semibold", p.growthPct > 0 ? "text-green-600" : p.growthPct < 0 ? "text-red-500" : "")}>
+                      {p.growthPct > 0 ? "+" : ""}{p.growthPct}%
+                    </td>
                     <td className="text-right py-2 font-semibold">{p.forecast}</td>
+                    <td className="text-center py-2">
+                      <Badge variant="outline" className={cn("text-[9px]",
+                        p.confidence === "high" ? "text-green-600 border-green-300" :
+                          p.confidence === "medium" ? "text-amber-600 border-amber-300" : "text-red-500 border-red-300"
+                      )}>{p.confidence === "high" ? "Hoog" : p.confidence === "medium" ? "Med" : "Laag"}</Badge>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -638,14 +769,20 @@ function ProductTab({ data, rangeDays }: { data: any; rangeDays: number }) {
 
 // ─── Stock Tab ───────────────────────────────────────────────────────────────
 
-function StockTab({ data }: { data: any }) {
+function StockTab({ data, onAction }: { data: any; onAction: (a: string, p: any) => void }) {
   const items = data?.items || [];
   if (items.length === 0) {
     return <NoData message="Geen voorraaddata beschikbaar." details="Voeg voorraadartikelen toe om stockforecasts te zien." />;
   }
+  const critical = data.critical ?? data.highRisk ?? 0;
+  const low = data.low ?? data.mediumRisk ?? 0;
+  const healthy = data.healthy ?? (items.length - critical - low);
 
-  const highRisk = data.highRisk || 0;
-  const mediumRisk = data.mediumRisk || 0;
+  const statusBadge = (s: string) => {
+    if (s === "critical") return <Badge variant="destructive" className="text-[10px]">🔴 Kritiek</Badge>;
+    if (s === "low") return <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">🟠 Laag</Badge>;
+    return <Badge variant="secondary" className="text-[10px] text-green-700">🟢 Gezond</Badge>;
+  };
 
   return (
     <div className="space-y-4">
@@ -658,33 +795,30 @@ function StockTab({ data }: { data: any }) {
             <div className="flex-1">
               <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Voorraad Forecast</div>
               <p className="text-sm leading-relaxed">
-                {items.length} artikelen geanalyseerd.
-                {highRisk > 0 && ` ⚠️ ${highRisk} artikel${highRisk > 1 ? "en" : ""} met hoog risico op tekort.`}
-                {mediumRisk > 0 && ` ${mediumRisk} met gemiddeld risico.`}
-                {highRisk === 0 && mediumRisk === 0 && " Alle voorraden op niveau."}
+                {items.length} artikelen. {critical > 0 && <span className="text-destructive font-semibold">⚠️ {critical} kritiek. </span>}
+                {low > 0 && <span className="text-amber-600">{low} laag.</span>}
+                {critical === 0 && low === 0 && " Alle voorraden op niveau."}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* KPIs */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="rounded-2xl"><CardContent className="p-4">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Artikelen</div>
-          <div className="text-xl font-bold">{items.length}</div>
-        </CardContent></Card>
-        <Card className="rounded-2xl border-destructive/30"><CardContent className="p-4">
-          <div className="text-[10px] uppercase tracking-wider text-destructive font-medium mb-1">Hoog risico</div>
-          <div className="text-xl font-bold text-destructive">{highRisk}</div>
+          <div className="text-[10px] uppercase tracking-wider text-green-600 font-medium mb-1">🟢 Gezond</div>
+          <div className="text-xl font-bold text-green-700">{healthy}</div>
         </CardContent></Card>
         <Card className="rounded-2xl border-amber-300/50"><CardContent className="p-4">
-          <div className="text-[10px] uppercase tracking-wider text-amber-600 font-medium mb-1">Gemiddeld risico</div>
-          <div className="text-xl font-bold text-amber-600">{mediumRisk}</div>
+          <div className="text-[10px] uppercase tracking-wider text-amber-600 font-medium mb-1">🟠 Laag</div>
+          <div className="text-xl font-bold text-amber-600">{low}</div>
+        </CardContent></Card>
+        <Card className="rounded-2xl border-destructive/30"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-destructive font-medium mb-1">🔴 Kritiek</div>
+          <div className="text-xl font-bold text-destructive">{critical}</div>
         </CardContent></Card>
       </div>
 
-      {/* Items table */}
       <Card className="rounded-2xl">
         <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Voorraad per artikel</CardTitle></CardHeader>
         <CardContent className="p-4 pt-0">
@@ -693,161 +827,266 @@ function StockTab({ data }: { data: any }) {
               <thead><tr className="border-b border-border">
                 <th className="text-left py-2 font-medium text-muted-foreground">Artikel</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Voorraad</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Min</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Gem/dag</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Dagen over</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">7d behoefte</th>
-                <th className="text-center py-2 font-medium text-muted-foreground">Risico</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Bestel</th>
+                <th className="text-center py-2 font-medium text-muted-foreground">Status</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Actie</th>
               </tr></thead>
               <tbody>
                 {items.map((item: any, i: number) => (
-                  <tr key={i} className={cn("border-b border-border/50", item.risk === "high" && "bg-destructive/5")}>
+                  <tr key={i} className={cn("border-b border-border/50", item.status === "critical" && "bg-destructive/5")}>
                     <td className="py-2 font-medium max-w-[140px] truncate">{item.name}</td>
                     <td className="text-right py-2">{item.currentStock} {item.unit}</td>
+                    <td className="text-right py-2 text-muted-foreground">{item.minStock}</td>
                     <td className="text-right py-2">{item.avgDailyUsage}</td>
                     <td className="text-right py-2 font-semibold">{item.daysRemaining > 100 ? "100+" : item.daysRemaining}</td>
-                    <td className="text-right py-2">{item.demand7d}</td>
-                    <td className="text-center py-2">
-                      <Badge variant={item.risk === "high" ? "destructive" : item.risk === "medium" ? "outline" : "secondary"} className="text-[10px]">
-                        {item.risk === "high" ? "Hoog" : item.risk === "medium" ? "Gemiddeld" : "Laag"}
-                      </Badge>
+                    <td className="text-right py-2">{item.reorderQty > 0 ? `${item.reorderQty} ${item.unit}` : "—"}</td>
+                    <td className="text-center py-2">{statusBadge(item.status || item.risk)}</td>
+                    <td className="text-right py-2">
+                      {(item.status === "critical" || item.status === "low") && (
+                        <Button size="sm" variant="outline" className="h-7 text-[10px]"
+                          onClick={() => onAction("create_po", { item_id: item.id, name: item.name, qty: item.reorderQty, supplier: item.supplier })}>
+                          <ShoppingCart className="h-3 w-3 mr-1" /> Bestel
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {items.some((i: any) => i.movementDays <= 1) && (
-            <div className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
-              <Info className="h-3 w-3" /> Sommige artikelen hebben weinig bewegingshistorie — schattingen kunnen onnauwkeurig zijn
-            </div>
-          )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// ─── Purchasing Tab ──────────────────────────────────────────────────────────
+
+function PurchasingTab({ data, rangeDays, onAction }: { data: any; rangeDays: number; onAction: (a: string, p: any) => void }) {
+  const recs: any[] = data?.recommendations || [];
+  const productForecast: any[] = data?.productForecast || [];
+  const hasRecipes = data?.hasRecipes;
+
+  if (!hasRecipes) {
+    return <NoData
+      message="Geen receptdata gevonden."
+      details="Koppel ingrediënten aan producten via Product Costs / Recipes om inkoopadvies te zien." />;
+  }
+  if (recs.length === 0) {
+    return <NoData message="Geen tekorten verwacht." details={`Op basis van ${rangeDays} dagen forecast en huidige voorraad.`} />;
+  }
+
+  const shortages = recs.filter(r => r.shortage > 0);
+  const totalCost = data?.totalEstimatedCost || 0;
+
+  return (
+    <div className="space-y-4">
+      <DataQualityNote dq={data.dataQuality} />
+
+      <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><ShoppingCart className="h-4 w-4 text-primary" /></div>
+            <div className="flex-1">
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Inkoopadvies — komende {rangeDays} dagen</div>
+              <p className="text-sm leading-relaxed">
+                {shortages.length} ingrediënten met tekort. Geschatte inkoopwaarde: <span className="font-bold">{euro2(totalCost)}</span>.
+                Gebaseerd op {productForecast.length} producten en hun recepten (incl. waste-factor).
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm">Inkooplijst</CardTitle>
+          {shortages.length > 0 && (
+            <Button size="sm" variant="default" onClick={() => onAction("create_bulk_po", { items: shortages })}>
+              <ShoppingCart className="h-3.5 w-3.5 mr-1" /> Maak inkooporder ({shortages.length})
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead><tr className="border-b border-border">
+                <th className="text-left py-2 font-medium text-muted-foreground">Ingrediënt</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Voorraad</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Behoefte</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Tekort</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Bestel (+15%)</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Leverancier</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Kosten</th>
+              </tr></thead>
+              <tbody>
+                {recs.map((r: any, i: number) => (
+                  <tr key={i} className={cn("border-b border-border/50", r.shortage > 0 && "bg-amber-50/30")}>
+                    <td className="py-2 font-medium max-w-[140px] truncate">{r.name}</td>
+                    <td className="text-right py-2">{r.currentStock} {r.unit}</td>
+                    <td className="text-right py-2">{r.neededQty} {r.unit}</td>
+                    <td className={cn("text-right py-2 font-semibold", r.shortage > 0 && "text-destructive")}>
+                      {r.shortage > 0 ? `${r.shortage} ${r.unit}` : "—"}
+                    </td>
+                    <td className="text-right py-2 font-semibold">{r.orderQty > 0 ? `${r.orderQty} ${r.unit}` : "—"}</td>
+                    <td className="py-2 text-muted-foreground max-w-[100px] truncate">{r.supplier || "—"}</td>
+                    <td className="text-right py-2">{r.estimatedCost > 0 ? euro2(r.estimatedCost) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {productForecast.length > 0 && (
+        <Card className="rounded-2xl">
+          <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Verwachte productverkoop (bron)</CardTitle></CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              {productForecast.slice(0, 12).map((p: any, i: number) => (
+                <div key={i} className="rounded-lg border border-border/50 px-2 py-1.5 text-xs">
+                  <div className="font-medium truncate">{p.name}</div>
+                  <div className="text-muted-foreground">~{p.qty} stuks</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
 
 // ─── Staffing Tab ────────────────────────────────────────────────────────────
 
-function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: ScheduleConfig }) {
+function StaffingTab({ data, daily, hourly, schedule, rangeDays, onAction }: {
+  data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[];
+  schedule: ScheduleConfig; rangeDays: number; onAction: (a: string, p: any) => void;
+}) {
   const patterns = data?.patterns || [];
-  const hasStaffData = data?.hasStaffData || false;
+  const dayForecasts: any[] = data?.dayForecasts || [];
   const today = getAmsterdamNow();
   const todayDow = today.getDay();
   const openHrs = getOpenHoursForDate(today, schedule);
 
-  // Filter patterns for today's weekday
+  // Today's hourly breakdown
   const todayPatterns = patterns
     .filter((p: any) => p.weekday === todayDow)
     .sort((a: any, b: any) => a.hour - b.hour);
 
-  // Get weather for today
   const todayWeather = daily.find(d => d.date === getAmsterdamDateStr());
 
-  // Build hourly staffing view
   const staffHours = openHrs.map(hour => {
     const pattern = todayPatterns.find((p: any) => p.hour === hour);
     const weatherHr = hourly.find(h => h.date === getAmsterdamDateStr() && h.localHour === hour);
-
     let avgOrders = pattern?.avgOrders ?? 0;
     let weatherNote = "";
-
-    // Weather adjustments
     if (weatherHr) {
       if (weatherHr.precipitationChance > 60) { avgOrders *= 0.85; weatherNote = "Regen"; }
       if (weatherHr.temperatureC > 22 && weatherHr.precipitationChance < 30) { avgOrders *= 1.1; weatherNote = "Warm"; }
       if (weatherHr.windSpeed > 30) { avgOrders *= 0.92; weatherNote += (weatherNote ? " + " : "") + "Wind"; }
     }
     if (todayWeather?.sunny && !weatherNote) weatherNote = "Zon";
-
     const recommended = avgOrders > 0 ? Math.max(1, Math.ceil(avgOrders / 10)) : 1;
     const loadPct = avgOrders > 0 ? Math.min(100, Math.round(avgOrders * 8)) : 0;
-    const hasData = !!pattern;
-
-    return { hour, avgOrders: Math.round(avgOrders * 10) / 10, recommended, loadPct, weatherNote, hasData, avgStaff: pattern?.avgStaff };
+    return { hour, avgOrders: Math.round(avgOrders * 10) / 10, recommended, loadPct, weatherNote, hasData: !!pattern, avgStaff: pattern?.avgStaff };
   });
 
-  const peakHour = staffHours.reduce((b, h) => h.loadPct > b.loadPct ? h : b, staffHours[0]);
+  const peakHour = staffHours.reduce((b, h) => h.loadPct > b.loadPct ? h : b, staffHours[0]) || { hour: 0, loadPct: 0, recommended: 0 };
   const totalStaffHours = staffHours.reduce((s, h) => s + h.recommended, 0);
 
   return (
     <div className="space-y-4">
       <DataQualityNote dq={data.dataQuality} />
 
-      {!hasStaffData && (
-        <Card className="rounded-2xl border-amber-200 bg-amber-50/50"><CardContent className="p-3 text-xs flex items-center gap-2 text-amber-800">
-          <AlertTriangle className="h-4 w-4" /> Geen personeelsregistratie gevonden. Aanbevelingen zijn gebaseerd op verkooppatronen.
-        </CardContent></Card>
+      {/* Multi-day forecast */}
+      {dayForecasts.length > 0 && (
+        <Card className="rounded-2xl">
+          <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Calendar className="h-4 w-4" /> Personeelsforecast — komende {rangeDays} dagen
+            </CardTitle>
+            <ConfidenceBadge confidence={data?.confidence} />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead><tr className="border-b border-border">
+                  <th className="text-left py-2 font-medium text-muted-foreground">Dag</th>
+                  <th className="text-right py-2 font-medium text-muted-foreground">Open uren</th>
+                  <th className="text-right py-2 font-medium text-muted-foreground">Verwachte orders</th>
+                  <th className="text-right py-2 font-medium text-muted-foreground">Aanbev. p-uren</th>
+                  <th className="text-right py-2 font-medium text-muted-foreground">Hist. gem. (p-uren)</th>
+                  <th className="text-center py-2 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right py-2 font-medium text-muted-foreground">Actie</th>
+                </tr></thead>
+                <tbody>
+                  {dayForecasts.map((d, i) => {
+                    const statusBadge =
+                      d.status === "understaffed" ? <Badge variant="destructive" className="text-[10px]">Onderbezet</Badge> :
+                      d.status === "overstaffed" ? <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">Overbezet</Badge> :
+                      d.status === "ok" ? <Badge variant="secondary" className="text-[10px] text-green-700">OK</Badge> :
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Geen historie</Badge>;
+                    return (
+                      <tr key={i} className={cn("border-b border-border/50", d.holiday && "bg-amber-50/50")}>
+                        <td className="py-2 font-medium">{DAY_LABELS[d.weekday]} {fmtShortDate(d.date)} {d.holiday && <span className="text-amber-600">🎉</span>}</td>
+                        <td className="text-right py-2 text-muted-foreground">{d.openHours}u</td>
+                        <td className="text-right py-2">{d.expectedOrders}</td>
+                        <td className="text-right py-2 font-semibold">{d.recommendedStaffHours}u</td>
+                        <td className="text-right py-2 text-muted-foreground">{d.scheduledStaffHours ?? "—"}</td>
+                        <td className="text-center py-2">{statusBadge}</td>
+                        <td className="text-right py-2">
+                          {(d.status === "understaffed" || d.status === "overstaffed") && (
+                            <Button size="sm" variant="outline" className="h-7 text-[10px]"
+                              onClick={() => onAction("create_schedule", { date: d.date, recommendedHours: d.recommendedStaffHours })}>
+                              <Users className="h-3 w-3 mr-1" /> Plan
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Users className="h-4 w-4 text-primary" /></div>
-            <div className="flex-1">
-              <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Personeel Forecast — {DAY_LABELS[todayDow]}</div>
-              <p className="text-sm leading-relaxed">
-                {staffHours.some(h => h.hasData)
-                  ? `Piekuur verwacht om ${peakHour?.hour}:00 met ${peakHour?.avgOrders} gem. orders. Totaal ${totalStaffHours} personeelsuren aanbevolen.`
-                  : "Onvoldoende historische data voor deze dag. Meer verkoopdata nodig."}
-                {todayWeather?.isRain && " Regen kan traffic verlagen."}
-                {todayWeather?.sunny && " Zonnig weer kan extra traffic brengen."}
-              </p>
-            </div>
-            <ConfidenceBadge level={staffHours.filter(h => h.hasData).length >= 6 ? "medium" : "low"} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="rounded-2xl"><CardContent className="p-4">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Piekuur</div>
-          <div className="text-xl font-bold">{peakHour?.hour}:00</div>
-          <div className="text-xs text-muted-foreground">{peakHour?.loadPct}% belasting</div>
-        </CardContent></Card>
-        <Card className="rounded-2xl"><CardContent className="p-4">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Werkuren</div>
-          <div className="text-xl font-bold">{totalStaffHours}u</div>
-          <div className="text-xs text-muted-foreground">aanbevolen</div>
-        </CardContent></Card>
-        <Card className="rounded-2xl"><CardContent className="p-4">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Open uren</div>
-          <div className="text-xl font-bold">{formatScheduleForDate(today, schedule)}</div>
-          <div className="text-xs text-muted-foreground">{getTotalOpenHoursForDate(today, schedule)} uur</div>
-        </CardContent></Card>
-      </div>
-
-      <Card className="rounded-2xl"><CardContent className="p-3 text-[10px] text-muted-foreground flex items-center gap-2">
-        <Info className="h-3 w-3 shrink-0" />
-        Uren buiten {formatScheduleForDate(today, schedule)} worden niet meegerekend in dit personeelsadvies.
-      </CardContent></Card>
-
-
+      {/* Today hourly */}
       <Card className="rounded-2xl">
         <CardHeader className="p-4 pb-2"><CardTitle className="text-sm flex items-center gap-2">
-          <Users className="h-4 w-4" /> Bezettingsadvies per uur
+          <Users className="h-4 w-4" /> Vandaag — bezettingsadvies per uur ({formatScheduleForDate(today, schedule)})
         </CardTitle></CardHeader>
         <CardContent className="p-4 pt-2">
-          <div className="space-y-1.5">
-            {staffHours.map((h, i) => (
-              <div key={i} className="flex items-center gap-3 min-h-[36px]">
-                <span className="text-xs font-mono w-12 text-muted-foreground">{h.hour}:00</span>
-                <div className="flex-1 h-7 rounded-lg overflow-hidden bg-muted/50 relative">
-                  <div className={cn("h-full rounded-lg transition-all",
-                    h.loadPct > 75 ? "bg-destructive/70" : h.loadPct > 50 ? "bg-orange-400/70" : "bg-green-500/50"
-                  )} style={{ width: `${h.loadPct}%` }} />
-                  <span className="absolute inset-0 flex items-center px-2 text-[10px] font-medium">
-                    {h.loadPct}% — {h.recommended} pers.
-                    {h.weatherNote && <span className="ml-1 text-muted-foreground">({h.weatherNote})</span>}
-                    {h.avgOrders > 0 && <span className="ml-1 text-muted-foreground/60">[{h.avgOrders} ord/u]</span>}
-                  </span>
+          {staffHours.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Vandaag gesloten.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {staffHours.map((h, i) => (
+                <div key={i} className="flex items-center gap-3 min-h-[36px]">
+                  <span className="text-xs font-mono w-12 text-muted-foreground">{h.hour}:00</span>
+                  <div className="flex-1 h-7 rounded-lg overflow-hidden bg-muted/50 relative">
+                    <div className={cn("h-full rounded-lg transition-all",
+                      h.loadPct > 75 ? "bg-destructive/70" : h.loadPct > 50 ? "bg-orange-400/70" : "bg-green-500/50"
+                    )} style={{ width: `${h.loadPct}%` }} />
+                    <span className="absolute inset-0 flex items-center px-2 text-[10px] font-medium">
+                      {h.loadPct}% — {h.recommended} pers.
+                      {h.weatherNote && <span className="ml-1 text-muted-foreground">({h.weatherNote})</span>}
+                      {h.avgOrders > 0 && <span className="ml-1 text-muted-foreground/60">[{h.avgOrders} ord/u]</span>}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-[8px] shrink-0">{h.hasData ? "📊" : "🔮"}</Badge>
                 </div>
-                <Badge variant="outline" className="text-[8px] shrink-0">{h.hasData ? "📊" : "🔮"}</Badge>
-              </div>
-            ))}
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
-            <Info className="h-3 w-3" /> 📊 = historische data &nbsp; 🔮 = schatting
+              ))}
+            </div>
+          )}
+          <div className="text-[10px] text-muted-foreground mt-2">
+            Piekuur {peakHour?.hour}:00 ({peakHour?.loadPct}%) • Totaal {totalStaffHours} personeelsuren aanbevolen voor vandaag.
           </div>
         </CardContent>
       </Card>
@@ -855,88 +1094,223 @@ function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: Norm
   );
 }
 
-// ─── Pricing Tab ─────────────────────────────────────────────────────────────
+// ─── Pricing Tab (legacy, kept) ──────────────────────────────────────────────
 
 function PricingTab({ data }: { data: any }) {
   const products = data?.products || [];
-  if (products.length === 0) {
-    return <NoData message="Nog niet genoeg verkoopdata voor prijsadvies." details="Er zijn meer transacties nodig om patronen te herkennen." />;
-  }
-
+  if (products.length === 0) return <NoData message="Nog niet genoeg verkoopdata voor prijsadvies." />;
   const totalDays = data.totalDays || 1;
   const withMargin = products.filter((p: any) => p.margin !== null);
   const avgMargin = withMargin.length > 0 ? withMargin.reduce((s: number, p: any) => s + p.margin, 0) / withMargin.length : null;
-
   return (
     <div className="space-y-4">
-      <DataQualityNote dq={data.dataQuality} />
-
       <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Tag className="h-4 w-4 text-primary" /></div>
-            <div className="flex-1">
-              <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Prijsadvies</div>
-              <p className="text-sm leading-relaxed">
-                {products.length} producten geanalyseerd over {totalDays} verkoopdagen.
-                {avgMargin !== null && ` Gemiddelde marge: ${avgMargin.toFixed(1)}%.`}
-                {avgMargin === null && " Geen inkoopprijzen opgeslagen — vul product costs in voor marge-analyse."}
-              </p>
-            </div>
-            <ConfidenceBadge level={totalDays >= 14 && withMargin.length > 0 ? "medium" : "low"} />
+            <Tag className="h-4 w-4 text-primary mt-1" />
+            <p className="text-sm leading-relaxed">
+              {products.length} producten over {totalDays} dagen.{avgMargin !== null && ` Gemiddelde marge: ${avgMargin.toFixed(1)}%.`}
+            </p>
           </div>
         </CardContent>
       </Card>
-
       <Card className="rounded-2xl">
-        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Producten & marge</CardTitle></CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="p-4">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead><tr className="border-b border-border">
+              <thead><tr className="border-b">
                 <th className="text-left py-2 font-medium text-muted-foreground">Product</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Verkocht</th>
-                <th className="text-right py-2 font-medium text-muted-foreground">Gem/dag</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Gem. prijs</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Inkoop</th>
                 <th className="text-right py-2 font-medium text-muted-foreground">Marge</th>
                 <th className="text-center py-2 font-medium text-muted-foreground">Advies</th>
               </tr></thead>
               <tbody>
-                {products.slice(0, 20).map((p: any, i: number) => {
-                  // Simple advice logic
-                  let advice = "—";
-                  let adviceColor = "text-muted-foreground";
+                {products.slice(0, 30).map((p: any, i: number) => {
+                  let advice = "—", color = "text-muted-foreground";
                   if (p.margin !== null) {
-                    if (p.margin > 70 && p.avgDaily > 2) { advice = "✅ Prima"; adviceColor = "text-green-600"; }
-                    else if (p.margin < 40) { advice = "⚠️ Laag"; adviceColor = "text-amber-600"; }
-                    else if (p.avgDaily < 0.5 && p.daysActive >= 7) { advice = "📉 Slow"; adviceColor = "text-red-500"; }
-                    else { advice = "✅ OK"; adviceColor = "text-green-600"; }
-                  } else if (p.daysActive < 3) {
-                    advice = "⏳ Te weinig data";
-                    adviceColor = "text-muted-foreground";
+                    if (p.margin > 70 && p.avgDaily > 2) { advice = "✅ Prima"; color = "text-green-600"; }
+                    else if (p.margin < 40) { advice = "⚠️ Laag"; color = "text-amber-600"; }
+                    else if (p.avgDaily < 0.5) { advice = "📉 Slow"; color = "text-red-500"; }
+                    else { advice = "✅ OK"; color = "text-green-600"; }
                   }
-
                   return (
                     <tr key={i} className="border-b border-border/50">
                       <td className="py-2 font-medium max-w-[140px] truncate">{p.name}</td>
                       <td className="text-right py-2">{p.totalQty}</td>
-                      <td className="text-right py-2">{p.avgDaily}</td>
-                      <td className="text-right py-2">{euro(p.avgPrice)}</td>
-                      <td className="text-right py-2">{p.buyingPrice ? euro(p.buyingPrice) : "—"}</td>
+                      <td className="text-right py-2">{euro2(p.avgPrice)}</td>
+                      <td className="text-right py-2">{p.buyingPrice ? euro2(p.buyingPrice) : "—"}</td>
                       <td className="text-right py-2 font-semibold">{p.margin !== null ? `${p.margin}%` : "—"}</td>
-                      <td className={cn("text-center py-2 text-[10px] font-medium", adviceColor)}>{advice}</td>
+                      <td className={cn("text-center py-2 text-[10px] font-medium", color)}>{advice}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          {withMargin.length === 0 && (
-            <div className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
-              <Info className="h-3 w-3" /> Vul inkoopprijzen in bij Product Costs voor marge-analyse en beter prijsadvies
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Actual vs Forecast Tab ──────────────────────────────────────────────────
+
+function ActualVsForecastTab({ data, rangeDays }: { data: any; rangeDays: number }) {
+  const backtest: any[] = data?.backtest || [];
+  if (backtest.length === 0) return <NoData message="Onvoldoende historische data voor backtest." />;
+
+  const chartData = backtest.map(b => ({ ...b, label: fmtShortDate(b.date) }));
+  const accuracy = data?.accuracy ?? 0;
+  const totalForecast = data?.totalForecast ?? 0;
+  const totalActual = data?.totalActual ?? 0;
+  const diffPct = data?.diffPct ?? 0;
+
+  return (
+    <div className="space-y-4">
+      <DataQualityNote dq={data.dataQuality} />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Werkelijk totaal</div>
+          <div className="text-xl font-bold">{euro(totalActual)}</div>
+        </CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Forecast totaal</div>
+          <div className="text-xl font-bold">{euro(totalForecast)}</div>
+        </CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Verschil</div>
+          <div className={cn("text-xl font-bold", diffPct >= 0 ? "text-green-600" : "text-red-500")}>
+            {diffPct >= 0 ? "+" : ""}{diffPct}%
+          </div>
+        </CardContent></Card>
+        <Card className="rounded-2xl"><CardContent className="p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Nauwkeurigheid</div>
+          <div className="text-xl font-bold text-primary">{accuracy}%</div>
+          <span className="text-[10px] text-muted-foreground">MAPE {data?.mape}%</span>
+        </CardContent></Card>
+      </div>
+
+      <Card className="rounded-2xl">
+        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm flex items-center gap-2">
+          <GitCompareArrows className="h-4 w-4" /> Forecast vs werkelijk — laatste {backtest.length} dagen
+        </CardTitle></CardHeader>
+        <CardContent className="p-4 pt-2">
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `€${v}`} />
+                <Tooltip contentStyle={{ borderRadius: 12, fontSize: 11 }} formatter={(v: number) => euro2(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="forecast" fill="hsl(var(--primary))" fillOpacity={0.4} name="Forecast" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="actual" fill="hsl(var(--primary))" name="Werkelijk" radius={[4, 4, 0, 0]} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Per-dag verschil</CardTitle></CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead><tr className="border-b">
+                <th className="text-left py-2 font-medium text-muted-foreground">Datum</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Forecast</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Werkelijk</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Verschil</th>
+              </tr></thead>
+              <tbody>
+                {[...backtest].reverse().map((b, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="py-2 font-medium">{DAY_LABELS[b.weekday]} {fmtShortDate(b.date)}</td>
+                    <td className="text-right py-2 text-muted-foreground">{euro2(b.forecast)}</td>
+                    <td className="text-right py-2 font-semibold">{euro2(b.actual)}</td>
+                    <td className={cn("text-right py-2 font-semibold", b.diffPct >= 0 ? "text-green-600" : "text-red-500")}>
+                      {b.diffPct >= 0 ? "+" : ""}{b.diffPct}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Multi-Location Tab ──────────────────────────────────────────────────────
+
+function MultiLocationTab({ data, rangeDays }: { data: any; rangeDays: number }) {
+  const locations: any[] = data?.locations || [];
+  if (locations.length === 0) return <NoData message="Geen locatiedata beschikbaar." />;
+  const grandTotal = data?.grandTotal ?? 0;
+
+  const chartData = locations.map(l => ({ name: l.name, omzet: l.forecastTotal }));
+
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-2xl border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Building2 className="h-4 w-4 text-primary mt-1" />
+            <div className="flex-1">
+              <div className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Multi-Location Forecast — {rangeDays} dagen</div>
+              <p className="text-sm leading-relaxed">
+                Verwachte totale omzet alle locaties: <span className="font-bold text-lg">{euro(grandTotal)}</span>
+              </p>
             </div>
-          )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardContent className="p-4">
+          <div className="h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `€${v}`} />
+                <Tooltip formatter={(v: number) => euro2(v)} contentStyle={{ borderRadius: 12, fontSize: 11 }} />
+                <Bar dataKey="omzet" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardHeader className="p-4 pb-2"><CardTitle className="text-sm">Per locatie</CardTitle></CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead><tr className="border-b">
+                <th className="text-left py-2 font-medium text-muted-foreground">Locatie</th>
+                <th className="text-left py-2 font-medium text-muted-foreground">Stad</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Historie</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">Forecast {rangeDays}d</th>
+                <th className="text-right py-2 font-medium text-muted-foreground">% van totaal</th>
+              </tr></thead>
+              <tbody>
+                {locations.map((l: any, i: number) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="py-2 font-medium">{l.name}</td>
+                    <td className="py-2 text-muted-foreground">{l.city || "—"}</td>
+                    <td className="text-right py-2 text-muted-foreground">{l.days} dgn</td>
+                    <td className="text-right py-2 font-semibold">{euro(l.forecastTotal)}</td>
+                    <td className="text-right py-2 text-muted-foreground">{grandTotal > 0 ? `${((l.forecastTotal / grandTotal) * 100).toFixed(1)}%` : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>
