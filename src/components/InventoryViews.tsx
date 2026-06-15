@@ -299,7 +299,7 @@ export function RecipeBuilderView({ products, onToast, addLog, locationId }: any
       unit: newLine.unit,
       is_optional: newLine.is_optional,
       waste_factor_pct: parseFloat(newLine.waste_factor_pct) || 0,
-      ...(locationId ? { location_id: locationId } : {}),
+      location_id: locationId as string,
     });
     onToast?.("Recept ingredient toegevoegd");
     addLog?.("recipe_updated", `Ingredient toegevoegd aan ${prod?.name}`);
@@ -483,7 +483,7 @@ export function StockIntakeView({ onToast, addLog, employeeName, locationId }: a
       invoice_reference: form.invoice_reference || null,
       location: form.location,
       employee_name: employeeName || null,
-      ...(locationId ? { location_id: locationId } : {}),
+      location_id: locationId as string,
     });
 
     // Update inventory stock + cost
@@ -504,7 +504,7 @@ export function StockIntakeView({ onToast, addLog, employeeName, locationId }: a
       source: "delivery",
       employee_name: employeeName,
       notes: form.invoice_reference ? `Factuur: ${form.invoice_reference}` : null,
-      ...(locationId ? { location_id: locationId } : {}),
+      location_id: locationId as string,
     });
 
     onToast?.(`${qty} ${form.unit} ontvangen`);
@@ -636,7 +636,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
         difference_pct: Math.round(diffPct * 100) / 100,
         adjustment_reason: reasons[item.id] || null,
         counted_by: employeeName,
-        ...(locationId ? { location_id: locationId } : {}),
+        location_id: locationId as string,
       });
 
       if (diff !== 0) {
@@ -647,7 +647,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
           source: "monthly_count",
           employee_name: employeeName,
           notes: reasons[item.id] || `Telling verschil: ${diff}`,
-          ...(locationId ? { location_id: locationId } : {}),
+          location_id: locationId as string,
         });
       }
 
@@ -1273,7 +1273,7 @@ export async function deductStockForOrder(orderItems: any[], employeeName?: stri
           source: "pos",
           employee_name: employeeName || null,
           order_id: orderId || null,
-          ...(locationId ? { location_id: locationId } : {}),
+          location_id: locationId as string,
         });
       }
     }
@@ -1308,7 +1308,7 @@ export async function restoreStockForRefund(orderItems: any[], employeeName?: st
           source: "refund",
           employee_name: employeeName || null,
           order_id: orderId || null,
-          ...(locationId ? { location_id: locationId } : {}),
+          location_id: locationId as string,
         });
       }
     }
@@ -1362,7 +1362,7 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName, l
       supplier: form.supplier || null,
       ai_forecast_enabled: form.ai_forecast_enabled,
       is_dynamic: true,
-      ...(locationId ? { location_id: locationId } : {}),
+      location_id: locationId as string,
     });
     if (error) { onToast?.("Fout bij aanmaken: " + error.message); return; }
     onToast?.(`${form.item_name} aangemaakt als dynamic stock`);
@@ -1382,7 +1382,7 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName, l
       source: "dynamic_refill",
       employee_name: employeeName || null,
       notes: `Quick refill +${amount} ${item.unit_type}`,
-      ...(locationId ? { location_id: locationId } : {}),
+      location_id: locationId as string,
     });
     addLog?.("dynamic_refill", `${item.item_name} bijgevuld: +${amount} ${item.unit_type}`);
     onToast?.(`${item.item_name} +${amount} ${item.unit_type}`);
@@ -1811,7 +1811,7 @@ export function WasteLoggingView({ onToast, addLog, currentRole, employeeName, l
       notes: form.notes || null,
       employee_name: employeeName,
       source: "waste_log",
-      ...(locationId ? { location_id: locationId } : {}),
+      location_id: locationId as string,
     });
 
     // Deduct from stock

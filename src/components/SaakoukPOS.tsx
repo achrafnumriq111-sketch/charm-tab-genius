@@ -5651,6 +5651,7 @@ function CashAuditView() {
       : `Verschil geaccepteerd als verklaard.`;
     await supabase.from("cash_audit_notes").insert({
       cash_closing_id: selected.id,
+      location_id: selected.location_id,
       employee_name: noteEmployee || "Owner",
       note_text: autoNote,
       action_type: actionType,
@@ -5666,6 +5667,7 @@ function CashAuditView() {
     setSaving(true);
     await supabase.from("cash_audit_notes").insert({
       cash_closing_id: selected.id,
+      location_id: selected.location_id,
       employee_name: noteEmployee || "Owner",
       note_text: noteText.trim(),
       action_type: "notitie",
