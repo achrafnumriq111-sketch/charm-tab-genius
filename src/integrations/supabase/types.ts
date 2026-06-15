@@ -1432,6 +1432,240 @@ export type Database = {
           },
         ]
       }
+      marketplace_integrations: {
+        Row: {
+          auto_accept: boolean
+          created_at: string
+          credentials: Json
+          display_name: string | null
+          external_menu_id: string | null
+          external_store_id: string | null
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          last_sync_status: string | null
+          location_id: string
+          prep_time_minutes: number
+          provider: Database["public"]["Enums"]["marketplace_provider"]
+          status: Database["public"]["Enums"]["marketplace_integration_status"]
+          tenant_id: string
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          auto_accept?: boolean
+          created_at?: string
+          credentials?: Json
+          display_name?: string | null
+          external_menu_id?: string | null
+          external_store_id?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          location_id: string
+          prep_time_minutes?: number
+          provider: Database["public"]["Enums"]["marketplace_provider"]
+          status?: Database["public"]["Enums"]["marketplace_integration_status"]
+          tenant_id: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          auto_accept?: boolean
+          created_at?: string
+          credentials?: Json
+          display_name?: string | null
+          external_menu_id?: string | null
+          external_store_id?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          location_id?: string
+          prep_time_minutes?: number
+          provider?: Database["public"]["Enums"]["marketplace_provider"]
+          status?: Database["public"]["Enums"]["marketplace_integration_status"]
+          tenant_id?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_integrations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_integrations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_orders: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          currency: string
+          customer_name: string | null
+          customer_phone: string | null
+          delivery_type: string
+          external_order_id: string
+          external_order_number: string | null
+          id: string
+          integration_id: string | null
+          items: Json
+          location_id: string
+          pos_transaction_id: string | null
+          provider: Database["public"]["Enums"]["marketplace_provider"]
+          qr_order_id: string | null
+          raw_payload: Json
+          ready_at: string | null
+          received_at: string
+          status: string
+          tenant_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_type?: string
+          external_order_id: string
+          external_order_number?: string | null
+          id?: string
+          integration_id?: string | null
+          items?: Json
+          location_id: string
+          pos_transaction_id?: string | null
+          provider: Database["public"]["Enums"]["marketplace_provider"]
+          qr_order_id?: string | null
+          raw_payload?: Json
+          ready_at?: string | null
+          received_at?: string
+          status?: string
+          tenant_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          delivery_type?: string
+          external_order_id?: string
+          external_order_number?: string | null
+          id?: string
+          integration_id?: string | null
+          items?: Json
+          location_id?: string
+          pos_transaction_id?: string | null
+          provider?: Database["public"]["Enums"]["marketplace_provider"]
+          qr_order_id?: string | null
+          raw_payload?: Json
+          ready_at?: string | null
+          received_at?: string
+          status?: string
+          tenant_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_orders_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_pos_transaction_id_fkey"
+            columns: ["pos_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pos_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_qr_order_id_fkey"
+            columns: ["qr_order_id"]
+            isOneToOne: false
+            referencedRelation: "qr_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_sync_log: {
+        Row: {
+          created_at: string
+          id: string
+          integration_id: string
+          kind: string
+          message: string | null
+          payload: Json | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          integration_id: string
+          kind: string
+          message?: string | null
+          payload?: Json | null
+          status: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          integration_id?: string
+          kind?: string
+          message?: string | null
+          payload?: Json | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_sync_log_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_sync_log_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modifier_groups: {
         Row: {
           created_at: string
@@ -3057,6 +3291,12 @@ export type Database = {
         | "retail"
         | "cleaning"
         | "misc"
+      marketplace_integration_status:
+        | "disconnected"
+        | "connected"
+        | "error"
+        | "syncing"
+      marketplace_provider: "mock" | "uber_eats" | "deliveroo" | "thuisbezorgd"
       movement_type:
         | "sale_deduction"
         | "stock_intake"
@@ -3208,6 +3448,13 @@ export const Constants = {
         "cleaning",
         "misc",
       ],
+      marketplace_integration_status: [
+        "disconnected",
+        "connected",
+        "error",
+        "syncing",
+      ],
+      marketplace_provider: ["mock", "uber_eats", "deliveroo", "thuisbezorgd"],
       movement_type: [
         "sale_deduction",
         "stock_intake",
