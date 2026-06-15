@@ -16,6 +16,7 @@ import AcceptInvite from "./pages/AcceptInvite.tsx";
 import TeamInvites from "./pages/TeamInvites.tsx";
 const Locations = lazy(() => import("./pages/Locations.tsx"));
 const TeamStaff = lazy(() => import("./pages/TeamStaff.tsx"));
+const SettingsFeatures = lazy(() => import("./pages/SettingsFeatures.tsx"));
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
