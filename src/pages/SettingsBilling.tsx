@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CreditCard, ExternalLink, Loader2, Sparkles, Check } from "lucide-react";
+import { ArrowLeft, CreditCard, ExternalLink, Loader2, Sparkles, Check, LogOut, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation_ } from "@/contexts/LocationContext";
 import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
-import { getStripeEnvironment, paymentsConfigured, PLANS } from "@/lib/stripe";
+import { getStripeEnvironment, paymentsConfigured, PLANS, SCALE_CONTACT_EMAIL } from "@/lib/stripe";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 const STATUS_META: Record<string, { label: string; bg: string; color: string }> = {
@@ -19,7 +19,7 @@ const STATUS_META: Record<string, { label: string; bg: string; color: string }> 
 };
 
 export default function SettingsBilling() {
-  const { employee } = useAuth();
+  const { employee, logout } = useAuth();
   const { activeLocation } = useLocation_();
   const { sub, loading } = useSubscriptionStatus(activeLocation?.id);
   const [busy, setBusy] = useState<string | null>(null);
@@ -98,10 +98,16 @@ export default function SettingsBilling() {
           <Link to="/" className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 border border-white shadow-sm">
             <ArrowLeft className="w-4 h-4 text-slate-600" />
           </Link>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black text-slate-900">Billing & abonnement</h1>
-            <div className="text-xs text-slate-500">{activeLocation?.name ?? "Geen locatie geselecteerd"}</div>
+            <div className="text-xs text-slate-500 truncate">{activeLocation?.name ?? "Geen locatie geselecteerd"}</div>
           </div>
+          <button
+            onClick={() => logout()}
+            className="h-10 px-4 rounded-xl flex items-center gap-2 bg-white/80 border border-white shadow-sm text-sm font-semibold text-slate-700 hover:bg-white"
+          >
+            <LogOut className="w-4 h-4" /> Uitloggen
+          </button>
         </div>
 
         {/* Current status card */}
@@ -167,12 +173,17 @@ export default function SettingsBilling() {
         {/* Plans grid */}
         <div className="rounded-3xl p-6 bg-white/85 backdrop-blur border border-white shadow-lg">
           <div className="font-bold text-slate-900 mb-1">Wijzig of kies een plan</div>
-          <div className="text-xs text-slate-500 mb-5">Alle plannen starten met 14 dagen gratis. Opzeggen wanneer je wil.</div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="text-xs text-slate-500 mb-5">Alle Pro-plannen starten met 14 dagen gratis. Opzeggen wanneer je wil.</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {PLANS.map((p) => {
               const isCurrent = sub?.stripe_price_id === p.priceId;
               return (
-                <div key={p.priceId} className="rounded-2xl p-4 border border-slate-200 bg-white flex flex-col">
+                <div key={p.priceId} className="relative rounded-2xl p-4 border border-slate-200 bg-white flex flex-col">
+                  {p.badge && (
+                    <span className="absolute -top-2 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white shadow">
+                      {p.badge}
+                    </span>
+                  )}
                   <div className="text-xs font-bold uppercase tracking-wider text-slate-500">{p.name}</div>
                   <div className="text-2xl font-black text-slate-900 mt-1">€{(p.amount / 100).toFixed(0)}</div>
                   <div className="text-xs text-slate-500">per {p.interval}</div>
@@ -187,6 +198,19 @@ export default function SettingsBilling() {
                 </div>
               );
             })}
+
+            {/* Scale: contact only */}
+            <div className="rounded-2xl p-4 border border-slate-900 bg-gradient-to-br from-slate-900 to-slate-700 text-white flex flex-col">
+              <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Scale</div>
+              <div className="text-2xl font-black mt-1">Op maat</div>
+              <div className="text-xs text-slate-300">Multi-locatie, SLA & integraties</div>
+              <a
+                href={`mailto:${SCALE_CONTACT_EMAIL}?subject=DOTTS%20Scale%20-%20informatie`}
+                className="mt-4 h-9 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-white text-slate-900"
+              >
+                <Mail className="w-3.5 h-3.5" /> Contact us
+              </a>
+            </div>
           </div>
         </div>
       </div>

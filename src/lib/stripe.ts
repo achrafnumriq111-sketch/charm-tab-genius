@@ -24,8 +24,8 @@ export function getStripe(): Promise<Stripe | null> {
 }
 
 export const PLANS = [
-  { priceId: "pro_monthly", name: "Pro maandelijks", amount: 4900, interval: "maand" },
-  { priceId: "pro_yearly", name: "Pro jaarlijks", amount: 49000, interval: "jaar" },
-  { priceId: "scale_monthly", name: "Scale maandelijks", amount: 12900, interval: "maand" },
-  { priceId: "scale_yearly", name: "Scale jaarlijks", amount: 129000, interval: "jaar" },
+  { priceId: "dotts_pro_monthly", name: "Pro maandelijks", amount: 8000, interval: "maand", badge: null },
+  { priceId: "dotts_pro_yearly", name: "Pro jaarlijks", amount: 80000, interval: "jaar", badge: "2 maanden gratis" },
 ] as const;
+
+export const SCALE_CONTACT_EMAIL = "sales@dotts.app";
