@@ -29,7 +29,7 @@ async function resolveOrCreateCustomer(
   }
   if (opts.email) {
     const existing = await stripe.customers.list({ email: opts.email, limit: 1 });
-    if (existing.data.length) {
+    if (existing?.data?.length) {
       const c = existing.data[0];
       await stripe.customers.update(c.id, {
         metadata: { ...c.metadata, userId: opts.userId, tenant_id: opts.tenantId, location_id: opts.locationId },
