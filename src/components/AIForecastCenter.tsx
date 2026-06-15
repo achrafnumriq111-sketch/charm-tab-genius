@@ -729,11 +729,12 @@ function StockTab({ data }: { data: any }) {
 
 // ─── Staffing Tab ────────────────────────────────────────────────────────────
 
-function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: LocationSchedule }) {
+function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: ScheduleConfig }) {
   const patterns = data?.patterns || [];
   const hasStaffData = data?.hasStaffData || false;
-  const todayDow = getAmsterdamDayOfWeek();
-  const openHrs = getOpenHours(todayDow, schedule);
+  const today = getAmsterdamNow();
+  const todayDow = today.getDay();
+  const openHrs = getOpenHoursForDate(today, schedule);
 
   // Filter patterns for today's weekday
   const todayPatterns = patterns
