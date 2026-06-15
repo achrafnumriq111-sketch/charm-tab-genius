@@ -231,7 +231,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
           {segment === "revenue" && <RevenueTab data={forecastData} rangeDays={rangeDays} daily={daily} />}
           {segment === "product" && <ProductTab data={forecastData} rangeDays={rangeDays} />}
           {segment === "stock" && <StockTab data={forecastData} />}
-          {segment === "staffing" && <StaffingTab data={forecastData} daily={daily} hourly={hourly} />}
+          {segment === "staffing" && <StaffingTab data={forecastData} daily={daily} hourly={hourly} schedule={schedule} />}
           {segment === "pricing" && <PricingTab data={forecastData} />}
         </>
       )}
