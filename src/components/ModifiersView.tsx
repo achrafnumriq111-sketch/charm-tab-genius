@@ -282,7 +282,7 @@ export default function ModifiersView({
     if (isLinked) {
       await supabase.from("product_modifier_groups").delete().eq("product_id", productId).eq("modifier_group_id", groupId);
     } else {
-      await supabase.from("product_modifier_groups").insert({ product_id: productId, modifier_group_id: groupId });
+      await supabase.from("product_modifier_groups").insert({ product_id: productId, modifier_group_id: groupId, location_id: locationId as string });
     }
     onRefetch();
   }
