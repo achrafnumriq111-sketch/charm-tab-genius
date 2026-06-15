@@ -220,7 +220,7 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex flex-col max-w-lg mx-auto relative">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b px-4 py-3">
+      <div className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold tracking-tight">Menu</h1>
@@ -293,7 +293,7 @@ export default function MenuPage() {
       {/* Modifier customization overlay */}
       {customizingProduct && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom">
+          <div className="bg-card w-full max-w-lg mx-auto rounded-t-3xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom">
             <div className="p-4 border-b flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-lg">{customizingProduct.name}</h3>
@@ -352,7 +352,7 @@ export default function MenuPage() {
       {/* Cart sheet */}
       {showCart && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
-          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom">
+          <div className="bg-card w-full max-w-lg mx-auto rounded-t-3xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom">
             <div className="p-4 border-b flex items-center justify-between">
               <h3 className="font-semibold text-lg">Je bestelling</h3>
               <button onClick={() => setShowCart(false)} className="p-2 rounded-full hover:bg-secondary">

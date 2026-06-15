@@ -24,10 +24,10 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
   if (!sub) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-amber-50">
-        <div className="max-w-md text-center rounded-3xl bg-white/80 backdrop-blur p-8 shadow-xl border border-white/60">
+        <div className="max-w-md text-center rounded-3xl bg-card/80 backdrop-blur p-8 shadow-xl border border-border/60">
           <Sparkles className="w-10 h-10 mx-auto text-amber-500" />
-          <h1 className="text-2xl font-black mt-3 text-slate-900">Kies een abonnement</h1>
-          <p className="text-sm text-slate-600 mt-2">
+          <h1 className="text-2xl font-black mt-3 text-foreground">Kies een abonnement</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             Deze locatie heeft nog geen actief abonnement. {isOwner ? "Start je 14-daagse proefperiode." : "Vraag je owner om een plan te kiezen."}
           </p>
           {isOwner && (
@@ -43,10 +43,10 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
   if (isSuspended) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-red-50 to-slate-50">
-        <div className="max-w-md text-center rounded-3xl bg-white/90 p-8 shadow-2xl border border-red-200">
+        <div className="max-w-md text-center rounded-3xl bg-card/90 p-8 shadow-2xl border border-red-200">
           <AlertTriangle className="w-10 h-10 mx-auto text-red-500" />
-          <h1 className="text-2xl font-black mt-3 text-slate-900">Abonnement gepauzeerd</h1>
-          <p className="text-sm text-slate-600 mt-2">
+          <h1 className="text-2xl font-black mt-3 text-foreground">Abonnement gepauzeerd</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             POS is uitgeschakeld voor deze locatie. {isOwner ? "Activeer een plan om verder te gaan." : "Vraag je owner om billing bij te werken."}
           </p>
           {isOwner && (
@@ -68,7 +68,7 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
             Betaling mislukt — werk je betaalmethode bij om service-onderbreking te voorkomen.
           </div>
           {isOwner && (
-            <Link to="/settings/billing" className="bg-white text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">
+            <Link to="/settings/billing" className="bg-card text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">
               Betaalmethode →
             </Link>
           )}
@@ -87,7 +87,7 @@ export function SubscriptionGate({ children }: { children: ReactNode }) {
             Proefperiode — nog {trialDaysLeft} {trialDaysLeft === 1 ? "dag" : "dagen"}
           </div>
           {isOwner && (
-            <Link to="/settings/billing" className="bg-white/95 text-amber-700 px-3 py-1 rounded-lg text-[11px] font-bold">
+            <Link to="/settings/billing" className="bg-card/95 text-amber-700 px-3 py-1 rounded-lg text-[11px] font-bold">
               Upgrade nu
             </Link>
           )}

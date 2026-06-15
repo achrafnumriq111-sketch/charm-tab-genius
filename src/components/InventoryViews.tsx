@@ -177,12 +177,12 @@ export function InventoryView({ onToast, addLog, currentRole, locationId }: any)
               <div><Label className="text-xs">Naam *</Label><Input value={form.item_name} onChange={e => setForm(p => ({ ...p, item_name: e.target.value }))} /></div>
               <div><Label className="text-xs">SKU</Label><Input value={form.sku} onChange={e => setForm(p => ({ ...p, sku: e.target.value }))} /></div>
               <div><Label className="text-xs">Categorie</Label>
-                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-card">
                   {["ingredient", "packaging", "pastry", "retail", "cleaning", "misc"].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div><Label className="text-xs">Eenheid</Label>
-                <select value={form.unit_type} onChange={e => setForm(p => ({ ...p, unit_type: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                <select value={form.unit_type} onChange={e => setForm(p => ({ ...p, unit_type: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-card">
                   {["gram", "ml", "pieces", "kg", "liter", "units"].map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
@@ -223,7 +223,7 @@ export function InventoryView({ onToast, addLog, currentRole, locationId }: any)
                 {filtered.map(item => {
                   const isLow = item.current_stock <= item.minimum_stock && item.minimum_stock > 0;
                   return (
-                    <tr key={item.id} className={clsx("border-b hover:bg-neutral-50", isLow && "bg-red-50")}>
+                    <tr key={item.id} className={clsx("border-b hover:bg-card", isLow && "bg-red-50")}>
                       <td className="px-3 py-2">
                         <div className="font-medium">{item.item_name}</div>
                         {item.sku && <div className="text-[10px] text-muted-foreground">{item.sku}</div>}
@@ -335,7 +335,7 @@ export function RecipeBuilderView({ products, onToast, addLog, locationId }: any
         <CardContent className="p-4">
           <Label className="text-xs">Selecteer product</Label>
           <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}
-            className="w-full rounded-md border px-3 py-2 text-sm bg-white mt-1">
+            className="w-full rounded-md border px-3 py-2 text-sm bg-card mt-1">
             <option value="">— Kies een product —</option>
             {products.map((p: any) => {
               const hasRecipe = recipes.some(r => r.product_id === p.id);
@@ -368,7 +368,7 @@ export function RecipeBuilderView({ products, onToast, addLog, locationId }: any
                 const inv = inventoryItems.find(i => i.id === r.inventory_item_id);
                 const lineCost = inv ? r.quantity * inv.cost_per_unit * (1 + (r.waste_factor_pct || 0) / 100) : 0;
                 return (
-                  <div key={r.id} className="flex items-center justify-between rounded-xl border p-3 bg-neutral-50">
+                  <div key={r.id} className="flex items-center justify-between rounded-xl border p-3 bg-card">
                     <div>
                       <div className="font-medium text-sm">{inv?.item_name || "Onbekend"}</div>
                       <div className="text-xs text-muted-foreground">{r.quantity} {r.unit} · {euro(lineCost)} {r.is_optional && "· Optioneel"} {r.waste_factor_pct > 0 && `· +${r.waste_factor_pct}% waste`}</div>
@@ -385,7 +385,7 @@ export function RecipeBuilderView({ products, onToast, addLog, locationId }: any
                       <select value={newLine.inventory_item_id} onChange={e => {
                         const inv = inventoryItems.find(i => i.id === e.target.value);
                         setNewLine(p => ({ ...p, inventory_item_id: e.target.value, unit: inv?.unit_type || "gram" }));
-                      }} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                      }} className="w-full rounded-md border px-3 py-2 text-sm bg-card">
                         <option value="">— Kies —</option>
                         {inventoryItems.map(i => <option key={i.id} value={i.id}>{i.item_name} ({i.unit_type})</option>)}
                       </select>
@@ -426,7 +426,7 @@ export function RecipeBuilderView({ products, onToast, addLog, locationId }: any
               return (
                 <button key={p.id} onClick={() => setSelectedProduct(p.id)}
                   className={clsx("rounded-xl border p-3 text-left text-xs transition",
-                    selectedProduct === p.id ? "border-primary bg-primary/5" : "hover:bg-neutral-50",
+                    selectedProduct === p.id ? "border-primary bg-primary/5" : "hover:bg-card",
                     pRecipes.length === 0 && "border-dashed opacity-60")}>
                   <div className="font-medium truncate">{p.name}</div>
                   {pRecipes.length > 0 ? (
@@ -536,7 +536,7 @@ export function StockIntakeView({ onToast, addLog, employeeName, locationId }: a
               <select value={form.inventory_item_id} onChange={e => {
                 const inv = inventoryItems.find(i => i.id === e.target.value);
                 setForm(p => ({ ...p, inventory_item_id: e.target.value, unit: inv?.unit_type || "pieces" }));
-              }} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+              }} className="w-full rounded-md border px-3 py-2 text-sm bg-card">
                 <option value="">— Kies item —</option>
                 {inventoryItems.map(i => <option key={i.id} value={i.id}>{i.item_name} ({i.unit_type})</option>)}
               </select>
@@ -572,7 +572,7 @@ export function StockIntakeView({ onToast, addLog, employeeName, locationId }: a
               <tbody>
                 {intakes.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Nog geen leveringen</td></tr>}
                 {intakes.map(i => (
-                  <tr key={i.id} className="border-b hover:bg-neutral-50">
+                  <tr key={i.id} className="border-b hover:bg-card">
                     <td className="px-3 py-2 whitespace-nowrap">{new Date(i.created_at).toLocaleDateString("nl-NL")}</td>
                     <td className="px-3 py-2 font-medium">{(i as any).inventory_items?.item_name || "—"}</td>
                     <td className="px-3 py-2 text-right text-green-600 font-medium">+{i.quantity} {i.unit}</td>
@@ -717,7 +717,7 @@ export function MonthlyCountView({ onToast, addLog, employeeName, locationId }: 
                 <tbody>
                   {history.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Nog geen tellingen</td></tr>}
                   {history.map(h => (
-                    <tr key={h.id} className="border-b hover:bg-neutral-50">
+                    <tr key={h.id} className="border-b hover:bg-card">
                       <td className="px-3 py-2 whitespace-nowrap">{new Date(h.created_at).toLocaleDateString("nl-NL")}</td>
                       <td className="px-3 py-2 font-mono text-[10px]">{h.count_session_id?.slice(0, 16)}</td>
                       <td className="px-3 py-2 text-right">{h.system_stock}</td>
@@ -934,7 +934,7 @@ export function CostingView({ products, orders, onToast, locationId }: any) {
         <CardHeader className="p-4 pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">Product Winstgevendheid</CardTitle>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="rounded-md border px-2 py-1 text-xs bg-white">
+            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="rounded-md border px-2 py-1 text-xs bg-card">
               <option value="margin_desc">Hoogste marge</option>
               <option value="margin_asc">Laagste marge</option>
               <option value="profit_desc">Hoogste winst €</option>
@@ -956,7 +956,7 @@ export function CostingView({ products, orders, onToast, locationId }: any) {
               </tr></thead>
               <tbody>
                 {sorted.map(p => (
-                  <tr key={p.id} className={clsx("border-b hover:bg-neutral-50", p.belowTarget && "bg-red-50")}>
+                  <tr key={p.id} className={clsx("border-b hover:bg-card", p.belowTarget && "bg-red-50")}>
                     <td className="px-3 py-2">
                       <div className="font-medium">{p.name}</div>
                       {!p.hasRecipe && <div className="text-[10px] text-orange-500">Geen recept</div>}
@@ -1052,7 +1052,7 @@ export function AIForecastView({ onToast }: any) {
           <p className="text-sm text-muted-foreground">Gemini AI analyseert je voorraad, verkoop en trends</p>
         </div>
         <div className="flex gap-2">
-          <select value={type} onChange={e => setType(e.target.value)} className="rounded-md border px-2 py-1.5 text-sm bg-white">
+          <select value={type} onChange={e => setType(e.target.value)} className="rounded-md border px-2 py-1.5 text-sm bg-card">
             <option value="forecast">Voorraad forecast</option>
             <option value="pricing">Prijsadvies</option>
           </select>
@@ -1139,7 +1139,7 @@ export function AIForecastView({ onToast }: any) {
                     </tr></thead>
                     <tbody>
                       {forecast.predictions.map((p: any, i: number) => (
-                        <tr key={i} className="border-b hover:bg-neutral-50">
+                        <tr key={i} className="border-b hover:bg-card">
                           <td className="px-3 py-2 font-medium">{p.item}</td>
                           <td className={clsx("px-3 py-2 text-right font-bold", p.days_left < 7 ? "text-red-600" : p.days_left < 14 ? "text-orange-500" : "text-green-600")}>{p.days_left}</td>
                           <td className="px-3 py-2 text-right">{p.monthly_forecast}</td>
@@ -1187,7 +1187,7 @@ export function AIForecastView({ onToast }: any) {
                     </tr></thead>
                     <tbody>
                       {forecast.pricing_recommendations.map((p: any, i: number) => (
-                        <tr key={i} className="border-b hover:bg-neutral-50">
+                        <tr key={i} className="border-b hover:bg-card">
                           <td className="px-3 py-2 font-medium">{p.product}</td>
                           <td className="px-3 py-2 text-right">{p.current_margin}%</td>
                           <td className="px-3 py-2 text-right font-bold">{euro(p.suggested_price)}</td>
@@ -1493,12 +1493,12 @@ export function DynamicStockView({ onToast, addLog, currentRole, employeeName, l
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div><Label className="text-xs">Naam *</Label><Input value={form.item_name} onChange={e => setForm(p => ({ ...p, item_name: e.target.value }))} placeholder="bijv. Volle Melk" /></div>
               <div><Label className="text-xs">Categorie</Label>
-                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-card">
                   {["ingredient", "packaging", "pastry", "retail", "cleaning", "misc"].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div><Label className="text-xs">Eenheid</Label>
-                <select value={form.unit_type} onChange={e => setForm(p => ({ ...p, unit_type: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-white">
+                <select value={form.unit_type} onChange={e => setForm(p => ({ ...p, unit_type: e.target.value }))} className="w-full rounded-md border px-3 py-2 text-sm bg-card">
                   {["liter", "ml", "pieces", "gram", "kg", "units"].map(u => <option key={u} value={u}>{u}</option>)}
                 </select>
               </div>

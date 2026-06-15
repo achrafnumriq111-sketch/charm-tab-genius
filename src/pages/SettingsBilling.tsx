@@ -83,7 +83,7 @@ export default function SettingsBilling() {
   if (!isOwner) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="text-center text-slate-500">Alleen owners kunnen billing beheren.</div>
+        <div className="text-center text-muted-foreground">Alleen owners kunnen billing beheren.</div>
       </div>
     );
   }
@@ -95,16 +95,16 @@ export default function SettingsBilling() {
       <PaymentTestModeBanner />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <Link to="/" className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 border border-white shadow-sm">
-            <ArrowLeft className="w-4 h-4 text-slate-600" />
+          <Link to="/" className="w-10 h-10 rounded-xl flex items-center justify-center bg-card/70 border border-border shadow-sm">
+            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black text-slate-900">Billing & abonnement</h1>
-            <div className="text-xs text-slate-500 truncate">{activeLocation?.name ?? "Geen locatie geselecteerd"}</div>
+            <h1 className="text-2xl font-black text-foreground">Billing & abonnement</h1>
+            <div className="text-xs text-muted-foreground truncate">{activeLocation?.name ?? "Geen locatie geselecteerd"}</div>
           </div>
           <button
             onClick={() => logout()}
-            className="h-10 px-4 rounded-xl flex items-center gap-2 bg-white/80 border border-white shadow-sm text-sm font-semibold text-slate-700 hover:bg-white"
+            className="h-10 px-4 rounded-xl flex items-center gap-2 bg-card/80 border border-border shadow-sm text-sm font-semibold text-foreground hover:bg-card"
           >
             <LogOut className="w-4 h-4" /> Uitloggen
           </button>
@@ -114,17 +114,17 @@ export default function SettingsBilling() {
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl p-6 mb-6 bg-white/85 backdrop-blur border border-white shadow-lg"
+          className="rounded-3xl p-6 mb-6 bg-card/85 backdrop-blur border border-border shadow-lg"
         >
           {loading ? (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : sub ? (
             <div className="grid sm:grid-cols-2 gap-6">
               <div>
-                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Huidig abonnement</div>
-                <div className="text-2xl font-black text-slate-900 mt-1">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Huidig abonnement</div>
+                <div className="text-2xl font-black text-foreground mt-1">
                   {sub.stripe_price_id || sub.plan_type}
                 </div>
                 <div className="mt-2">
@@ -134,7 +134,7 @@ export default function SettingsBilling() {
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-slate-600 mt-3 space-y-1">
+                <div className="text-sm text-muted-foreground mt-3 space-y-1">
                   <div>Prijs: <span className="font-semibold">€{(sub.price_cents / 100).toFixed(2)}</span> / periode</div>
                   {sub.trial_ends_at && sub.status === "trialing" && (
                     <div>Proef tot {new Date(sub.trial_ends_at).toLocaleDateString("nl-NL")}</div>
@@ -156,7 +156,7 @@ export default function SettingsBilling() {
                   {busy === "portal" ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                   Beheer abonnement
                 </button>
-                <p className="text-[11px] text-slate-500 text-center">
+                <p className="text-[11px] text-muted-foreground text-center">
                   Opent het Stripe Customer Portal: betaalmethodes, facturen, opzeggen.
                 </p>
               </div>
@@ -164,29 +164,29 @@ export default function SettingsBilling() {
           ) : (
             <div className="text-center py-4">
               <Sparkles className="w-8 h-8 mx-auto text-amber-500" />
-              <div className="font-bold mt-2 text-slate-900">Nog geen abonnement</div>
-              <div className="text-sm text-slate-500">Kies hieronder een plan om je 14-daagse proefperiode te starten.</div>
+              <div className="font-bold mt-2 text-foreground">Nog geen abonnement</div>
+              <div className="text-sm text-muted-foreground">Kies hieronder een plan om je 14-daagse proefperiode te starten.</div>
             </div>
           )}
         </motion.div>
 
         {/* Plans grid */}
-        <div className="rounded-3xl p-6 bg-white/85 backdrop-blur border border-white shadow-lg">
-          <div className="font-bold text-slate-900 mb-1">Wijzig of kies een plan</div>
-          <div className="text-xs text-slate-500 mb-5">Alle Pro-plannen starten met 14 dagen gratis. Opzeggen wanneer je wil.</div>
+        <div className="rounded-3xl p-6 bg-card/85 backdrop-blur border border-border shadow-lg">
+          <div className="font-bold text-foreground mb-1">Wijzig of kies een plan</div>
+          <div className="text-xs text-muted-foreground mb-5">Alle Pro-plannen starten met 14 dagen gratis. Opzeggen wanneer je wil.</div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {PLANS.map((p) => {
               const isCurrent = sub?.stripe_price_id === p.priceId;
               return (
-                <div key={p.priceId} className="relative rounded-2xl p-4 border border-slate-200 bg-white flex flex-col">
+                <div key={p.priceId} className="relative rounded-2xl p-4 border border-border bg-card flex flex-col">
                   {p.badge && (
                     <span className="absolute -top-2 right-3 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white shadow">
                       {p.badge}
                     </span>
                   )}
-                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500">{p.name}</div>
-                  <div className="text-2xl font-black text-slate-900 mt-1">€{(p.amount / 100).toFixed(0)}</div>
-                  <div className="text-xs text-slate-500">per {p.interval}</div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{p.name}</div>
+                  <div className="text-2xl font-black text-foreground mt-1">€{(p.amount / 100).toFixed(0)}</div>
+                  <div className="text-xs text-muted-foreground">per {p.interval}</div>
                   <button
                     onClick={() => openCheckout(p.priceId)}
                     disabled={!!busy || isCurrent || !paymentsConfigured()}
@@ -203,10 +203,10 @@ export default function SettingsBilling() {
             <div className="rounded-2xl p-4 border border-slate-900 bg-gradient-to-br from-slate-900 to-slate-700 text-white flex flex-col">
               <div className="text-xs font-bold uppercase tracking-wider text-amber-300">Scale</div>
               <div className="text-2xl font-black mt-1">Op maat</div>
-              <div className="text-xs text-slate-300">Multi-locatie, SLA & integraties</div>
+              <div className="text-xs text-muted-foreground">Multi-locatie, SLA & integraties</div>
               <a
                 href={`mailto:${SCALE_CONTACT_EMAIL}?subject=DOTTS%20Scale%20-%20informatie`}
-                className="mt-4 h-9 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-white text-slate-900"
+                className="mt-4 h-9 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 bg-card text-foreground"
               >
                 <Mail className="w-3.5 h-3.5" /> Contact us
               </a>

@@ -39,7 +39,7 @@ function GroupForm({
   });
 
   return (
-    <div className="p-5 space-y-4 bg-white rounded-2xl border">
+    <div className="p-5 space-y-4 bg-card rounded-2xl border">
       <h3 className="font-bold text-sm">{initial ? "Edit Group" : "New Modifier Group"}</h3>
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2">
@@ -103,7 +103,7 @@ function ModifierForm({
   });
 
   return (
-    <div className="p-4 space-y-3 bg-neutral-50 rounded-xl border">
+    <div className="p-4 space-y-3 bg-card rounded-xl border">
       <h4 className="font-semibold text-sm">{initial ? "Edit Modifier" : "Add Modifier"}</h4>
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-3">
@@ -161,7 +161,7 @@ function ProductAssignment({
   const filtered = products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="p-4 bg-neutral-50 rounded-xl border space-y-3">
+    <div className="p-4 bg-card rounded-xl border space-y-3">
       <h4 className="font-semibold text-sm flex items-center gap-2">
         <Package className="h-4 w-4" /> Assign to products
         <Badge variant="secondary" className="text-[10px]">{assignedIds.length} linked</Badge>
@@ -178,7 +178,7 @@ function ProductAssignment({
               key={product.id}
               onClick={() => onToggle(product.id, group.id, linked)}
               className={`w-full text-left px-3 py-1.5 rounded-lg text-sm flex items-center justify-between transition-all ${
-                linked ? "bg-black text-white" : "bg-white hover:bg-neutral-100 border"
+                linked ? "bg-black text-white" : "bg-card hover:bg-card border"
               }`}
             >
               <span>{product.name}</span>
@@ -323,7 +323,7 @@ export default function ModifiersView({
           return (
             <Card key={group.id} className="rounded-2xl overflow-hidden">
               <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-50 transition"
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-card transition"
                 onClick={() => setExpandedGroup(isExpanded ? null : group.id)}
               >
                 <div className="flex items-center gap-3">
@@ -377,7 +377,7 @@ export default function ModifiersView({
                         onCancel={() => setEditingModifier(null)}
                       />
                     ) : (
-                      <div key={mod.id} className={`flex items-center justify-between p-3 rounded-xl border transition ${mod.is_active ? "bg-white" : "bg-neutral-100 opacity-60"}`}>
+                      <div key={mod.id} className={`flex items-center justify-between p-3 rounded-xl border transition ${mod.is_active ? "bg-card" : "bg-card opacity-60"}`}>
                         <div className="flex items-center gap-3">
                           <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30" />
                           <div>

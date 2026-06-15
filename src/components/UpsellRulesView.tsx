@@ -42,7 +42,7 @@ function RuleForm({
   const SECTIONS = ["Signature Drinks", "Specials", "Cold Drinks", "Hot Drinks", "Sweets"];
 
   return (
-    <div className="p-5 space-y-4 bg-white rounded-2xl border">
+    <div className="p-5 space-y-4 bg-card rounded-2xl border">
       <h3 className="font-bold text-sm">{initial ? "Edit Rule" : "New Upsell Rule"}</h3>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -50,7 +50,7 @@ function RuleForm({
           <select
             value={form.trigger_product_id}
             onChange={(e) => setForm({ ...form, trigger_product_id: e.target.value })}
-            className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm"
+            className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm"
           >
             <option value="">— None (use category) —</option>
             {products.map((p) => (
@@ -63,7 +63,7 @@ function RuleForm({
           <select
             value={form.trigger_category}
             onChange={(e) => setForm({ ...form, trigger_category: e.target.value })}
-            className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm"
+            className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm"
           >
             <option value="">— None (use product) —</option>
             {SECTIONS.map((s) => (
@@ -76,7 +76,7 @@ function RuleForm({
           <select
             value={form.suggested_product_id}
             onChange={(e) => setForm({ ...form, suggested_product_id: e.target.value })}
-            className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm"
+            className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm"
           >
             <option value="">— Select —</option>
             {products.map((p) => (
@@ -98,7 +98,7 @@ function RuleForm({
           <select
             value={form.suggestion_type}
             onChange={(e) => setForm({ ...form, suggestion_type: e.target.value })}
-            className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm"
+            className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm"
           >
             <option value="combo">Combo</option>
             <option value="upgrade">Upgrade</option>
