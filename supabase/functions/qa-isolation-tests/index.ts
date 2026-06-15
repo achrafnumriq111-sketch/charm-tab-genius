@@ -311,15 +311,12 @@ Deno.serve(async (req) => {
     }
 
     // ============ Intra-tenant isolation: A staff at L1 cannot see A.L2 data ============
-    // NOTE: Phase 0 enforces per-location staff scoping ONLY on tables that hold
-    // operational data; tenant-wide config (products, floor_tables, reservations,
-    // discounts) is shared across locations for owners and visible to staff of any
-    // location within the tenant. Per-location scoping for those tables is a
-    // Phase 1 concern and will be added when the multi-location owner switcher ships.
+    // Phase 1: per-location staff scoping for floor_tables, reservations, discounts.
+    // Products remain tenant-wide (shared menu model).
     const STAFF_SCOPED_TABLES = [
       "pos_transactions", "inventory_items", "customers", "qr_orders",
       "cash_closings", "stock_movements", "employees", "modifiers",
-      "modifier_groups", "gift_cards",
+      "modifier_groups", "gift_cards", "floor_tables", "reservations", "discounts",
     ];
     const jwtAStaff = await signIn(A_staff.email, A_staff.password);
     const sbAStaff = userClient(jwtAStaff);
