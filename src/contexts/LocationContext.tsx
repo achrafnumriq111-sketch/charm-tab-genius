@@ -200,7 +200,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       setTenantId(null);
     }
     setLoading(false);
-  }, [effectiveTenantId, activeLocationId]);
+  }, [effectiveTenantId, activeLocationId, isPlatformAdmin, selectedTenantId]);
 
   useEffect(() => {
     fetchLocations();
