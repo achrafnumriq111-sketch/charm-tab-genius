@@ -21,6 +21,7 @@ const SettingsFeatures = lazy(() => import("./pages/SettingsFeatures.tsx"));
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
 const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin.tsx"));
+const Jarvis = lazy(() => import("./pages/Jarvis.tsx"));
 const QAReport = lazy(() => import("./pages/QAReport.tsx"));
 const SecurityEvents = lazy(() => import("./pages/SecurityEvents.tsx"));
 const OfflineAdmin = lazy(() => import("./pages/OfflineAdmin.tsx"));
