@@ -18,8 +18,8 @@ import type {
   WeatherSummary,
 } from "@/lib/weather/weatherIntelligence";
 import {
-  getSchedule, isOpenHour, getOpenHours, getTotalOpenHours, formatSchedule,
-  normalizeSchedule, getDefaultSchedule, type LocationSchedule,
+  getOpenHoursForDate, getTotalOpenHoursForDate, formatScheduleForDate, getScheduleForDate,
+  normalizeScheduleConfig, getDefaultScheduleConfig, type ScheduleConfig,
 } from "@/lib/businessHours";
 import { useLocation_ } from "@/contexts/LocationContext";
 
