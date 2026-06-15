@@ -7,15 +7,18 @@ import { AlertTriangle, CreditCard, Sparkles } from "lucide-react";
 
 export function SubscriptionGate({ children }: { children: ReactNode }) {
   const { employee } = useAuth();
-  const { activeLocation } = useLocation_();
+  const { activeLocation, isPlatformAdmin } = useLocation_();
   const route = useLocation();
   const { sub, loading, isPastDue, isSuspended, isTrialing, trialDaysLeft } = useSubscriptionStatus(activeLocation?.id);
 
   const isBillingRoute = route.pathname.startsWith("/settings/billing");
   const isOwner = employee?.role === "owner";
 
+  // DOTTS platform admins bypass tenant billing entirely
+  if (isPlatformAdmin) return <>{children}</>;
   if (loading || !activeLocation) return <>{children}</>;
   if (isBillingRoute) return <>{children}</>;
+
 
   // No subscription at all → show choose-plan screen for owners; soft-block staff
   if (!sub) {

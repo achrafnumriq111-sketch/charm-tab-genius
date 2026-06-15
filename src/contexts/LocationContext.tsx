@@ -151,11 +151,23 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     : tenant?.id || null;
 
   const fetchLocations = useCallback(async () => {
+    // Platform admin without an explicit tenant selection → no tenant scope.
+    // Don't auto-pick a tenant's location; show the admin overview instead.
+    if (isPlatformAdmin && !selectedTenantId) {
+      setLocations([]);
+      setActiveLocationIdState(null);
+      localStorage.removeItem(STORAGE_KEY);
+      setTenantId(null);
+      setLoading(false);
+      return;
+    }
+
     let query = supabase
       .from("locations")
       .select("*")
       .eq("is_active", true)
       .order("name");
+
 
     if (effectiveTenantId) {
       query = query.eq("tenant_id", effectiveTenantId);
@@ -188,7 +200,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       setTenantId(null);
     }
     setLoading(false);
-  }, [effectiveTenantId, activeLocationId]);
+  }, [effectiveTenantId, activeLocationId, isPlatformAdmin, selectedTenantId]);
 
   useEffect(() => {
     fetchLocations();
