@@ -1,43 +1,82 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   AUROS — Abyssal observatory theme
+   Dark teal void, bioluminescent accents, rationed gradients.
+   ============================================================ */
+
 @layer base {
   :root {
-    --background: 0 0% 97%;
-    --foreground: 0 0% 9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 94%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 9%;
-    --radius: 0.75rem;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 35%;
-    --sidebar-primary: 0 0% 9%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 95%;
-    --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 0 0% 9%;
+    /* Surfaces (HSL for shadcn compat) */
+    --background: 177 94% 8%;          /* #012624 abyss */
+    --foreground: 0 0% 100%;           /* #ffffff snow */
 
-    --pos-success: 142 71% 45%;
-    --pos-warning: 38 92% 50%;
-    --pos-info: 217 91% 60%;
+    --card: 178 93% 6%;                /* #011d1c trench */
+    --card-foreground: 0 0% 100%;
+
+    --popover: 178 93% 6%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Primary = reef teal w/ snow text (gradient reserved for hero CTAs) */
+    --primary: 176 100% 11%;           /* #003734 reef */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 176 100% 11%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 178 93% 9%;
+    --muted-foreground: 178 9% 76%;    /* #bbc7c6 fog veil */
+
+    --accent: 176 100% 90%;            /* #cbfffc aurora cyan */
+    --accent-foreground: 178 93% 6%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;                /* #333333 ash */
+    --input: 176 100% 11%;
+    --ring: 176 100% 70%;              /* cyan glow */
+
+    --radius: 0.5rem;
+
+    /* Sidebar — sits on trench */
+    --sidebar-background: 178 93% 6%;
+    --sidebar-foreground: 178 9% 76%;
+    --sidebar-primary: 176 100% 70%;
+    --sidebar-primary-foreground: 178 93% 6%;
+    --sidebar-accent: 176 100% 11%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 176 100% 70%;
+
+    /* POS status colors — re-tinted to live in the abyss */
+    --pos-success: 158 64% 52%;
+    --pos-warning: 38 92% 58%;
+    --pos-info: 176 100% 70%;
+
+    /* Auros raw tokens (hex via HSL) */
+    --auros-abyss: 177 94% 8%;
+    --auros-trench: 178 93% 6%;
+    --auros-reef: 176 100% 11%;
+    --auros-fog: 178 9% 76%;
+    --auros-ice: 178 100% 96%;
+    --auros-snow: 0 0% 100%;
+    --auros-lilac: 289 100% 96%;
+    --auros-teal: 177 100% 26%;
+    --auros-cyan: 176 100% 90%;
+
+    /* Auros gradients */
+    --gradient-current: linear-gradient(90deg, #00827c 0%, #cbfffc 100%);
+    --gradient-aurora: linear-gradient(90deg, #cbfffc 0%, #edfffe 26%, #fffdfa 48%, #fad1ff 89%);
+    --gradient-twilight: radial-gradient(circle at 50% 0%, #fad1ff00 0%, #fad1ff10 20%, transparent 60%);
+
+    /* Auros typography scale */
+    --tracking-eyebrow: 0.24em;
+    --tracking-caption: 0.12em;
   }
 }
 
@@ -47,41 +86,143 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
   }
+  html, body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    @apply antialiased;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
     -webkit-text-size-adjust: 100%;
     overscroll-behavior: none;
   }
+  /* Headings: tight tracking, geometric */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+  }
+  h1 { letter-spacing: -0.035em; }
 }
 
 @layer utilities {
-  .pos-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .pos-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  .pos-scrollbar::-webkit-scrollbar { width: 4px; }
+  .pos-scrollbar::-webkit-scrollbar-track { background: transparent; }
   .pos-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 80%);
+    background: hsl(var(--border));
     border-radius: 4px;
+  }
+
+  /* Tracked-out eyebrow label */
+  .text-eyebrow {
+    font-size: 10px;
+    line-height: 1.4;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .text-caption {
+    font-size: 12px;
+    line-height: 1.4;
+    letter-spacing: 0.12em;
   }
 }
 
 @layer components {
-  /* Shared glass panel style */
-  .glass {
-    background:
-      radial-gradient(circle at top left, rgba(205, 216, 255, 0.24), transparent 38%),
-      radial-gradient(circle at top right, rgba(255, 206, 236, 0.18), transparent 42%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 249, 255, 0.78));
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.85), 0 22px 90px rgba(160, 175, 219, 0.16);
-    backdrop-filter: blur(14px);
+  /* Auros gradient utility classes */
+  .bg-gradient-current { background: var(--gradient-current); }
+  .bg-gradient-aurora { background: var(--gradient-aurora); }
+  .bg-gradient-twilight { background: var(--gradient-twilight); }
+
+  /* Primary CTA — teal→cyan luminous fill */
+  .btn-current {
+    background: var(--gradient-current);
+    color: hsl(var(--auros-trench));
+    border-radius: 6px;
+    padding: 14px 28px;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: filter 200ms ease, transform 200ms ease;
+  }
+  .btn-current:hover { filter: brightness(1.08); }
+  .btn-current:active { transform: translateY(1px); }
+
+  /* Ghost CTA — aurora gradient border */
+  .btn-ghost-aurora {
+    position: relative;
+    background: transparent;
+    color: hsl(var(--foreground));
+    border-radius: 6px;
+    padding: 14px 24px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-ghost-aurora::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    padding: 1px;
+    background: var(--gradient-aurora);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
   }
 
+  /* Section eyebrow with mint dot prefix */
+  .eyebrow-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: hsl(var(--auros-fog));
+  }
+  .eyebrow-dot::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: #00827c;
+    box-shadow: 0 0 12px #00827c80;
+  }
+
+  /* Card style — pressed-in surface, no shadow */
+  .card-auros {
+    background: hsl(var(--auros-trench));
+    border-radius: 16px;
+    padding: 40px;
+    border: 1px solid transparent;
+    transition: border-color 200ms ease;
+  }
+  .card-auros:hover {
+    border-color: hsl(var(--auros-ice) / 0.12);
+  }
+
+  /* Bioluminescent particle/glow accent */
   .glow-ring {
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65), 0 18px 60px rgba(172, 155, 255, 0.18);
+    box-shadow: 0 0 0 1px hsl(var(--auros-ice) / 0.08),
+                0 24px 80px hsl(var(--auros-teal) / 0.22);
+  }
+
+  /* Backwards-compat: old .glass utility now reads as the trench surface */
+  .glass {
+    background: hsl(var(--auros-trench));
+    border: 1px solid hsl(var(--border));
+    backdrop-filter: blur(8px);
   }
 
   .soft-tap {

@@ -6,7 +6,7 @@
 - iPad/tablet optimized: 44px hit targets, viewport-fit=cover, responsive grid.
 - Stack: Supabase (RLS anon access for PIN auth), Edge Functions, PassKit.
 - AI BI powered exclusively by Apple WeatherKit (Europe/Amsterdam timezone).
-- UI: 3D luxury pastel, glassmorphism, Framer Motion.
+- UI: Auros — abyssal observatory. Dark teal (#012624), Inter font, rationed teal→cyan gradients, no drop shadows. See [Auros theme tokens](mem://ui/auros-theme).
 - Operations: "Anti-fuzz" strict logic. Ticket/cart state lifted to root.
 - Business Hours: Mon-Thu 10-22, Fri-Sat 10-00, Sun 12-00.
 - Customers: Name, Email, Phone strictly mandatory for all new entries.
@@ -14,6 +14,7 @@
 - Platform admin: separate role via platform_admins table, /admin panel.
 
 ## Memories
+- [Auros theme tokens](mem://ui/auros-theme) — Global dark teal abyssal theme, palette, gradients, fonts, radius
 - [DOTTS brand](mem://brand/dotts) — Product brand DOTTS vs tenant SAAKOUK; what to rename and what not to touch
 - [SaaS Tenant Model](mem://features/saas-tenant-model) — Tenants table, self-service onboarding, subdomain routing
 - [Layout Design](mem://ui/layout-design) — Compact icon-centric sidebar, wrapping POS categories
