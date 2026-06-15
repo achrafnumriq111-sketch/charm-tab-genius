@@ -40,3 +40,4 @@
 - [Upsell Engine](mem://features/upsell-engine) — Smart rule-based upsell prompts with time windows and conversion tracking
 - [Self-Service Onboarding](mem://features/onboarding) — Public signup, plan selection, 14-day trial subscription, demo data seeding
 - [Reporting & Exports](mem://features/reporting-exports) — P&L per location, Moneybird/Exact/generic CSV download, VAT split
+- [Loyalty 2.0](mem://features/loyalty-v2) — Tiers, customer segments, push/email/passkit campaigns

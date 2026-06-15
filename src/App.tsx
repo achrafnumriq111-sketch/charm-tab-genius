@@ -20,6 +20,7 @@ const SettingsFeatures = lazy(() => import("./pages/SettingsFeatures.tsx"));
 const SettingsBilling = lazy(() => import("./pages/SettingsBilling.tsx"));
 const BillingCheckout = lazy(() => import("./pages/BillingCheckout.tsx"));
 const Reports = lazy(() => import("./pages/Reports.tsx"));
+const Loyalty = lazy(() => import("./pages/Loyalty.tsx"));
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
@@ -68,6 +69,7 @@ const AppRoutes = () => {
         <Route path="/settings/billing" element={<ProtectedRoute><SettingsBilling /></ProtectedRoute>} />
         <Route path="/settings/billing/checkout" element={<ProtectedRoute><BillingCheckout /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+        <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
 
 
         {isPlatformLevel ? (
