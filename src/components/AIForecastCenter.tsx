@@ -246,17 +246,19 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
   currentWeather: NormalizedCurrentWeather | null; weatherSource: "live" | "fallback";
   weatherLoading: boolean; liveTime: Date; lastUpdated: Date | null;
   fetchWeather: (silent?: boolean) => Promise<void>;
-  schedule: LocationSchedule;
+  schedule: ScheduleConfig;
 }) {
   const todayStr = getAmsterdamDateStr();
   const currentHour = getAmsterdamHour();
-  const currentDow = getAmsterdamDayOfWeek();
+  const today = getAmsterdamNow();
+  const currentDow = today.getDay();
 
-  const todayOpenHours = useMemo(() => {
-    const s = getSchedule(currentDow, schedule);
-    if (s.closed || s.close <= s.open) return [];
-    return hourly.filter(h => h.date === todayStr && h.localHour >= currentHour && h.localHour >= s.open && h.localHour < s.close);
-  }, [hourly, todayStr, currentHour, currentDow, schedule]);
+  const openHoursToday = useMemo(() => new Set(getOpenHoursForDate(today, schedule)), [schedule, todayStr]);
+  // Show full 0-23 for today (mark closed hours visually) so user sees what's excluded.
+  const todayHourly = useMemo(
+    () => hourly.filter(h => h.date === todayStr && h.localHour >= currentHour),
+    [hourly, todayStr, currentHour]
+  );
 
   return (
     <Card className="rounded-2xl">
