@@ -3270,6 +3270,10 @@ export type Database = {
         }[]
       }
       segment_preview: { Args: { _segment_id: string }; Returns: Json }
+      set_employee_pin: {
+        Args: { _employee_id: string; _pin: string }
+        Returns: undefined
+      }
       setup_tenant_onboarding:
         | {
             Args: {
