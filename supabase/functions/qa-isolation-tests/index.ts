@@ -164,7 +164,7 @@ async function seedRow(admin: SupabaseClient, table: string, locationId: string)
           .select("id").single();
         if (iErr || !inv) throw new Error(`seed inv for movement: ${iErr?.message}`);
         Object.assign(base, {
-          inventory_item_id: inv.id, movement_type: "manual_adjustment", quantity: 1,
+          inventory_item_id: inv.id, movement_type: "manual_correction", quantity: 1,
           idempotency_key: crypto.randomUUID(),
         });
       }
@@ -266,20 +266,38 @@ Deno.serve(async (req) => {
     const jwtB = await signIn(B.email, B.password);
     const sbB = userClient(jwtB);
 
+    // Per-table benign payload for UPDATE probes (must reference a real column).
+    const UPDATE_PAYLOAD: Record<string, Record<string, unknown>> = {
+      pos_transactions: { items: [] },
+      products: { name: "x" },
+      inventory_items: { item_name: "x" },
+      customers: { full_name: "x" },
+      qr_orders: { items: [] },
+      cash_closings: { primary_employee_name: "x" },
+      stock_movements: { notes: "x" },
+      employees: { full_name: "x" },
+      modifiers: { name: "x" },
+      modifier_groups: { name: "x" },
+      gift_cards: { customer_name: "x" },
+      floor_tables: { name: "x" },
+      reservations: { guest_name: "x" },
+      discounts: { name: "x" },
+    };
+
     for (const t of SCOPED_TABLES) {
       if (!seededA[t]) continue;
       const { data, error } = await sbB.from(t).select("id").eq("id", seededA[t]);
       assert(
         `B-owner cannot SELECT A.${t}`,
-        (data?.length ?? 0) === 0,
+        !error && (data?.length ?? -1) === 0,
         error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
 
-      // UPDATE: must affect 0 rows
-      const upd = await sbB.from(t).update({ updated_at: new Date().toISOString() } as Record<string, unknown>).eq("id", seededA[t]).select("id");
+      // UPDATE: must affect 0 rows (no error, no rows returned)
+      const upd = await sbB.from(t).update(UPDATE_PAYLOAD[t] ?? { name: "x" }).eq("id", seededA[t]).select("id");
       assert(
         `B-owner cannot UPDATE A.${t}`,
-        (upd.data?.length ?? 0) === 0,
+        !upd.error && (upd.data?.length ?? -1) === 0,
         upd.error ? `err: ${upd.error.message}` : `rows: ${upd.data?.length}`,
       );
 
@@ -287,21 +305,28 @@ Deno.serve(async (req) => {
       const del = await sbB.from(t).delete().eq("id", seededA[t]).select("id");
       assert(
         `B-owner cannot DELETE A.${t}`,
-        (del.data?.length ?? 0) === 0,
+        !del.error && (del.data?.length ?? -1) === 0,
         del.error ? `err: ${del.error.message}` : `rows: ${del.data?.length}`,
       );
     }
 
     // ============ Intra-tenant isolation: A staff at L1 cannot see A.L2 data ============
+    // Phase 1: per-location staff scoping for floor_tables, reservations, discounts.
+    // Products remain tenant-wide (shared menu model).
+    const STAFF_SCOPED_TABLES = [
+      "pos_transactions", "inventory_items", "customers", "qr_orders",
+      "cash_closings", "stock_movements", "employees", "modifiers",
+      "modifier_groups", "gift_cards", "floor_tables", "reservations", "discounts",
+    ];
     const jwtAStaff = await signIn(A_staff.email, A_staff.password);
     const sbAStaff = userClient(jwtAStaff);
 
-    for (const t of SCOPED_TABLES) {
+    for (const t of STAFF_SCOPED_TABLES) {
       if (!seededA_L2[t]) continue;
       const { data, error } = await sbAStaff.from(t).select("id").eq("id", seededA_L2[t]);
       assert(
         `A-staff(L1) cannot SELECT A.L2.${t}`,
-        (data?.length ?? 0) === 0,
+        !error && (data?.length ?? -1) === 0,
         error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
     }
@@ -311,22 +336,22 @@ Deno.serve(async (req) => {
     const sbA = userClient(jwtA);
     for (const t of SCOPED_TABLES) {
       if (!seededA[t]) continue;
-      const { data } = await sbA.from(t).select("id").eq("id", seededA[t]);
+      const { data, error } = await sbA.from(t).select("id").eq("id", seededA[t]);
       assert(
         `A-owner CAN SELECT A.L1.${t}`,
         (data?.length ?? 0) === 1,
-        `rows: ${data?.length}`,
+        error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
     }
 
     // ============ Positive control: A owner CAN see A.L2 (cross-location within own tenant) ============
     for (const t of SCOPED_TABLES) {
       if (!seededA_L2[t]) continue;
-      const { data } = await sbA.from(t).select("id").eq("id", seededA_L2[t]);
+      const { data, error } = await sbA.from(t).select("id").eq("id", seededA_L2[t]);
       assert(
         `A-owner CAN SELECT A.L2.${t}`,
         (data?.length ?? 0) === 1,
-        `rows: ${data?.length}`,
+        error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
     }
   } catch (e) {
