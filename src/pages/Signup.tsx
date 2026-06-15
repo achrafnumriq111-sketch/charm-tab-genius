@@ -433,8 +433,117 @@ const Signup = () => {
                   <ArrowLeft className="w-4 h-4" /> Terug
                 </button>
                 <button
+                  onClick={() => {
+                    if (!businessName.trim() || !ownerName.trim() || !slug.trim()) {
+                      setError("Vul bedrijfsnaam, jouw naam en slug in");
+                      return;
+                    }
+                    if (slugAvailable === false) {
+                      setError("Deze slug is al in gebruik");
+                      return;
+                    }
+                    setError("");
+                    setStep("plan");
+                  }}
+                  disabled={!businessName.trim() || !ownerName.trim() || !slug.trim() || slugAvailable === false}
+                  className="flex-1 h-12 rounded-xl text-sm font-semibold transition-all disabled:opacity-35 flex items-center justify-center gap-2"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
+                    color: "#fff",
+                    boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+                  }}
+                >
+                  Volgende <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP: Plan */}
+          {step === "plan" && (
+            <div className="space-y-4">
+              <div className="text-center mb-2">
+                <h2 className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>Kies je startplan</h2>
+                <p className="text-[11px] mt-0.5" style={{ color: "#9b9bab" }}>14 dagen gratis, geen creditcard nodig</p>
+              </div>
+
+              {[
+                { id: "trial" as PlanChoice, name: "Gratis proef", price: "€0", desc: "14 dagen alles uitproberen", icon: Sparkles, badge: "Aanbevolen" },
+                { id: "pro" as PlanChoice, name: "Pro", price: "€49/mnd", desc: "Volledige POS + multi-locatie", icon: Store, badge: null },
+                { id: "scale" as PlanChoice, name: "Scale", price: "€129/mnd", desc: "Inclusief AI BI + integraties", icon: Zap, badge: null },
+              ].map((p) => {
+                const selected = plan === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setPlan(p.id)}
+                    className="w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all"
+                    style={{
+                      background: selected ? "rgba(172,155,255,0.12)" : "rgba(255,255,255,0.5)",
+                      border: selected ? "1.5px solid rgba(172,155,255,0.6)" : "1px solid rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                      style={{
+                        background: selected
+                          ? "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))"
+                          : "rgba(0,0,0,0.04)",
+                        color: selected ? "#fff" : "#7c6bc4",
+                      }}
+                    >
+                      <p.icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{p.name}</span>
+                        {p.badge && (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: "#16a34a" }}>
+                            {p.badge}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px]" style={{ color: "#9b9bab" }}>{p.desc}</span>
+                    </div>
+                    <span className="text-sm font-bold shrink-0" style={{ color: selected ? "#7c6bc4" : "#5a5a72" }}>{p.price}</span>
+                  </button>
+                );
+              })}
+
+              <label className="flex items-center gap-2.5 p-3 rounded-xl cursor-pointer" style={{ background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.06)" }}>
+                <input
+                  type="checkbox"
+                  checked={seedDemo}
+                  onChange={(e) => setSeedDemo(e.target.checked)}
+                  className="w-4 h-4 rounded accent-purple-500"
+                />
+                <div className="flex-1">
+                  <div className="text-xs font-semibold" style={{ color: "#2a2a3a" }}>Demo-data toevoegen</div>
+                  <div className="text-[10px]" style={{ color: "#9b9bab" }}>10 voorbeeldproducten + 6 tafels — verwijderbaar</div>
+                </div>
+              </label>
+
+              {error && (
+                <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+                  className="px-3 py-2.5 rounded-xl text-xs"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "#dc2626" }}>
+                  {error}
+                </motion.div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setStep("business"); setError(""); }}
+                  disabled={loading}
+                  className="h-12 px-4 rounded-xl text-sm font-medium flex items-center gap-1.5"
+                  style={{ background: "rgba(0,0,0,0.04)", color: "#5a5a72" }}
+                >
+                  <ArrowLeft className="w-4 h-4" /> Terug
+                </button>
+                <button
                   onClick={handleBusinessSubmit}
-                  disabled={loading || !businessName.trim() || !ownerName.trim() || !slug.trim() || slugAvailable === false}
+                  disabled={loading}
                   className="flex-1 h-12 rounded-xl text-sm font-semibold transition-all disabled:opacity-35 flex items-center justify-center gap-2"
                   style={{
                     background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
