@@ -308,7 +308,7 @@ export type Database = {
           second_checker_id: string
           second_checker_name: string
           status: string
-          tenant_id: string
+          tenant_id: string | null
         }
         Insert: {
           closing_date?: string
@@ -330,7 +330,7 @@ export type Database = {
           second_checker_id: string
           second_checker_name: string
           status?: string
-          tenant_id: string
+          tenant_id?: string | null
         }
         Update: {
           closing_date?: string
@@ -352,7 +352,7 @@ export type Database = {
           second_checker_id?: string
           second_checker_name?: string
           status?: string
-          tenant_id?: string
+          tenant_id?: string | null
         }
         Relationships: [
           {
@@ -385,7 +385,7 @@ export type Database = {
           passkit_member_id: string | null
           phone: string | null
           source: string
-          tenant_id: string
+          tenant_id: string | null
           total_spent: number
           updated_at: string
           visit_count: number
@@ -403,7 +403,7 @@ export type Database = {
           passkit_member_id?: string | null
           phone?: string | null
           source?: string
-          tenant_id: string
+          tenant_id?: string | null
           total_spent?: number
           updated_at?: string
           visit_count?: number
@@ -421,7 +421,7 @@ export type Database = {
           passkit_member_id?: string | null
           phone?: string | null
           source?: string
-          tenant_id?: string
+          tenant_id?: string | null
           total_spent?: number
           updated_at?: string
           visit_count?: number
@@ -713,7 +713,7 @@ export type Database = {
           location_id: string | null
           locked_until: string | null
           role: Database["public"]["Enums"]["employee_role"]
-          tenant_id: string
+          tenant_id: string | null
           updated_at: string
           user_id: string | null
           username_normalized: string
@@ -728,7 +728,7 @@ export type Database = {
           location_id?: string | null
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
-          tenant_id: string
+          tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
           username_normalized: string
@@ -743,7 +743,7 @@ export type Database = {
           location_id?: string | null
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
-          tenant_id?: string
+          tenant_id?: string | null
           updated_at?: string
           user_id?: string | null
           username_normalized?: string
@@ -1007,7 +1007,7 @@ export type Database = {
           reorder_level: number
           sku: string | null
           supplier: string | null
-          tenant_id: string
+          tenant_id: string | null
           unit_type: string
           updated_at: string
           waste_percentage: number
@@ -1031,7 +1031,7 @@ export type Database = {
           reorder_level?: number
           sku?: string | null
           supplier?: string | null
-          tenant_id: string
+          tenant_id?: string | null
           unit_type?: string
           updated_at?: string
           waste_percentage?: number
@@ -1055,7 +1055,7 @@ export type Database = {
           reorder_level?: number
           sku?: string | null
           supplier?: string | null
-          tenant_id?: string
+          tenant_id?: string | null
           unit_type?: string
           updated_at?: string
           waste_percentage?: number
@@ -1410,7 +1410,7 @@ export type Database = {
           status: string
           subtotal: number
           table_id: string | null
-          tenant_id: string
+          tenant_id: string | null
           tip: number
           total: number
         }
@@ -1436,7 +1436,7 @@ export type Database = {
           status?: string
           subtotal?: number
           table_id?: string | null
-          tenant_id: string
+          tenant_id?: string | null
           tip?: number
           total?: number
         }
@@ -1462,7 +1462,7 @@ export type Database = {
           status?: string
           subtotal?: number
           table_id?: string | null
-          tenant_id?: string
+          tenant_id?: string | null
           tip?: number
           total?: number
         }
@@ -1630,7 +1630,7 @@ export type Database = {
           section: string
           sort_order: number
           tags: string[] | null
-          tenant_id: string
+          tenant_id: string | null
           updated_at: string
           vat_rate: number | null
         }
@@ -1646,7 +1646,7 @@ export type Database = {
           section?: string
           sort_order?: number
           tags?: string[] | null
-          tenant_id: string
+          tenant_id?: string | null
           updated_at?: string
           vat_rate?: number | null
         }
@@ -1662,7 +1662,7 @@ export type Database = {
           section?: string
           sort_order?: number
           tags?: string[] | null
-          tenant_id?: string
+          tenant_id?: string | null
           updated_at?: string
           vat_rate?: number | null
         }
@@ -1695,7 +1695,7 @@ export type Database = {
           location_id: string | null
           status: string
           table_id: string
-          tenant_id: string
+          tenant_id: string | null
           total: number
         }
         Insert: {
@@ -1709,7 +1709,7 @@ export type Database = {
           location_id?: string | null
           status?: string
           table_id: string
-          tenant_id: string
+          tenant_id?: string | null
           total?: number
         }
         Update: {
@@ -1723,7 +1723,7 @@ export type Database = {
           location_id?: string | null
           status?: string
           table_id?: string
-          tenant_id?: string
+          tenant_id?: string | null
           total?: number
         }
         Relationships: [
@@ -2093,7 +2093,7 @@ export type Database = {
           product_sold: string | null
           quantity: number
           source: string | null
-          tenant_id: string
+          tenant_id: string | null
           waste_reason: string | null
         }
         Insert: {
@@ -2110,7 +2110,7 @@ export type Database = {
           product_sold?: string | null
           quantity?: number
           source?: string | null
-          tenant_id: string
+          tenant_id?: string | null
           waste_reason?: string | null
         }
         Update: {
@@ -2127,7 +2127,7 @@ export type Database = {
           product_sold?: string | null
           quantity?: number
           source?: string | null
-          tenant_id?: string
+          tenant_id?: string | null
           waste_reason?: string | null
         }
         Relationships: [
