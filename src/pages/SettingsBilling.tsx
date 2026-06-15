@@ -98,10 +98,16 @@ export default function SettingsBilling() {
           <Link to="/" className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 border border-white shadow-sm">
             <ArrowLeft className="w-4 h-4 text-slate-600" />
           </Link>
-          <div>
+          <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black text-slate-900">Billing & abonnement</h1>
-            <div className="text-xs text-slate-500">{activeLocation?.name ?? "Geen locatie geselecteerd"}</div>
+            <div className="text-xs text-slate-500 truncate">{activeLocation?.name ?? "Geen locatie geselecteerd"}</div>
           </div>
+          <button
+            onClick={() => logout()}
+            className="h-10 px-4 rounded-xl flex items-center gap-2 bg-white/80 border border-white shadow-sm text-sm font-semibold text-slate-700 hover:bg-white"
+          >
+            <LogOut className="w-4 h-4" /> Uitloggen
+          </button>
         </div>
 
         {/* Current status card */}
