@@ -299,21 +299,100 @@
     color: hsl(var(--muted-foreground)) !important;
   }
 
-  /* Light borders → ash */
-  .border-slate-200, .border-gray-200, .border-neutral-200, .border-zinc-200, .border-stone-200,
+@layer utilities {
+  /* Light surface backgrounds → trench */
+  .bg-white,
+  .bg-slate-50, .bg-slate-100,
+  .bg-gray-50,  .bg-gray-100,
+  .bg-neutral-50, .bg-neutral-100,
+  .bg-zinc-50,  .bg-zinc-100,
+  .bg-stone-50, .bg-stone-100 {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground));
+  }
+
+  /* Slightly darker light surfaces → reef (elevated) */
+  .bg-slate-200, .bg-gray-200, .bg-neutral-200, .bg-zinc-200, .bg-stone-200,
+  .bg-slate-300, .bg-gray-300, .bg-neutral-300, .bg-zinc-300, .bg-stone-300 {
+    background-color: hsl(var(--secondary)) !important;
+    color: hsl(var(--secondary-foreground));
+  }
+
+  /* Pastel tinted surfaces (legacy luxury palette) → trench */
+  .bg-rose-50, .bg-rose-100,
+  .bg-pink-50, .bg-pink-100,
+  .bg-purple-50, .bg-purple-100,
+  .bg-violet-50, .bg-violet-100,
+  .bg-indigo-50, .bg-indigo-100,
+  .bg-blue-50, .bg-blue-100,
+  .bg-sky-50, .bg-sky-100,
+  .bg-cyan-50, .bg-cyan-100,
+  .bg-teal-50, .bg-teal-100,
+  .bg-emerald-50, .bg-emerald-100,
+  .bg-green-50, .bg-green-100,
+  .bg-amber-50, .bg-amber-100,
+  .bg-yellow-50, .bg-yellow-100,
+  .bg-orange-50, .bg-orange-100 {
+    background-color: hsl(var(--card)) !important;
+  }
+
+  /* Pure black text on dark canvas is unreadable */
+  .text-black,
+  .text-slate-900, .text-gray-900, .text-neutral-900, .text-zinc-900, .text-stone-900 {
+    color: hsl(var(--foreground)) !important;
+  }
+  .text-slate-800, .text-gray-800, .text-neutral-800, .text-zinc-800, .text-stone-800,
+  .text-slate-700, .text-gray-700, .text-neutral-700, .text-zinc-700, .text-stone-700 {
+    color: hsl(var(--foreground) / 0.92) !important;
+  }
+  .text-slate-600, .text-gray-600, .text-neutral-600, .text-zinc-600, .text-stone-600,
+  .text-slate-500, .text-gray-500, .text-neutral-500, .text-zinc-500, .text-stone-500,
+  .text-slate-400, .text-gray-400, .text-neutral-400, .text-zinc-400, .text-stone-400 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /* Light borders / dividers / rings → ash */
+  .border-white,
   .border-slate-100, .border-gray-100, .border-neutral-100, .border-zinc-100, .border-stone-100,
-  .border-white {
+  .border-slate-200, .border-gray-200, .border-neutral-200, .border-zinc-200, .border-stone-200,
+  .border-slate-300, .border-gray-300, .border-neutral-300, .border-zinc-300, .border-stone-300 {
     border-color: hsl(var(--border)) !important;
+  }
+  .divide-slate-200 > * + *, .divide-gray-200 > * + *, .divide-neutral-200 > * + *,
+  .divide-zinc-200 > * + *, .divide-stone-200 > * + *,
+  .divide-slate-100 > * + *, .divide-gray-100 > * + * {
+    border-color: hsl(var(--border)) !important;
+  }
+  .ring-white,
+  .ring-slate-200, .ring-gray-200, .ring-neutral-200, .ring-zinc-200, .ring-stone-200,
+  .ring-slate-100, .ring-gray-100 {
+    --tw-ring-color: hsl(var(--border)) !important;
   }
 
   /* Pastel fintech gradients (legacy) → abyss canvas */
-  [class*="from-white"], [class*="to-white"],
-  [class*="from-slate-50"], [class*="to-slate-50"],
-  [class*="from-pink-"],  [class*="to-pink-"],
-  [class*="from-purple-"], [class*="to-purple-"],
-  [class*="from-rose-"],  [class*="to-rose-"] {
+  [class*="from-white"], [class*="to-white"], [class*="via-white"],
+  [class*="from-slate-50"], [class*="to-slate-50"], [class*="via-slate-50"],
+  [class*="from-gray-50"],  [class*="to-gray-50"],
+  [class*="from-pink-"],    [class*="to-pink-"],    [class*="via-pink-"],
+  [class*="from-rose-"],    [class*="to-rose-"],    [class*="via-rose-"],
+  [class*="from-purple-"],  [class*="to-purple-"],  [class*="via-purple-"],
+  [class*="from-violet-"],  [class*="to-violet-"],
+  [class*="from-indigo-"],  [class*="to-indigo-"],
+  [class*="from-blue-"],    [class*="to-blue-"],    [class*="via-blue-"],
+  [class*="from-sky-"],     [class*="to-sky-"],
+  [class*="from-amber-"],   [class*="to-amber-"],
+  [class*="from-yellow-"],  [class*="to-yellow-"],
+  [class*="from-orange-"],  [class*="to-orange-"] {
     --tw-gradient-from: hsl(var(--background)) !important;
+    --tw-gradient-via:  hsl(var(--card)) !important;
     --tw-gradient-to:   hsl(var(--card)) !important;
   }
+
+  /* Tame harsh white shadows; re-tint to abyss black so elevation reads on dark surfaces */
+  .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+    --tw-shadow-color: hsl(0 0% 0% / 0.55) !important;
+    --tw-shadow: var(--tw-shadow-colored) !important;
+  }
 }
+
 
