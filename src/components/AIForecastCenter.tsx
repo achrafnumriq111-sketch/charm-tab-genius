@@ -718,11 +718,11 @@ function StockTab({ data }: { data: any }) {
 
 // ─── Staffing Tab ────────────────────────────────────────────────────────────
 
-function StaffingTab({ data, daily, hourly }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[] }) {
+function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[]; schedule: LocationSchedule }) {
   const patterns = data?.patterns || [];
   const hasStaffData = data?.hasStaffData || false;
   const todayDow = getAmsterdamDayOfWeek();
-  const openHrs = getOpenHours(todayDow);
+  const openHrs = getOpenHours(todayDow, schedule);
 
   // Filter patterns for today's weekday
   const todayPatterns = patterns
