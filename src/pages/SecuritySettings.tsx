@@ -47,7 +47,7 @@ export default function SecuritySettings() {
     try {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: `SAAKOUK ${new Date().toLocaleDateString("nl-NL")}`,
+        friendlyName: `DOTTS ${new Date().toLocaleDateString("nl-NL")}`,
       });
       if (error) { setError(error.message); return; }
       setEnrollment({
