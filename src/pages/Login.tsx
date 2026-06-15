@@ -2,30 +2,25 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { isTrustedDevice } from "@/lib/device";
+import { Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
 import { motion } from "framer-motion";
 
-type Mode = "owner" | "employee";
-
 const Login = () => {
-  const [mode, setMode] = useState<Mode>("owner");
-  const [username, setUsername] = useState("");
-  const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPin, setShowPin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaCode, setMfaCode] = useState("");
-  const usernameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const mfaRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { login, loginOwner, verifyOwnerMfa, isAuthenticated } = useAuth();
+  const { loginOwner, verifyOwnerMfa, isAuthenticated } = useAuth();
   const { tenant, isPlatformLevel } = useTenant();
+  const paired = isTrustedDevice();
 
   useEffect(() => {
     if (isAuthenticated) navigate(isPlatformLevel ? "/app" : "/", { replace: true });
@@ -33,15 +28,13 @@ const Login = () => {
 
   useEffect(() => {
     if (mfaFactorId) mfaRef.current?.focus();
-    else if (mode === "owner") emailRef.current?.focus();
-    else usernameRef.current?.focus();
-  }, [mode, mfaFactorId]);
+    else emailRef.current?.focus();
+  }, [mfaFactorId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // MFA challenge step
     if (mfaFactorId) {
       if (!/^\d{6}$/.test(mfaCode)) { setError("Voer 6 cijfers in"); return; }
       setLoading(true);
@@ -52,49 +45,18 @@ const Login = () => {
       return;
     }
 
-    if (mode === "owner") {
-      if (!email.trim() || !password) {
-        setError("Vul email en wachtwoord in");
-        return;
-      }
-      setLoading(true);
-      const result = await loginOwner(email.trim(), password, rememberMe);
-      setLoading(false);
-      if (result.error) {
-        setError(result.error);
-        setPassword("");
-      } else if (result.mfaRequired) {
-        setMfaFactorId(result.mfaRequired.factorId);
-      } else {
-        navigate(isPlatformLevel ? "/app" : "/", { replace: true });
-      }
-      return;
-    }
-
-    // Employee mode
-    if (!username.trim() || !pin.trim()) {
-      setError("Vul alle velden in");
-      return;
-    }
-    if (!/^\d{6}$/.test(pin)) {
-      setError("PIN moet exact 6 cijfers zijn");
-      return;
-    }
+    if (!email.trim() || !password) { setError("Vul email en wachtwoord in"); return; }
     setLoading(true);
-    const result = await login(username.trim(), pin, rememberMe);
+    const result = await loginOwner(email.trim(), password, rememberMe);
     setLoading(false);
     if (result.error) {
       setError(result.error);
-      setPin("");
+      setPassword("");
+    } else if (result.mfaRequired) {
+      setMfaFactorId(result.mfaRequired.factorId);
     } else {
       navigate(isPlatformLevel ? "/app" : "/", { replace: true });
     }
-  };
-
-  const handlePinChange = (val: string) => {
-    const cleaned = val.replace(/\D/g, "").slice(0, 6);
-    setPin(cleaned);
-    setError("");
   };
 
   return (
@@ -114,7 +76,6 @@ const Login = () => {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-sm"
       >
-        {/* Brand */}
         <div className="text-center mb-8">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -136,11 +97,10 @@ const Login = () => {
             {tenant ? tenant.name : "SAAKOUK"}
           </h1>
           <p className="text-xs mt-0.5" style={{ color: "#9b9bab" }}>
-            Point of Sale
+            Eigenaar-login
           </p>
         </div>
 
-        {/* Glass Card */}
         <div
           className="rounded-2xl p-6"
           style={{
@@ -154,32 +114,6 @@ const Login = () => {
             backdropFilter: "blur(14px)",
           }}
         >
-          {/* Mode tabs (hidden during MFA challenge) */}
-          {!mfaFactorId && (
-            <div
-              className="flex p-1 rounded-xl mb-5"
-              style={{ background: "rgba(0,0,0,0.04)" }}
-            >
-              {(["owner", "employee"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => { setMode(m); setError(""); }}
-                  className="flex-1 h-9 rounded-lg text-xs font-semibold transition-all"
-                  style={{
-                    background: mode === m
-                      ? "linear-gradient(135deg, rgba(172,155,255,0.9), rgba(140,120,220,0.95))"
-                      : "transparent",
-                    color: mode === m ? "#fff" : "#8b8b9e",
-                    boxShadow: mode === m ? "0 2px 10px rgba(172,155,255,0.25)" : "none",
-                  }}
-                >
-                  {m === "owner" ? "Eigenaar" : "Medewerker"}
-                </button>
-              ))}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-5">
             {mfaFactorId ? (
               <div>
@@ -204,21 +138,17 @@ const Login = () => {
                     fontVariantNumeric: "tabular-nums",
                   }}
                 />
-                <p className="text-[11px] mt-2" style={{ color: "#9b9bab" }}>
-                  Open je authenticator-app en voer de huidige code in.
-                </p>
                 <button
                   type="button"
                   onClick={() => { setMfaFactorId(null); setMfaCode(""); setPassword(""); setError(""); }}
-                  className="text-[11px] underline mt-1"
+                  className="text-[11px] underline mt-2"
                   style={{ color: "#7c6bc4" }}
                 >
                   Annuleer
                 </button>
               </div>
-            ) : mode === "owner" ? (
+            ) : (
               <>
-                {/* Email */}
                 <div>
                   <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
                     E-mailadres
@@ -240,8 +170,6 @@ const Login = () => {
                     }}
                   />
                 </div>
-
-                {/* Password */}
                 <div>
                   <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
                     Wachtwoord
@@ -274,71 +202,8 @@ const Login = () => {
                   </div>
                 </div>
               </>
-            ) : (
-              <>
-                {/* Username */}
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
-                    Gebruikersnaam
-                  </label>
-                  <input
-                    ref={usernameRef}
-                    type="text"
-                    value={username}
-                    onChange={(e) => { setUsername(e.target.value); setError(""); }}
-                    placeholder="Voornaam Achternaam"
-                    autoComplete="username"
-                    disabled={loading}
-                    className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all duration-200"
-                    style={{
-                      background: "rgba(255,255,255,0.5)",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      color: "#2a2a3a",
-                      boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
-                    }}
-                  />
-                </div>
-
-                {/* PIN */}
-                <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
-                    PIN (6 cijfers)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPin ? "text" : "password"}
-                      value={pin}
-                      onChange={(e) => handlePinChange(e.target.value)}
-                      placeholder="••••••"
-                      inputMode="numeric"
-                      pattern="\d{6}"
-                      maxLength={6}
-                      autoComplete="current-password"
-                      disabled={loading}
-                      className="w-full h-12 px-4 pr-11 rounded-xl text-sm outline-none transition-all duration-200"
-                      style={{
-                        background: "rgba(255,255,255,0.5)",
-                        border: "1px solid rgba(0,0,0,0.06)",
-                        color: "#2a2a3a",
-                        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
-                        letterSpacing: showPin ? "normal" : "0.25em",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPin(!showPin)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-black/5"
-                      style={{ color: "#9b9bab" }}
-                      tabIndex={-1}
-                    >
-                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </>
             )}
 
-            {/* Remember me */}
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <div
                 className="w-4 h-4 rounded flex items-center justify-center transition-all"
@@ -362,7 +227,6 @@ const Login = () => {
               </span>
             </label>
 
-            {/* Error */}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
@@ -378,17 +242,9 @@ const Login = () => {
               </motion.div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
-              disabled={
-                loading ||
-                (mfaFactorId
-                  ? mfaCode.length !== 6
-                  : mode === "owner"
-                    ? !email.trim() || !password
-                    : !username.trim() || pin.length !== 6)
-              }
+              disabled={loading || (mfaFactorId ? mfaCode.length !== 6 : !email.trim() || !password)}
               className="w-full h-12 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-35"
               style={{
                 background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
@@ -401,7 +257,24 @@ const Login = () => {
           </form>
         </div>
 
-        {/* Links */}
+        {/* Staff PIN: only visible on a paired device */}
+        {paired && !mfaFactorId && (
+          <button
+            onClick={() => navigate("/staff-pin")}
+            className="w-full mt-4 h-11 rounded-xl text-xs font-medium flex items-center justify-center gap-2"
+            style={{
+              background: "rgba(255,255,255,0.7)",
+              border: "1px solid rgba(0,0,0,0.06)",
+              color: "#5a5a72",
+              boxShadow: "0 2px 12px rgba(160,175,219,0.12)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Medewerker-PIN op dit apparaat
+          </button>
+        )}
+
         <div className="text-center mt-4 space-y-1.5">
           <p className="text-[11px]" style={{ color: "#9b9bab" }}>
             <button onClick={() => navigate("/forgot-password")} className="font-medium underline" style={{ color: "#7c6bc4" }}>
