@@ -14,6 +14,7 @@
 - Platform admin: separate role via platform_admins table, /admin panel.
 
 ## Memories
+- [DOTTS brand](mem://brand/dotts) — Product brand DOTTS vs tenant SAAKOUK; what to rename and what not to touch
 - [SaaS Tenant Model](mem://features/saas-tenant-model) — Tenants table, self-service onboarding, subdomain routing
 - [Layout Design](mem://ui/layout-design) — Compact icon-centric sidebar, wrapping POS categories
 - [State Management](mem://architecture/state-management) — Ticket/cart state keyed by table ID or walk-in
