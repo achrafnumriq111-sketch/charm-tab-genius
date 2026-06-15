@@ -311,22 +311,22 @@ Deno.serve(async (req) => {
     const sbA = userClient(jwtA);
     for (const t of SCOPED_TABLES) {
       if (!seededA[t]) continue;
-      const { data } = await sbA.from(t).select("id").eq("id", seededA[t]);
+      const { data, error } = await sbA.from(t).select("id").eq("id", seededA[t]);
       assert(
         `A-owner CAN SELECT A.L1.${t}`,
         (data?.length ?? 0) === 1,
-        `rows: ${data?.length}`,
+        error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
     }
 
     // ============ Positive control: A owner CAN see A.L2 (cross-location within own tenant) ============
     for (const t of SCOPED_TABLES) {
       if (!seededA_L2[t]) continue;
-      const { data } = await sbA.from(t).select("id").eq("id", seededA_L2[t]);
+      const { data, error } = await sbA.from(t).select("id").eq("id", seededA_L2[t]);
       assert(
         `A-owner CAN SELECT A.L2.${t}`,
         (data?.length ?? 0) === 1,
-        `rows: ${data?.length}`,
+        error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
     }
   } catch (e) {
