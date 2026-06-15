@@ -191,24 +191,14 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
   const [tenantPinInput, setTenantPinInput] = React.useState("");
   const [tenantPinError, setTenantPinError] = React.useState(false);
   const [pendingTenantId, setPendingTenantId] = React.useState<string | null>(null);
-  const allSections = [
-    { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true },
-    { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true },
-    { key: "pos", label: "POS", icon: ShoppingCart, adminOnly: false, ownerOnly: false },
-    { key: "prepstation", label: "Prep", icon: ChefHat, adminOnly: false, ownerOnly: false },
-    { key: "cashclose", label: "Kassa", icon: Lock, adminOnly: false, ownerOnly: false },
-    { key: "reservations", label: "Reservations", icon: CalendarDays, adminOnly: false, ownerOnly: false },
-    { key: "products", label: "Products", icon: Package, adminOnly: false, ownerOnly: false },
-    { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false },
-    { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true },
-    { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false },
-    { key: "customers", label: "Customers", icon: Users, adminOnly: false, ownerOnly: false },
-    { key: "giftcards", label: "Gift cards", icon: Gift, adminOnly: false, ownerOnly: false },
-    { key: "verkoop", label: "Verkoop", icon: Receipt, adminOnly: true, ownerOnly: true },
-    { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true },
-    { key: "employees", label: "Team", icon: UserCog, adminOnly: true, ownerOnly: false },
-    { key: "settings", label: "Settings", icon: Settings, adminOnly: true, ownerOnly: false },
-  ];
+  // Derived from the single NAV_ITEMS source — short labels for the rail.
+  const allSections = NAV_ITEMS.map((it) => ({
+    key: it.key,
+    label: it.sidebarLabel,
+    icon: it.icon,
+    adminOnly: it.adminOnly,
+    ownerOnly: it.ownerOnly,
+  }));
   const sections = allSections.filter((s) => {
     if (s.ownerOnly && !isOwner) return false;
     if (s.adminOnly && !isAdmin) return false;
