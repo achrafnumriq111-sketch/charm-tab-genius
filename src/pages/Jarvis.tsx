@@ -133,6 +133,45 @@ export default function Jarvis() {
 
     setTenants(Object.values(byTenant).sort((a, b) => b.criticalEvents24h - a.criticalEvents24h || b.rlsRejects24h - a.rlsRejects24h));
     setSummary(((sumRes.data as SecuritySummary[] | null)?.[0]) ?? null);
+
+    // Subscriptions overview
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const subsRes = await supabase
+      .from("subscriptions")
+      .select("tenant_id,status,price_cents,currency,stripe_price_id,canceled_at,updated_at")
+      .limit(5000);
+    const subRows = (subsRes.data || []) as any[];
+    const tenantNameById: Record<string, string> = {};
+    tenantRows.forEach((t) => { tenantNameById[t.id] = t.name; });
+    let mrr = 0, active = 0, trial = 0, pd = 0, churned = 0;
+    const pdByTenant: Record<string, { tenant: string; locations: number; lastUpdate: string | null }> = {};
+    subRows.forEach((s) => {
+      if (s.status === "active" || s.status === "trialing") {
+        // normalize to monthly MRR — divide yearly prices by 12
+        const yearly = (s.stripe_price_id || "").endsWith("_yearly");
+        mrr += yearly ? Math.round((s.price_cents || 0) / 12) : (s.price_cents || 0);
+      }
+      if (s.status === "active") active++;
+      if (s.status === "trialing") trial++;
+      if (s.status === "past_due") {
+        pd++;
+        const name = tenantNameById[s.tenant_id] || s.tenant_id;
+        const cur = pdByTenant[s.tenant_id] || { tenant: name, locations: 0, lastUpdate: null };
+        cur.locations++;
+        if (!cur.lastUpdate || s.updated_at > cur.lastUpdate) cur.lastUpdate = s.updated_at;
+        pdByTenant[s.tenant_id] = cur;
+      }
+      if (s.status === "canceled" && s.canceled_at && s.canceled_at >= since30) churned++;
+    });
+    setSubs({
+      mrrCents: mrr,
+      activeCount: active,
+      trialingCount: trial,
+      pastDueCount: pd,
+      canceledLast30: churned,
+      pastDueTenants: Object.values(pdByTenant).sort((a, b) => b.locations - a.locations),
+    });
+
     setLoading(false);
   }, []);
 
