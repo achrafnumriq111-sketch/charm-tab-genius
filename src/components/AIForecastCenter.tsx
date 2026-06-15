@@ -241,20 +241,22 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
 
 // ─── Weather Strip ───────────────────────────────────────────────────────────
 
-function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoading, liveTime, lastUpdated, fetchWeather }: {
+function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoading, liveTime, lastUpdated, fetchWeather, schedule }: {
   daily: NormalizedDailyWeather[]; hourly: NormalizedHourlyWeather[];
   currentWeather: NormalizedCurrentWeather | null; weatherSource: "live" | "fallback";
   weatherLoading: boolean; liveTime: Date; lastUpdated: Date | null;
   fetchWeather: (silent?: boolean) => Promise<void>;
+  schedule: LocationSchedule;
 }) {
   const todayStr = getAmsterdamDateStr();
   const currentHour = getAmsterdamHour();
   const currentDow = getAmsterdamDayOfWeek();
 
   const todayOpenHours = useMemo(() => {
-    const schedule = getSchedule(currentDow);
-    return hourly.filter(h => h.date === todayStr && h.localHour >= currentHour && h.localHour >= schedule.open && h.localHour < schedule.close);
-  }, [hourly, todayStr, currentHour, currentDow]);
+    const s = getSchedule(currentDow, schedule);
+    if (s.closed || s.close <= s.open) return [];
+    return hourly.filter(h => h.date === todayStr && h.localHour >= currentHour && h.localHour >= s.open && h.localHour < s.close);
+  }, [hourly, todayStr, currentHour, currentDow, schedule]);
 
   return (
     <Card className="rounded-2xl">
