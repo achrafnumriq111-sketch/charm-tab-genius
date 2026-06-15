@@ -647,6 +647,14 @@ const PlatformAdmin = () => {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => navigate("/admin/jarvis")}
+              className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-white/50 text-white"
+              style={{ background: "linear-gradient(135deg, #6366f1, #818cf8)" }}
+              title="Jarvis observability"
+            >
+              <Zap className="w-3.5 h-3.5" /> Jarvis
+            </button>
+            <button
               onClick={() => navigate("/admin/security-events")}
               className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-white/50"
               style={{ color: "#dc2626" }}
