@@ -164,7 +164,7 @@ async function seedRow(admin: SupabaseClient, table: string, locationId: string)
           .select("id").single();
         if (iErr || !inv) throw new Error(`seed inv for movement: ${iErr?.message}`);
         Object.assign(base, {
-          inventory_item_id: inv.id, movement_type: "manual_adjustment", quantity: 1,
+          inventory_item_id: inv.id, movement_type: "manual_correction", quantity: 1,
           idempotency_key: crypto.randomUUID(),
         });
       }
