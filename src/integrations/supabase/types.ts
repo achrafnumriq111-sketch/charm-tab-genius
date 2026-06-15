@@ -2836,18 +2836,33 @@ export type Database = {
           warning: number
         }[]
       }
-      setup_tenant_onboarding: {
-        Args: {
-          _address?: string
-          _city?: string
-          _currency?: string
-          _owner_name: string
-          _slug: string
-          _tenant_name: string
-          _timezone?: string
-        }
-        Returns: Json
-      }
+      seed_demo_data: { Args: { _location_id: string }; Returns: Json }
+      setup_tenant_onboarding:
+        | {
+            Args: {
+              _address?: string
+              _city?: string
+              _currency?: string
+              _owner_name: string
+              _slug: string
+              _tenant_name: string
+              _timezone?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _address?: string
+              _city?: string
+              _currency?: string
+              _owner_name: string
+              _plan_type?: string
+              _slug: string
+              _tenant_name: string
+              _timezone?: string
+            }
+            Returns: Json
+          }
       tenant_has_active_subscription: {
         Args: { _tenant_id: string }
         Returns: boolean
