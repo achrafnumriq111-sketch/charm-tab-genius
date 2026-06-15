@@ -378,6 +378,44 @@ export default function Jarvis() {
           )}
         </div>
 
+        {/* Subscriptions overview */}
+        {subs && (
+          <div className="rounded-2xl p-5 mb-6" style={glass}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #d1fae5, #6ee7b7)" }}>
+                <CreditCard className="w-5 h-5 text-emerald-700" />
+              </div>
+              <div>
+                <div className="font-bold text-slate-900">Subscriptions overview</div>
+                <div className="text-xs text-slate-500">MRR · churn · past_due tenants</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <Stat label="MRR" value={Math.round(subs.mrrCents / 100)} color="#15803d" />
+              <Stat label="Actief" value={subs.activeCount} color="#16a34a" />
+              <Stat label="Trialing" value={subs.trialingCount} color="#d97706" />
+              <Stat label="Past due" value={subs.pastDueCount} color={subs.pastDueCount > 0 ? "#dc2626" : "#16a34a"} />
+              <Stat label="Churn (30d)" value={subs.canceledLast30} color={subs.canceledLast30 > 0 ? "#b45309" : "#16a34a"} />
+            </div>
+            {subs.pastDueTenants.length > 0 && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50/60 p-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-red-700 mb-2">
+                  <TrendingDown className="w-3.5 h-3.5" />
+                  Past_due tenants ({subs.pastDueTenants.length})
+                </div>
+                <div className="space-y-1">
+                  {subs.pastDueTenants.slice(0, 8).map((t, i) => (
+                    <div key={i} className="text-xs font-mono text-red-800 flex justify-between">
+                      <span>{t.tenant} · {t.locations} loc</span>
+                      <span className="opacity-70">{t.lastUpdate ? new Date(t.lastUpdate).toLocaleDateString("nl-NL") : "—"}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tenant health table */}
         <div className="rounded-2xl overflow-hidden mb-6" style={glass}>
           <div className="p-4 border-b border-white/50 flex items-center justify-between">
