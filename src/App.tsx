@@ -52,6 +52,7 @@ const AppRoutes = () => {
         <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
         <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
         <Route path="/admin" element={<PlatformAdmin />} />
+        <Route path="/admin/jarvis" element={<Jarvis />} />
         <Route path="/admin/qa-report" element={<QAReport />} />
         <Route path="/admin/security-events" element={<SecurityEvents />} />
         <Route path="/admin/offline" element={<ProtectedRoute><OfflineAdmin /></ProtectedRoute>} />
