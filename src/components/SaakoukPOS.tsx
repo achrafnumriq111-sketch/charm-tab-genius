@@ -167,7 +167,7 @@ function Modal({ open, onClose, children, wide }: { open: boolean; onClose?: () 
   if (!open) return null;
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6 z-50" onClick={() => onClose?.()}>
-      <div className={clsx("bg-white rounded-3xl shadow-2xl max-h-[90vh] overflow-auto", wide ? "w-full max-w-4xl" : "w-full max-w-2xl")} onClick={(e) => e.stopPropagation()}>
+      <div className={clsx("bg-card rounded-3xl shadow-2xl max-h-[90vh] overflow-auto", wide ? "w-full max-w-4xl" : "w-full max-w-2xl")} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -217,25 +217,25 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
   return (
     <div className="w-[72px] flex flex-col shrink-0 relative z-20">
       {/* Glass sidebar background */}
-      <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl border-r border-white/70 shadow-[4px_0_40px_rgba(162,178,226,0.10)]" />
+      <div className="absolute inset-0 bg-card/60 backdrop-blur-2xl border-r border-border/70 shadow-[4px_0_40px_rgba(162,178,226,0.10)]" />
       <div className="relative z-10 flex flex-col h-full">
-        <div className="py-3 px-2 border-b border-white/50 flex flex-col items-center gap-0.5">
+        <div className="py-3 px-2 border-b border-border/50 flex flex-col items-center gap-0.5">
           <motion.div
             whileHover={{ scale: 1.08, rotate: -4 }}
-            className="w-9 h-9 rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffffff,#f1ecff_45%,#ddd6fe_72%,#fbcfe8_100%)] border border-white/80 flex items-center justify-center text-xs font-bold text-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_8px_24px_rgba(172,155,255,0.18)]"
+            className="w-9 h-9 rounded-full bg-accent border border-border/80 flex items-center justify-center text-xs font-bold text-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_8px_24px_rgba(172,155,255,0.18)]"
           >
             {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
           </motion.div>
-          <span className="text-[8px] text-slate-500 truncate w-full text-center">{employeeName.split(" ")[0]}</span>
+          <span className="text-[8px] text-muted-foreground truncate w-full text-center">{employeeName.split(" ")[0]}</span>
         </div>
         {/* Platform admin: Tenant selector with PIN gate */}
         {isPlatformAdmin && allTenants && allTenants.length > 0 && (
-          <div className="px-1.5 py-1.5 border-b border-white/50">
+          <div className="px-1.5 py-1.5 border-b border-border/50">
             <div className="flex flex-col items-center gap-1">
-              <span className="text-[7px] text-violet-500 font-semibold uppercase tracking-wider">Customer</span>
+              <span className="text-[7px] text-accent font-semibold uppercase tracking-wider">Customer</span>
               {pendingTenantId && !tenantUnlocked ? (
                 <div className="flex flex-col items-center gap-1 w-full">
-                  <span className="text-[7px] text-slate-500">PIN bevestigen</span>
+                  <span className="text-[7px] text-muted-foreground">PIN bevestigen</span>
                   <input
                     type="password"
                     inputMode="numeric"
@@ -255,11 +255,11 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
                         }
                       }
                     }}
-                    className={`w-full text-[10px] bg-white/60 border ${tenantPinError ? "border-red-400" : "border-violet-200"} rounded-lg px-1 py-1 text-center font-mono tracking-[0.3em]`}
+                    className={`w-full text-[10px] bg-card/60 border ${tenantPinError ? "border-red-400" : "border-accent/30"} rounded-lg px-1 py-1 text-center font-mono tracking-[0.3em]`}
                     placeholder="••••••"
                     autoFocus
                   />
-                  <button onClick={() => { setPendingTenantId(null); setTenantPinInput(""); }} className="text-[7px] text-slate-400 hover:text-slate-600">Annuleer</button>
+                  <button onClick={() => { setPendingTenantId(null); setTenantPinInput(""); }} className="text-[7px] text-muted-foreground hover:text-muted-foreground">Annuleer</button>
                 </div>
               ) : (
                 <>
@@ -279,7 +279,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
                         setTenantPinError(false);
                       }
                     }}
-                    className="w-full text-[8px] bg-violet-50/80 border border-violet-200/70 rounded-xl px-1 py-1.5 text-center font-medium text-violet-700 truncate appearance-none cursor-pointer"
+                    className="w-full text-[8px] bg-accent/80 border border-accent/70 rounded-xl px-1 py-1.5 text-center font-medium text-accent truncate appearance-none cursor-pointer"
                     title="Selecteer customer"
                   >
                     <option value="">— Kies customer —</option>
@@ -288,7 +288,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
                     ))}
                   </select>
                   {selectedTenantId && (
-                    <button onClick={() => onClearTenant?.()} className="text-[7px] text-violet-400 hover:text-violet-600 flex items-center gap-0.5">
+                    <button onClick={() => onClearTenant?.()} className="text-[7px] text-accent hover:text-accent flex items-center gap-0.5">
                       <X className="h-2.5 w-2.5" /> Reset
                     </button>
                   )}
@@ -299,12 +299,12 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
         )}
         {/* Location selector (owner sees dropdown, staff sees label) */}
         {activeLocation && (
-          <div className="px-1.5 py-1.5 border-b border-white/50">
+          <div className="px-1.5 py-1.5 border-b border-border/50">
             {role === "owner" && locations.length > 1 ? (
               <select
                 value={activeLocation.id}
                 onChange={(e) => onLocationChange(e.target.value)}
-                className="w-full text-[8px] bg-white/60 border border-white/70 rounded-xl px-1 py-1.5 text-center font-medium text-slate-700 truncate appearance-none cursor-pointer"
+                className="w-full text-[8px] bg-card/60 border border-border/70 rounded-xl px-1 py-1.5 text-center font-medium text-foreground truncate appearance-none cursor-pointer"
                 title="Selecteer locatie"
               >
                 {locations.map((l: any) => (
@@ -313,8 +313,8 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
               </select>
             ) : (
               <div className="flex flex-col items-center gap-0.5" title={activeLocation.name}>
-                <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                <span className="text-[7px] text-slate-500 truncate w-full text-center leading-tight">{activeLocation.city || activeLocation.name}</span>
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[7px] text-muted-foreground truncate w-full text-center leading-tight">{activeLocation.city || activeLocation.name}</span>
               </div>
             )}
           </div>
@@ -334,8 +334,8 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
                   className={clsx(
                     "w-12 h-12 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center rounded-2xl text-[10px] leading-tight transition-all gap-0.5",
                     isActive
-                      ? "bg-[linear-gradient(135deg,rgba(196,181,253,0.6),rgba(255,192,230,0.5),rgba(191,219,254,0.5))] text-slate-800 font-medium shadow-[0_8px_30px_rgba(172,155,255,0.22)] border border-white/70"
-                      : "hover:bg-white/50 text-slate-500"
+                      ? "bg-accent/20 text-foreground font-medium shadow-[0_8px_30px_rgba(172,155,255,0.22)] border border-border/70"
+                      : "hover:bg-card/50 text-muted-foreground"
                   )}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
@@ -345,7 +345,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
             })}
           </div>
         </ScrollArea>
-        <div className="p-1.5 border-t border-white/50 flex justify-center">
+        <div className="p-1.5 border-t border-border/50 flex justify-center">
           <motion.button
             title="Log out"
             onClick={onLogout}
@@ -369,15 +369,15 @@ function ProductButton({ product, onClick }: { product: any; onClick: () => void
       onClick={onClick}
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="rounded-[22px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,249,255,0.88))] p-3 text-left shadow-[0_14px_40px_rgba(163,177,219,0.12)] backdrop-blur-xl active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation min-h-[72px] group"
+      className="rounded-[22px] border border-border/80 bg-card p-3 text-left shadow-[0_14px_40px_rgba(163,177,219,0.12)] backdrop-blur-xl active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation min-h-[72px] group"
     >
       <div>
         <div className="flex items-start justify-between gap-1.5">
-          <div className="font-semibold text-[13px] leading-tight text-slate-900">{product.name}</div>
-          <span className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/70 border border-white/80 text-slate-600 shadow-[0_4px_12px_rgba(162,178,226,0.10)]">{euro(product.price)}</span>
+          <div className="font-semibold text-[13px] leading-tight text-foreground">{product.name}</div>
+          <span className="shrink-0 text-[11px] font-medium px-2 py-0.5 rounded-full bg-card/70 border border-border/80 text-muted-foreground shadow-[0_4px_12px_rgba(162,178,226,0.10)]">{euro(product.price)}</span>
         </div>
         {product.modifierGroups?.length > 0 && (
-          <div className="text-[10px] text-slate-500 mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">{product.modifierGroups.length} mod{product.modifierGroups.length > 1 ? "s" : ""}</div>
         )}
       </div>
       {product.color && <div className="w-full h-1 rounded-full mt-1.5 opacity-70 group-hover:opacity-100 transition" style={{ backgroundColor: product.color }} />}
@@ -444,7 +444,7 @@ function ModifierPicker({ product, onAdd, onClose }: { product: any; onAdd: (ite
           <h2 className="text-xl font-bold">{product.name}</h2>
           <div className="text-sm text-muted-foreground mt-0.5">Base price: {euro(product.price)}</div>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+        <button onClick={onClose} className="p-2 hover:bg-card rounded-full"><X className="h-5 w-5" /></button>
       </div>
       {modifierGroups.length === 0 ? (
         <div className="text-sm text-muted-foreground">No modifiers for this product.</div>
@@ -462,7 +462,7 @@ function ModifierPicker({ product, onAdd, onClose }: { product: any; onAdd: (ite
                 return (
                   <button key={option.id} onClick={() => toggle(group, option.id)}
                     className={clsx("rounded-xl border px-3 py-2 text-left text-sm transition-all",
-                      active ? "border-black bg-black text-white" : "bg-white hover:bg-neutral-50")}>
+                      active ? "border-black bg-black text-white" : "bg-card hover:bg-card")}>
                     <div className="font-medium">{option.name}</div>
                     <div className={clsx("text-xs", active ? "text-white/70" : "text-muted-foreground")}>
                       {option.price > 0 ? `+${euro(option.price)}` : "Included"}
@@ -635,7 +635,7 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
           <>
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">Betaling</h2>
-              <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+              <button onClick={onClose} className="p-2 hover:bg-card rounded-full"><X className="h-5 w-5" /></button>
             </div>
             <div className="text-center py-4">
               <div className="text-sm text-muted-foreground">Totaal</div>
@@ -682,7 +682,7 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
                   ].map((m) => (
                     <button key={m.key} onClick={() => setMethod(m.key)}
                       className={clsx("rounded-xl border p-4 flex flex-col items-center gap-2 transition",
-                        method === m.key ? "border-black bg-black text-white" : "hover:bg-neutral-50")}>
+                        method === m.key ? "border-black bg-black text-white" : "hover:bg-card")}>
                       <m.icon className="h-6 w-6" />
                       <span className="text-sm font-medium">{m.label}</span>
                     </button>
@@ -698,7 +698,7 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
                   {[0, 5, 10, 15].map((pct) => (
                     <button key={pct} onClick={() => setTipPercent(pct)}
                       className={clsx("rounded-xl border px-3 py-2 text-sm transition",
-                        tipPercent === pct ? "border-black bg-black text-white" : "hover:bg-neutral-50")}>
+                        tipPercent === pct ? "border-black bg-black text-white" : "hover:bg-card")}>
                       {pct === 0 ? "Geen" : `${pct}%`}
                     </button>
                   ))}
@@ -852,7 +852,7 @@ function PaymentModal({ open, onClose, total, onComplete, method: initialMethod,
                   ].map((m) => (
                     <button key={m.key} onClick={() => updateSplitPart(activeSplitIdx, { method: m.key as any })}
                       className={clsx("rounded-xl border p-2.5 flex flex-col items-center gap-1 transition text-xs",
-                        splitParts[activeSplitIdx].method === m.key ? "border-black bg-black text-white" : "hover:bg-neutral-50")}>
+                        splitParts[activeSplitIdx].method === m.key ? "border-black bg-black text-white" : "hover:bg-card")}>
                       <m.icon className="h-4 w-4" />
                       {m.label}
                     </button>
@@ -912,9 +912,9 @@ function ReceiptPreview({ order, onClose }: { order: any; onClose: () => void })
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Receipt</h2>
-        <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+        <button onClick={onClose} className="p-2 hover:bg-card rounded-full"><X className="h-5 w-5" /></button>
       </div>
-      <div className="font-mono text-sm space-y-2 bg-neutral-50 rounded-xl p-4">
+      <div className="font-mono text-sm space-y-2 bg-card rounded-xl p-4">
         <div className="text-center font-bold text-base">SAAKOUK</div>
         <div className="text-center text-xs text-muted-foreground">Your friendly matcha spot</div>
         <Separator className="my-2" />
@@ -1186,7 +1186,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs">Type</Label>
-                <select value={tableId} onChange={(e) => updateTicket({ tableId: e.target.value })} className="w-full rounded-lg border px-2 py-1.5 text-sm mt-0.5 bg-white">
+                <select value={tableId} onChange={(e) => updateTicket({ tableId: e.target.value })} className="w-full rounded-lg border px-2 py-1.5 text-sm mt-0.5 bg-card">
                   <option value="walk-in">Walk-in</option>
                   {tables.map((t) => (<option key={t.id} value={t.id}>Table {t.name} · {t.area}</option>))}
                 </select>
@@ -1200,7 +1200,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
           <div className="flex-1 overflow-auto px-4">
             {/* Loyalty — PassKit only */}
             {features.passkit && (
-              <div className="rounded-xl border p-3 mb-3 bg-neutral-50">
+              <div className="rounded-xl border p-3 mb-3 bg-card">
                 <div className="font-medium text-xs flex items-center gap-1.5 mb-2"><Wallet className="h-3.5 w-3.5" /> Loyalty (PassKit)</div>
                 <div className="flex gap-1.5">
                   <Input value={scanValue} onChange={(e) => setScanValue(e.target.value)}
@@ -1237,7 +1237,7 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
                 cart.map((item) => {
                   const lineTotal = (item.price + item.modifiers.reduce((m, x) => m + x.price, 0)) * item.qty;
                   return (
-                    <div key={item.lineId} className="rounded-xl border p-2.5 bg-white">
+                    <div key={item.lineId} className="rounded-xl border p-2.5 bg-card">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-sm truncate">{item.name}</div>
@@ -1276,16 +1276,16 @@ function CounterView({ products: allProducts, tables, features, customers, giftC
             {discountAmount > 0 && (
               <div className="flex justify-between text-xs text-red-400"><span>Discount ({selectedDiscount?.name})</span><span>-{euro(discountAmount)}</span></div>
             )}
-            <Separator className="my-2 bg-white/20" />
+            <Separator className="my-2 bg-card/20" />
             <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{euro(total)}</span></div>
             <div className="grid grid-cols-4 gap-2 mt-3">
-              <Button className="bg-white text-black hover:bg-white/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("card")} disabled={cart.length === 0}>
+              <Button className="bg-card text-foreground hover:bg-card/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("card")} disabled={cart.length === 0}>
                 <CreditCard className="h-4 w-4 mr-1" /> Card
               </Button>
-              <Button className="bg-white text-black hover:bg-white/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("cash")} disabled={cart.length === 0}>
+              <Button className="bg-card text-foreground hover:bg-card/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("cash")} disabled={cart.length === 0}>
                 <Banknote className="h-4 w-4 mr-1" /> Cash
               </Button>
-              <Button className="bg-white text-black hover:bg-white/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("qr")} disabled={cart.length === 0}>
+              <Button className="bg-card text-foreground hover:bg-card/90 text-xs h-11 min-h-[44px]" onClick={() => openPayment("qr")} disabled={cart.length === 0}>
                 <Smartphone className="h-4 w-4 mr-1" /> QR
               </Button>
               <Button className="bg-amber-500 text-white hover:bg-amber-600 text-xs h-11 min-h-[44px]" onClick={() => {
@@ -2050,7 +2050,7 @@ function DashboardView({ orders, tables, openTickets, qrOrders, onAdvanceOrder, 
             <div className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Favoriete inzichten selecteren</h2>
-                <button onClick={() => setShowFavPicker(false)} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+                <button onClick={() => setShowFavPicker(false)} className="p-2 hover:bg-card rounded-full"><X className="h-5 w-5" /></button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {ALL_INSIGHTS.map((insight) => {
@@ -2421,7 +2421,7 @@ function ActivityView({ orders, employees }: any) {
           <select
             value={filterEmployee}
             onChange={(e) => setFilterEmployee(e.target.value)}
-            className="h-12 min-w-[170px] rounded-2xl border border-white/80 bg-white/70 backdrop-blur-lg px-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-200 touch-manipulation"
+            className="h-12 min-w-[170px] rounded-2xl border border-border/80 bg-card/70 backdrop-blur-lg px-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-200 touch-manipulation"
           >
             <option value="all">Alle medewerkers</option>
             {employeeOptions.map(([id, name]) => (
@@ -2432,7 +2432,7 @@ function ActivityView({ orders, employees }: any) {
 
         {/* Row 2: Date pills + custom + summary */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 rounded-2xl border border-white/80 bg-white/70 backdrop-blur-lg p-1 shadow-sm">
+          <div className="flex items-center gap-1 rounded-2xl border border-border/80 bg-card/70 backdrop-blur-lg p-1 shadow-sm">
             {([["all", "Alles"], ["today", "Vandaag"], ["week", "Week"], ["custom", "Custom"]] as const).map(([key, label]) => (
               <button
                 key={key}
@@ -2441,7 +2441,7 @@ function ActivityView({ orders, employees }: any) {
                   "min-h-[44px] px-4 rounded-xl text-sm font-medium transition-all touch-manipulation",
                   dateMode === key
                     ? "bg-gradient-to-b from-violet-500 to-indigo-500 text-white shadow-md"
-                    : "text-slate-600 hover:bg-white/80 active:bg-white/90"
+                    : "text-muted-foreground hover:bg-card/80 active:bg-card/90"
                 )}
               >
                 {label}
@@ -2452,7 +2452,7 @@ function ActivityView({ orders, employees }: any) {
           {dateMode === "custom" && (
             <div className="flex items-center gap-2">
               <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="h-12 rounded-2xl w-[150px] text-sm touch-manipulation" />
-              <span className="text-sm text-slate-400">→</span>
+              <span className="text-sm text-muted-foreground">→</span>
               <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="h-12 rounded-2xl w-[150px] text-sm touch-manipulation" />
             </div>
           )}
@@ -2475,7 +2475,7 @@ function ActivityView({ orders, employees }: any) {
                 <button
                   key={order.id}
                   onClick={() => setReceiptOrder(order)}
-                  className="flex items-center justify-between w-full text-left min-h-[56px] px-4 py-3 hover:bg-neutral-50 active:bg-neutral-100 transition touch-manipulation"
+                  className="flex items-center justify-between w-full text-left min-h-[56px] px-4 py-3 hover:bg-card active:bg-card transition touch-manipulation"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="shrink-0">
@@ -2598,7 +2598,7 @@ function ReservationsView({ reservations, setReservations, tables, addLog, onCre
             <div><Label>Guests</Label><Input type="number" value={form.guests} onChange={(e) => setForm({ ...form, guests: e.target.value })} className="mt-1" /></div>
             <div>
               <Label>Table</Label>
-              <select value={form.table} onChange={(e) => setForm({ ...form, table: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+              <select value={form.table} onChange={(e) => setForm({ ...form, table: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm">
                 <option value="">Select table...</option>
                 {tables.map((t) => <option key={t.id} value={t.name}>{t.name} · {t.area} · {t.seats} seats</option>)}
               </select>
@@ -2721,7 +2721,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." className="pl-9" />
             </div>
-            <select value={filterSection} onChange={(e) => setFilterSection(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+            <select value={filterSection} onChange={(e) => setFilterSection(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-card">
               <option value="all">All sections</option>
               {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
@@ -2731,7 +2731,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
             <CardContent className="p-0">
               <div className="divide-y">
                 {filtered.map((product) => (
-                  <div key={product.id} className="flex items-center justify-between p-3 hover:bg-neutral-50">
+                  <div key={product.id} className="flex items-center justify-between p-3 hover:bg-card">
                     <div className="flex items-center gap-3">
                       {product.color && <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: product.color }} />}
                       <div>
@@ -2766,7 +2766,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
                   <div className="col-span-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /></div>
                   <div>
                     <Label>Section</Label>
-                    <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value, color: SECTION_COLORS[e.target.value] || "#94a3b8" })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+                    <select value={form.section} onChange={(e) => setForm({ ...form, section: e.target.value, color: SECTION_COLORS[e.target.value] || "#94a3b8" })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm">
                       {SECTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
@@ -2794,7 +2794,7 @@ function ProductsView({ products: allProducts, setProducts, currentRole, current
                   {ALL_MODIFIER_GROUPS.map((g) => (
                     <button key={g.id} onClick={() => toggleModifierGroup(g.id)}
                       className={clsx("rounded-xl border px-3 py-2 text-left text-sm transition-all",
-                        form.modifierGroupIds.includes(g.id) ? "border-black bg-black text-white" : "bg-white hover:bg-neutral-50")}>
+                        form.modifierGroupIds.includes(g.id) ? "border-black bg-black text-white" : "bg-card hover:bg-card")}>
                       <div className="font-medium">{g.name}</div>
                       <div className={clsx("text-xs", form.modifierGroupIds.includes(g.id) ? "text-white/70" : "text-muted-foreground")}>{g.options.length} options</div>
                     </button>
@@ -2885,7 +2885,7 @@ function QrView({ features, tables }: any) {
             <Card key={table.id} className="rounded-2xl overflow-hidden">
               <CardContent className="p-4 flex flex-col items-center gap-3">
                 <div className="text-sm font-semibold">Tafel {table.name}</div>
-                <div className="bg-white p-2 rounded-xl border">
+                <div className="bg-card p-2 rounded-xl border">
                   <QRCodeSVG
                     id={`qr-${table.id}`}
                     value={menuUrl}
@@ -3044,7 +3044,7 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
           <Card key={c.id} className="rounded-2xl cursor-pointer hover:shadow-md transition" onClick={() => { setSelected(c); addLog?.("customer_viewed", `Klant bekeken: ${c.name}`); }}>
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-neutral-200 flex items-center justify-center font-bold text-sm">
+                <div className="h-10 w-10 rounded-full bg-card flex items-center justify-center font-bold text-sm">
                   {c.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div>
@@ -3078,7 +3078,7 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
             <div><Label>Phone <span className="text-red-500">*</span></Label><Input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1" /></div>
             <div>
               <Label>Loyalty provider</Label>
-              <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm">
+              <select value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm">
                 <option value="none">None</option>
                 <option value="passkit">PassKit</option>
                 <option value="piggy">Piggy</option>
@@ -3097,19 +3097,19 @@ function CustomersView({ customers, setCustomers, addLog, currentRole, locationI
           <div className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-neutral-200 flex items-center justify-center font-bold">{selected.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
+                <div className="h-12 w-12 rounded-full bg-card flex items-center justify-center font-bold">{selected.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</div>
                 <div>
                   <h2 className="text-lg font-bold">{selected.name}</h2>
                   <div className="text-sm text-muted-foreground">{selected.email || "No email"}</div>
                 </div>
               </div>
-              <button onClick={() => setSelected(null)} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>
+              <button onClick={() => setSelected(null)} className="p-2 hover:bg-card rounded-full"><X className="h-5 w-5" /></button>
             </div>
             <div className="grid grid-cols-4 gap-3">
-              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{selected.points}</div><div className="text-xs text-muted-foreground">Points</div></div>
-              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{selected.visits}</div><div className="text-xs text-muted-foreground">Visits</div></div>
-              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{euro(selected.totalSpent)}</div><div className="text-xs text-muted-foreground">Spent</div></div>
-              <div className="rounded-xl bg-neutral-50 p-3 text-center"><div className="text-xl font-bold">{selected.lastVisit}</div><div className="text-xs text-muted-foreground">Last visit</div></div>
+              <div className="rounded-xl bg-card p-3 text-center"><div className="text-xl font-bold">{selected.points}</div><div className="text-xs text-muted-foreground">Points</div></div>
+              <div className="rounded-xl bg-card p-3 text-center"><div className="text-xl font-bold">{selected.visits}</div><div className="text-xs text-muted-foreground">Visits</div></div>
+              <div className="rounded-xl bg-card p-3 text-center"><div className="text-xl font-bold">{euro(selected.totalSpent)}</div><div className="text-xs text-muted-foreground">Spent</div></div>
+              <div className="rounded-xl bg-card p-3 text-center"><div className="text-xl font-bold">{selected.lastVisit}</div><div className="text-xs text-muted-foreground">Last visit</div></div>
             </div>
             {selected.loyaltyId && (
               <div className="rounded-xl border p-3">
@@ -4867,17 +4867,17 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
   });
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-[#f6f8ff] text-slate-900 select-none touch-manipulation">
+    <div className="relative h-dvh overflow-hidden bg-background text-foreground select-none touch-manipulation">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.55),transparent_70%)] blur-3xl" />
         <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.45),transparent_70%)] blur-3xl" />
         <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.55),transparent_70%)] blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbfcff_0%,#f3f6ff_48%,#eef2ff_100%)]" />
+        <div className="absolute inset-0 bg-background" />
         <motion.div
           animate={{ x: [0, 20, 0], y: [0, -10, 0], rotate: [8, 10, 8] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-[-8%] top-[18%] h-24 w-[58%] rounded-full bg-[linear-gradient(90deg,rgba(192,206,255,0.18),rgba(244,197,255,0.35),rgba(255,255,255,0.08))] blur-2xl"
+          className="absolute left-[-8%] top-[18%] h-24 w-[58%] rounded-full bg-accent/10 blur-2xl"
         />
       </div>
 
@@ -4893,22 +4893,22 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
             <div className="flex items-center gap-4">
               <motion.div
                 whileHover={{ scale: 1.06, rotate: -4 }}
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/80 bg-[radial-gradient(circle_at_30%_30%,#ffffff,#f1ecff_45%,#ddd6fe_72%,#fbcfe8_100%)] text-sm font-semibold text-slate-700 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_10px_30px_rgba(172,155,255,0.18)]"
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border/80 bg-accent text-sm font-semibold text-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_10px_30px_rgba(172,155,255,0.18)]"
               >
                 {employee.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
               </motion.div>
               <div>
-                <h1 className="text-2xl font-semibold tracking-[-0.03em] text-slate-900">
+                <h1 className="text-2xl font-semibold tracking-[-0.03em] text-foreground">
                   Hoi, {employee.name.split(" ")[0]}
                 </h1>
-                <p className="text-sm text-slate-500 capitalize">{employee.role} · Kies een sectie</p>
+                <p className="text-sm text-muted-foreground capitalize">{employee.role} · Kies een sectie</p>
               </div>
             </div>
             <motion.button
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.94 }}
               onClick={onLogout}
-              className="flex items-center gap-2 rounded-full border border-white/70 bg-white/60 backdrop-blur-xl px-4 py-2.5 text-sm font-medium text-red-500 shadow-[0_10px_30px_rgba(162,178,226,0.12)] hover:bg-red-50/60 transition min-h-[44px]"
+              className="flex items-center gap-2 rounded-full border border-border/70 bg-card/60 backdrop-blur-xl px-4 py-2.5 text-sm font-medium text-red-500 shadow-[0_10px_30px_rgba(162,178,226,0.12)] hover:bg-red-50/60 transition min-h-[44px]"
             >
               <LogOut className="h-4 w-4" />
               Uitloggen
@@ -4934,15 +4934,15 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
                   {/* hover glow */}
                   <div className={`absolute -inset-[2px] rounded-[24px] bg-gradient-to-br ${item.color} opacity-0 blur-md transition duration-500 group-hover:opacity-40`} />
 
-                  <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[22px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(247,249,255,0.88))] px-4 py-6 shadow-[0_18px_50px_rgba(163,177,219,0.14)] backdrop-blur-xl transition duration-500 group-hover:shadow-[0_26px_70px_rgba(170,148,255,0.20)] min-h-[120px]">
+                  <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[22px] border border-border/80 bg-card px-4 py-6 shadow-[0_18px_50px_rgba(163,177,219,0.14)] backdrop-blur-xl transition duration-500 group-hover:shadow-[0_26px_70px_rgba(170,148,255,0.20)] min-h-[120px]">
                     {/* inner shine */}
-                    <div className="absolute inset-x-0 top-0 h-10 bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(255,255,255,0))]" />
+                    <div className="absolute inset-x-0 top-0 h-10 bg-transparent" />
 
                     <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-[0_8px_24px_rgba(0,0,0,0.12)]`}>
                       <Icon className="h-6 w-6" />
                     </div>
 
-                    <span className="text-[15px] font-semibold tracking-[-0.01em] text-slate-800 text-center leading-tight">
+                    <span className="text-[15px] font-semibold tracking-[-0.01em] text-foreground text-center leading-tight">
                       {item.label}
                     </span>
                   </div>
@@ -5162,7 +5162,7 @@ function EmployeesView({ employees = [], setEmployees, currentRole, locationId, 
             <div><Label>Naam</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" disabled={!!editingId} /></div>
             <div>
               <Label>Rol</Label>
-              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-white text-sm" disabled={!isOwner || !!editingId}>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full rounded-lg border px-3 py-2 mt-1 bg-card text-sm" disabled={!isOwner || !!editingId}>
                 {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
               {!isOwner && <p className="text-xs text-muted-foreground mt-1">Alleen owners kunnen rollen wijzigen</p>}
@@ -5281,10 +5281,10 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
     reservation_status_changed: "bg-sky-100 text-sky-800",
     reservation_deleted: "bg-red-100 text-red-800",
     customer_created: "bg-teal-100 text-teal-800",
-    customer_viewed: "bg-slate-100 text-slate-800",
+    customer_viewed: "bg-card text-foreground",
     customer_deleted: "bg-red-100 text-red-800",
     giftcard_issued: "bg-pink-100 text-pink-800",
-    view_changed: "bg-gray-100 text-gray-800",
+    view_changed: "bg-card text-foreground",
     login: "bg-emerald-100 text-emerald-800",
     logout: "bg-amber-100 text-amber-800",
     cash_closing: "bg-emerald-100 text-emerald-800",
@@ -5297,11 +5297,11 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Zoek in logs..." className="pl-9" />
         </div>
-        <select value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+        <select value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-card">
           <option value="all">Alle medewerkers</option>
           {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
         </select>
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-white">
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="rounded-lg border px-3 py-2 text-sm bg-card">
           <option value="all">Alle acties</option>
           {actionTypes.map((t) => <option key={t} value={t}>{actionLabels[t] || t}</option>)}
         </select>
@@ -5318,14 +5318,14 @@ function LogsView({ logs, employees }: { logs: any[]; employees: any[] }) {
               </div>
             )}
             {filtered.map((log) => (
-              <div key={log.id} className="flex items-start gap-3 p-3 hover:bg-neutral-50">
+              <div key={log.id} className="flex items-start gap-3 p-3 hover:bg-card">
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                   {log.employeeName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium text-sm">{log.employeeName}</span>
-                    <Badge className={clsx("text-[10px] rounded-full", actionColors[log.action] || "bg-gray-100 text-gray-800")}>
+                    <Badge className={clsx("text-[10px] rounded-full", actionColors[log.action] || "bg-card text-foreground")}>
                       {actionLabels[log.action] || log.action}
                     </Badge>
                   </div>
@@ -5450,7 +5450,7 @@ function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, 
               ))}
             </div>
           )}
-          {step < 6 && <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full"><X className="h-5 w-5" /></button>}
+          {step < 6 && <button onClick={onClose} className="p-2 hover:bg-card rounded-full"><X className="h-5 w-5" /></button>}
         </div>
 
         {/* Step 1: Cash count */}
@@ -5525,7 +5525,7 @@ function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, 
               <div className="font-semibold text-green-900 flex items-center gap-2"><DollarSign className="h-4 w-4" /> Stap 4: Enveloppe bedrag</div>
               <p className="text-sm text-green-700 mt-1">Dit bedrag gaat in de enveloppe.</p>
             </div>
-            <div className="bg-white border-2 border-green-400 rounded-2xl p-6 text-center">
+            <div className="bg-card border-2 border-green-400 rounded-2xl p-6 text-center">
               <div className="text-sm text-muted-foreground">Geteld: {euro(counted)} − Float: {euro(float_)}</div>
               <div className="text-5xl font-black text-green-700 mt-2">{euro(envelopeAmount)}</div>
               <div className="text-sm font-medium text-green-600 mt-2">In enveloppe</div>
@@ -5545,7 +5545,7 @@ function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, 
               <p className="text-sm text-purple-700 mt-1">Een tweede medewerker moet de afsluiting bevestigen met hun PIN.</p>
             </div>
 
-            <div className="bg-white rounded-xl border p-4 space-y-3">
+            <div className="bg-card rounded-xl border p-4 space-y-3">
               <div className="text-sm text-muted-foreground">Samenvatting:</div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>Geteld:</div><div className="font-bold">{euro(counted)}</div>
@@ -5558,7 +5558,7 @@ function CashClosingModal({ open, onClose, employees, loggedInEmployee, orders, 
             <div>
               <Label className="text-sm font-semibold">Wie is de tweede collega?</Label>
               <select value={secondCheckerId} onChange={(e) => { setSecondCheckerId(e.target.value); setSecondPin(""); setPinError(""); }}
-                className="w-full rounded-lg border px-3 py-2 text-sm bg-white mt-1">
+                className="w-full rounded-lg border px-3 py-2 text-sm bg-card mt-1">
                 <option value="">Selecteer collega...</option>
                 {otherEmployees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name} ({emp.role})</option>)}
               </select>
@@ -6225,7 +6225,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
   );
 
   return (
-    <div className="h-dvh flex flex-col items-center justify-center relative overflow-hidden select-none" style={{ background: "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)" }}>
+    <div className="h-dvh flex flex-col items-center justify-center relative overflow-hidden select-none" >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.35),transparent_70%)] blur-3xl" />
         <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.25),transparent_70%)] blur-3xl" />
@@ -6236,7 +6236,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))", border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 12px 40px rgba(160,175,219,0.15)" }}
+            style={{  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 12px 40px rgba(160,175,219,0.15)" }}
           >
             <Shield className="w-8 h-8" style={{ color: "#5a5a72" }} />
           </motion.div>
@@ -6266,7 +6266,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
               disabled={loading !== null}
               className="w-full rounded-xl p-4 flex items-center justify-between text-left transition-all hover:scale-[1.01]"
               style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
+                
                 border: "1px solid rgba(255,255,255,0.72)",
                 boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 8px 24px rgba(160,175,219,0.08)",
                 opacity: t.is_active ? 1 : 0.5,
@@ -6299,7 +6299,7 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
         </div>
 
         <div className="mt-6 text-center">
-          <button onClick={onAdmin} className="text-xs font-medium px-4 py-2 rounded-lg transition-colors hover:bg-white/50" style={{ color: "#7c6bc4" }}>
+          <button onClick={onAdmin} className="text-xs font-medium px-4 py-2 rounded-lg transition-colors hover:bg-card/50" style={{ color: "#7c6bc4" }}>
             <Shield className="w-3.5 h-3.5 inline mr-1" />
             Naar Admin Dashboard
           </button>
@@ -6890,10 +6890,10 @@ export default function SaakoukPOS() {
   };
 
   return (
-    <div className="h-dvh relative overflow-hidden flex select-none text-slate-900 touch-manipulation" style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="h-dvh relative overflow-hidden flex select-none text-foreground touch-manipulation" style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Ambient pastel background */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,#fbfcff_0%,#f3f6ff_48%,#eef2ff_100%)]" />
+        <div className="absolute inset-0 bg-background" />
         <div className="absolute left-[-10%] top-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(214,197,255,0.35),transparent_70%)] blur-3xl" />
         <div className="absolute right-[-8%] top-[8%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,188,233,0.25),transparent_70%)] blur-3xl" />
         <div className="absolute bottom-[-8%] left-[18%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(195,221,255,0.35),transparent_70%)] blur-3xl" />
@@ -6902,10 +6902,10 @@ export default function SaakoukPOS() {
       <Sidebar active={active} setActive={(view) => { if (!canAccessView(view)) { setToast("Geen toegang tot deze sectie"); return; } setActive(view); addLog("view_changed", `Navigeerde naar: ${view}`); }} role={loggedInEmployee.role} onLogout={handleLogout} employeeName={loggedInEmployee.name} locations={locations} activeLocation={activeLocation} onLocationChange={setActiveLocationId} isPlatformAdmin={isPlatformAdmin} allTenants={allTenants} selectedTenantId={selectedTenantId} onSelectTenant={selectTenant} tenantUnlocked={tenantUnlocked} onUnlockTenant={unlockTenant} onClearTenant={clearTenantSelection} canAccessView={canAccessView} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 relative z-10">
         {/* Glass top bar */}
-        <div className="shrink-0 border-b border-white/50 bg-white/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
+        <div className="shrink-0 border-b border-border/50 bg-card/50 backdrop-blur-2xl px-5 py-2.5 flex items-center justify-between">
           <div>
-            <h1 className="text-base font-semibold tracking-[-0.02em] text-slate-900 leading-tight">{titles[active] || "DOTTS"}</h1>
-            <div className="text-[11px] text-slate-500">{formatDate(new Date())} · {formatTime(new Date())}{activeLocation ? ` · ${activeLocation.name}` : ""}</div>
+            <h1 className="text-base font-semibold tracking-[-0.02em] text-foreground leading-tight">{titles[active] || "DOTTS"}</h1>
+            <div className="text-[11px] text-muted-foreground">{formatDate(new Date())} · {formatTime(new Date())}{activeLocation ? ` · ${activeLocation.name}` : ""}</div>
           </div>
           <div className="flex items-center gap-2">
             {/* QR Orders indicator */}
@@ -6946,24 +6946,24 @@ export default function SaakoukPOS() {
                   {lowStockItems.length} lage voorraad
                 </motion.button>
                 {showLowStockPanel && (
-                  <div className="absolute right-0 top-10 z-50 w-80 rounded-[22px] border border-white/70 bg-white/80 backdrop-blur-2xl shadow-[0_30px_80px_rgba(162,178,226,0.22)] p-4 space-y-2 max-h-80 overflow-auto">
+                  <div className="absolute right-0 top-10 z-50 w-80 rounded-[22px] border border-border/70 bg-card/80 backdrop-blur-2xl shadow-[0_30px_80px_rgba(162,178,226,0.22)] p-4 space-y-2 max-h-80 overflow-auto">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-bold text-slate-900">⚠️ Lage voorraad</span>
-                      <button onClick={() => setShowLowStockPanel(false)} className="text-slate-400 hover:text-slate-700"><X className="h-4 w-4" /></button>
+                      <span className="text-sm font-bold text-foreground">⚠️ Lage voorraad</span>
+                      <button onClick={() => setShowLowStockPanel(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
                     </div>
                     {lowStockItems.map((item: any) => (
                       <div key={item.id} className="flex items-center justify-between bg-red-50/80 rounded-xl px-3 py-2 text-xs border border-red-100/50">
                         <div>
-                          <div className="font-semibold text-slate-900">{item.item_name}</div>
-                          <div className="text-slate-500">{item.category}</div>
+                          <div className="font-semibold text-foreground">{item.item_name}</div>
+                          <div className="text-muted-foreground">{item.category}</div>
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-red-600">{item.current_stock} {item.unit_type}</div>
-                          <div className="text-slate-500">min: {item.minimum_stock}</div>
+                          <div className="text-muted-foreground">min: {item.minimum_stock}</div>
                         </div>
                       </div>
                     ))}
-                    <button onClick={() => { setShowLowStockPanel(false); setActive("inventory"); }} className="w-full text-center text-xs font-semibold text-violet-600 hover:underline pt-1">
+                    <button onClick={() => { setShowLowStockPanel(false); setActive("inventory"); }} className="w-full text-center text-xs font-semibold text-accent hover:underline pt-1">
                       Ga naar Voorraad →
                     </button>
                   </div>
@@ -6982,7 +6982,7 @@ export default function SaakoukPOS() {
                 {notifications.filter((n) => !n.read).length} melding{notifications.filter((n) => !n.read).length !== 1 ? "en" : ""}
               </motion.button>
             )}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/70 bg-white/60 backdrop-blur-xl text-[11px] font-medium text-slate-600 shadow-[0_8px_24px_rgba(162,178,226,0.10)]">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/70 bg-card/60 backdrop-blur-xl text-[11px] font-medium text-muted-foreground shadow-[0_8px_24px_rgba(162,178,226,0.10)]">
               {todayOrders.length} orders · {euro(todayRevenue)}
             </div>
           </div>
@@ -6990,10 +6990,10 @@ export default function SaakoukPOS() {
         <div className="flex-1 overflow-auto p-4">
           <div className="mx-auto">
             {!canAccessView(active) ? (
-              <div className="max-w-md mx-auto mt-24 rounded-3xl border border-white/70 bg-white/70 backdrop-blur-2xl p-8 text-center shadow-[0_30px_80px_rgba(162,178,226,0.18)]">
-                <Lock className="h-10 w-10 mx-auto text-slate-400 mb-3" />
-                <h2 className="text-lg font-semibold text-slate-900 mb-1">Geen toegang</h2>
-                <p className="text-sm text-slate-500 mb-4">Je rol ({loggedInEmployee.role}) heeft geen toestemming voor deze sectie. Vraag de eigenaar om je permissies aan te passen.</p>
+              <div className="max-w-md mx-auto mt-24 rounded-3xl border border-border/70 bg-card/70 backdrop-blur-2xl p-8 text-center shadow-[0_30px_80px_rgba(162,178,226,0.18)]">
+                <Lock className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <h2 className="text-lg font-semibold text-foreground mb-1">Geen toegang</h2>
+                <p className="text-sm text-muted-foreground mb-4">Je rol ({loggedInEmployee.role}) heeft geen toestemming voor deze sectie. Vraag de eigenaar om je permissies aan te passen.</p>
                 <button onClick={() => setActive("pos")} className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700">Terug naar POS</button>
               </div>
             ) : (<>
@@ -7014,9 +7014,9 @@ export default function SaakoukPOS() {
             {active === "multilocatie" && <MultiLocationDashboard />}
             {active === "pos" && (
               <Tabs defaultValue="counter" className="space-y-3">
-                <TabsList className="rounded-full bg-white/60 backdrop-blur-xl border border-white/70 shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
-                  <TabsTrigger value="counter" className="rounded-full data-[state=active]:bg-[linear-gradient(135deg,rgba(196,181,253,0.5),rgba(255,192,230,0.4))] data-[state=active]:shadow-sm">Counter</TabsTrigger>
-                  <TabsTrigger value="table" className="rounded-full data-[state=active]:bg-[linear-gradient(135deg,rgba(196,181,253,0.5),rgba(255,192,230,0.4))] data-[state=active]:shadow-sm">Tables</TabsTrigger>
+                <TabsList className="rounded-full bg-card/60 backdrop-blur-xl border border-border/70 shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+                  <TabsTrigger value="counter" className="rounded-full data-[state=active]:bg-accent/20 data-[state=active]:shadow-sm">Counter</TabsTrigger>
+                  <TabsTrigger value="table" className="rounded-full data-[state=active]:bg-accent/20 data-[state=active]:shadow-sm">Tables</TabsTrigger>
                 </TabsList>
                 <TabsContent value="counter">
                   <CounterView

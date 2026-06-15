@@ -23,6 +23,7 @@ const Reports = lazy(() => import("./pages/Reports.tsx"));
 const Loyalty = lazy(() => import("./pages/Loyalty.tsx"));
 const Marketplace = lazy(() => import("./pages/Marketplace.tsx"));
 import { SubscriptionGate } from "@/components/SubscriptionGate";
+import { ThemeProvider } from "@/lib/theme";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
@@ -102,19 +103,21 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <TenantProvider>
-          <AuthProvider>
-            <LocationProvider>
-              <AppRoutes />
-            </LocationProvider>
-          </AuthProvider>
-        </TenantProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <TenantProvider>
+            <AuthProvider>
+              <LocationProvider>
+                <AppRoutes />
+              </LocationProvider>
+            </AuthProvider>
+          </TenantProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

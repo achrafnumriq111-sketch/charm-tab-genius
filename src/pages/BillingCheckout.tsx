@@ -15,7 +15,7 @@ export default function BillingCheckout() {
 
   if (!clientSecret) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500">
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
         Checkout sessie niet gevonden. <Link to="/settings/billing" className="underline ml-1">Terug</Link>
       </div>
@@ -23,13 +23,13 @@ export default function BillingCheckout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-card">
       <PaymentTestModeBanner />
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <Link to="/settings/billing" className="inline-flex items-center gap-2 text-sm text-slate-600 mb-4">
+        <Link to="/settings/billing" className="inline-flex items-center gap-2 text-sm text-muted-foreground mb-4">
           <ArrowLeft className="w-4 h-4" /> Terug naar billing
         </Link>
-        <div className="rounded-2xl bg-white shadow-lg overflow-hidden">
+        <div className="rounded-2xl bg-card shadow-lg overflow-hidden">
           <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: async () => clientSecret }}>
             <EmbeddedCheckout />
           </EmbeddedCheckoutProvider>

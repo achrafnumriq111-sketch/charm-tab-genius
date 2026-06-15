@@ -34,20 +34,20 @@ export default function UpsellPrompt({ suggestion, onAccept, onDismiss }: Upsell
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
               <div>
-                <div className="font-bold text-sm text-slate-900">Tip voor je klant</div>
+                <div className="font-bold text-sm text-foreground">Tip voor je klant</div>
                 <div className="text-xs text-amber-700/80">{suggestion.rule.suggestion_type === "upgrade" ? "Upgrade" : suggestion.rule.suggestion_type === "addon" ? "Add-on" : "Combo deal"}</div>
               </div>
             </div>
             <button
               onClick={onDismiss}
-              className="p-1.5 rounded-full hover:bg-black/5 transition text-slate-400 hover:text-slate-600"
+              className="p-1.5 rounded-full hover:bg-black/5 transition text-muted-foreground hover:text-muted-foreground"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="bg-white/70 rounded-2xl p-3 border border-amber-100/80">
-            <div className="text-sm font-medium text-slate-800">{suggestion.promptText}</div>
+          <div className="bg-card/70 rounded-2xl p-3 border border-amber-100/80">
+            <div className="text-sm font-medium text-foreground">{suggestion.promptText}</div>
             {suggestion.suggestedProduct?.color && (
               <div className="flex items-center gap-2 mt-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: suggestion.suggestedProduct.color }} />

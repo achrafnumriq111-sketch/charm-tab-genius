@@ -182,32 +182,32 @@ export default function SecurityEvents() {
 
   if (authorized === null) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="flex h-screen items-center justify-center bg-card">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (!authorized) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-slate-50 gap-4">
+      <div className="flex h-screen flex-col items-center justify-center bg-card gap-4">
         <ShieldAlert className="h-16 w-16 text-red-500" />
         <h1 className="text-2xl font-bold">Access denied</h1>
-        <p className="text-slate-500">Platform admin role required.</p>
+        <p className="text-muted-foreground">Platform admin role required.</p>
         <button onClick={() => navigate("/")} className="text-blue-600 underline">Go home</button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-card p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/admin")}
-              className="rounded-lg p-2 hover:bg-slate-200"
+              className="rounded-lg p-2 hover:bg-card"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -216,7 +216,7 @@ export default function SecurityEvents() {
           </div>
           <button
             onClick={loadData}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 shadow-sm hover:bg-slate-100"
+            className="flex items-center gap-2 rounded-lg bg-card px-3 py-2 shadow-sm hover:bg-card"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -226,7 +226,7 @@ export default function SecurityEvents() {
         {/* Summary */}
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           {summary && [
-            { label: "Total", value: summary.total, icon: Activity, color: "text-slate-700" },
+            { label: "Total", value: summary.total, icon: Activity, color: "text-foreground" },
             { label: "Critical", value: summary.critical, icon: ShieldAlert, color: "text-red-600" },
             { label: "RLS Rejects (42501)", value: summary.rls_rejects, icon: AlertTriangle, color: "text-amber-600" },
             { label: "Cross-tenant", value: summary.cross_tenant, icon: Shield, color: "text-red-600" },
@@ -236,10 +236,10 @@ export default function SecurityEvents() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="rounded-xl bg-white p-4 shadow-sm"
+              className="rounded-xl bg-card p-4 shadow-sm"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wide text-slate-500">{s.label}</span>
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">{s.label}</span>
                 <s.icon className={`h-4 w-4 ${s.color}`} />
               </div>
               <div className={`mt-2 text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -248,15 +248,15 @@ export default function SecurityEvents() {
         </div>
 
         {/* Filters */}
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 shadow-sm">
-          <Filter className="h-4 w-4 text-slate-500" />
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl bg-card p-3 shadow-sm">
+          <Filter className="h-4 w-4 text-muted-foreground" />
           <div className="flex gap-1">
             {WINDOWS.map((w) => (
               <button
                 key={w.label}
                 onClick={() => setWindowHours(w.hours)}
                 className={`rounded-md px-3 py-1 text-sm ${
-                  windowHours === w.hours ? "bg-slate-900 text-white" : "bg-slate-100 hover:bg-slate-200"
+                  windowHours === w.hours ? "bg-slate-900 text-white" : "bg-card hover:bg-card"
                 }`}
               >
                 {w.label}
@@ -266,7 +266,7 @@ export default function SecurityEvents() {
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value as Severity | "all")}
-            className="rounded-md border border-slate-200 px-2 py-1 text-sm"
+            className="rounded-md border border-border px-2 py-1 text-sm"
           >
             <option value="all">All severities</option>
             <option value="critical">Critical</option>
@@ -276,43 +276,43 @@ export default function SecurityEvents() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-md border border-slate-200 px-2 py-1 text-sm"
+            className="rounded-md border border-border px-2 py-1 text-sm"
           >
             <option value="all">All event types</option>
             {eventTypes.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
-          <span className="ml-auto text-xs text-slate-500">{events.length} events</span>
+          <span className="ml-auto text-xs text-muted-foreground">{events.length} events</span>
         </div>
 
         {/* Events table */}
-        <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-sm">
+        <div className="mb-6 overflow-hidden rounded-xl bg-card shadow-sm">
           <div className="max-h-[500px] overflow-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-slate-50">
+              <thead className="sticky top-0 bg-card">
                 <tr className="text-left">
-                  <th className="px-3 py-2 font-medium text-slate-600">Time</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Sev</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Event</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Source</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Table</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Code</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">User</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Customer</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Details</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Time</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Sev</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Event</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Source</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Table</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Code</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">User</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Customer</th>
+                  <th className="px-3 py-2 font-medium text-muted-foreground">Details</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && (
-                  <tr><td colSpan={9} className="p-8 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-400" /></td></tr>
+                  <tr><td colSpan={9} className="p-8 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" /></td></tr>
                 )}
                 {!loading && events.length === 0 && (
-                  <tr><td colSpan={9} className="p-8 text-center text-slate-400">No events in selected window</td></tr>
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No events in selected window</td></tr>
                 )}
                 {events.map((e) => (
-                  <tr key={e.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-slate-500">
+                  <tr key={e.id} className="border-t border-border hover:bg-card">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">
                       {new Date(e.occurred_at).toLocaleString("nl-NL")}
                     </td>
                     <td className="px-3 py-2">
@@ -321,12 +321,12 @@ export default function SecurityEvents() {
                       </span>
                     </td>
                     <td className="px-3 py-2 font-mono text-xs">{e.event_type}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{e.source}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">{e.source}</td>
                     <td className="px-3 py-2 font-mono text-xs">{e.target_table ?? "—"}</td>
                     <td className="px-3 py-2 font-mono text-xs">{e.error_code ?? "—"}</td>
                     <td className="px-3 py-2 font-mono text-[10px]">{e.user_id?.slice(0, 8) ?? "—"}</td>
                     <td className="px-3 py-2 font-mono text-[10px]">{e.tenant_id?.slice(0, 8) ?? "—"}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600 max-w-xs truncate" title={e.error_message ?? ""}>
+                    <td className="px-3 py-2 text-xs text-muted-foreground max-w-xs truncate" title={e.error_message ?? ""}>
                       {e.error_message ?? JSON.stringify(e.metadata)}
                     </td>
                   </tr>
@@ -337,40 +337,40 @@ export default function SecurityEvents() {
         </div>
 
         {/* Alert config */}
-        <div className="rounded-xl bg-white p-4 shadow-sm">
+        <div className="rounded-xl bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center gap-2">
             <Bell className="h-5 w-5 text-amber-600" />
             <h2 className="text-lg font-semibold">Alert rules</h2>
-            <span className="text-xs text-slate-500">Triggered hourly by the security-alerts-cron function</span>
+            <span className="text-xs text-muted-foreground">Triggered hourly by the security-alerts-cron function</span>
           </div>
 
-          <div className="mb-4 flex flex-wrap items-end gap-2 rounded-lg bg-slate-50 p-3">
+          <div className="mb-4 flex flex-wrap items-end gap-2 rounded-lg bg-card p-3">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-xs text-slate-600">Notify email</label>
+              <label className="block text-xs text-muted-foreground">Notify email</label>
               <input
                 type="email"
                 value={newConfig.notify_email}
                 onChange={(e) => setNewConfig({ ...newConfig, notify_email: e.target.value })}
-                className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                className="w-full rounded-md border border-border px-2 py-1.5 text-sm"
                 placeholder="owner@example.com"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-600">Threshold/hr</label>
+              <label className="block text-xs text-muted-foreground">Threshold/hr</label>
               <input
                 type="number"
                 min={1}
                 value={newConfig.threshold_per_hour}
                 onChange={(e) => setNewConfig({ ...newConfig, threshold_per_hour: Number(e.target.value) })}
-                className="w-24 rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                className="w-24 rounded-md border border-border px-2 py-1.5 text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-600">Min severity</label>
+              <label className="block text-xs text-muted-foreground">Min severity</label>
               <select
                 value={newConfig.min_severity}
                 onChange={(e) => setNewConfig({ ...newConfig, min_severity: e.target.value as Severity })}
-                className="rounded-md border border-slate-200 px-2 py-1.5 text-sm"
+                className="rounded-md border border-border px-2 py-1.5 text-sm"
               >
                 <option value="info">Info</option>
                 <option value="warning">Warning</option>
@@ -386,14 +386,14 @@ export default function SecurityEvents() {
           </div>
 
           {configs.length === 0 ? (
-            <p className="text-sm text-slate-400">No alert rules configured.</p>
+            <p className="text-sm text-muted-foreground">No alert rules configured.</p>
           ) : (
             <div className="space-y-2">
               {configs.map((c) => (
-                <div key={c.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+                <div key={c.id} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div className="flex flex-col">
                     <span className="font-medium">{c.notify_email}</span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       ≥ {c.threshold_per_hour}/hr · min {c.min_severity} · scope {c.scope}
                       {c.last_triggered_at && ` · last alert ${new Date(c.last_triggered_at).toLocaleString("nl-NL")}`}
                     </span>
@@ -402,7 +402,7 @@ export default function SecurityEvents() {
                     <button
                       onClick={() => toggleConfig(c)}
                       className={`rounded-md px-2 py-1 text-xs ${
-                        c.is_enabled ? "bg-green-100 text-green-700" : "bg-slate-200 text-slate-600"
+                        c.is_enabled ? "bg-green-100 text-green-700" : "bg-card text-muted-foreground"
                       }`}
                     >
                       {c.is_enabled ? "Enabled" : "Disabled"}

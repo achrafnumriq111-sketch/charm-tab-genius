@@ -223,17 +223,17 @@ export default function Jarvis() {
 
   if (authorized === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="min-h-screen flex items-center justify-center bg-card">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
   if (!authorized) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-card gap-4">
         <ShieldAlert className="h-14 w-14 text-red-500" />
         <h1 className="text-xl font-bold">Geen toegang</h1>
-        <p className="text-slate-500 text-sm">Platform-admin rechten vereist.</p>
+        <p className="text-muted-foreground text-sm">Platform-admin rechten vereist.</p>
         <button onClick={() => navigate("/")} className="text-blue-600 underline text-sm">Terug</button>
       </div>
     );
@@ -253,25 +253,25 @@ export default function Jarvis() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/admin")} className="rounded-lg p-2 hover:bg-white/50">
-              <ArrowLeft className="h-5 w-5 text-slate-600" />
+            <button onClick={() => navigate("/admin")} className="rounded-lg p-2 hover:bg-card/50">
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #818cf8, #c084fc)" }}>
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">Jarvis</h1>
-              <p className="text-xs text-slate-500">Platform observability · isolatie · customer health</p>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Jarvis</h1>
+              <p className="text-xs text-muted-foreground">Platform observability · isolatie · customer health</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => navigate("/admin/security-events")} className="h-9 px-3 rounded-xl text-xs font-medium hover:bg-white/60 flex items-center gap-1.5 text-slate-700">
+            <button onClick={() => navigate("/admin/security-events")} className="h-9 px-3 rounded-xl text-xs font-medium hover:bg-card/60 flex items-center gap-1.5 text-foreground">
               <Shield className="w-3.5 h-3.5" /> Security events
             </button>
-            <button onClick={() => navigate("/admin/qa-report")} className="h-9 px-3 rounded-xl text-xs font-medium hover:bg-white/60 flex items-center gap-1.5 text-slate-700">
+            <button onClick={() => navigate("/admin/qa-report")} className="h-9 px-3 rounded-xl text-xs font-medium hover:bg-card/60 flex items-center gap-1.5 text-foreground">
               <FileText className="w-3.5 h-3.5" /> QA-rapport
             </button>
-            <button onClick={loadHealth} className="h-9 w-9 rounded-xl flex items-center justify-center hover:bg-white/60 text-slate-600">
+            <button onClick={loadHealth} className="h-9 w-9 rounded-xl flex items-center justify-center hover:bg-card/60 text-muted-foreground">
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
@@ -294,7 +294,7 @@ export default function Jarvis() {
               style={glass}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">{s.label}</span>
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{s.label}</span>
                 <s.icon className="w-4 h-4" style={{ color: s.color }} />
               </div>
               <div className="text-2xl font-black mt-1" style={{ color: s.color }}>{s.value}</div>
@@ -320,8 +320,8 @@ export default function Jarvis() {
                 <BugPlay className="w-5 h-5 text-amber-700" />
               </div>
               <div>
-                <div className="font-bold text-slate-900">Customer data isolation testsuite</div>
-                <div className="text-xs text-slate-500">
+                <div className="font-bold text-foreground">Customer data isolation testsuite</div>
+                <div className="text-xs text-muted-foreground">
                   Maakt ephemere customers, bewijst dat SELECT/UPDATE/DELETE tussen customers 0 rijen raakt, en ruimt zichzelf op.
                 </div>
               </div>
@@ -338,7 +338,7 @@ export default function Jarvis() {
           </div>
 
           {qaRunning && (
-            <div className="text-xs text-slate-500 italic">
+            <div className="text-xs text-muted-foreground italic">
               Setup → seed → assert × {13 * 3}+ → cleanup. Duurt typisch 10–30 seconden.
             </div>
           )}
@@ -356,7 +356,7 @@ export default function Jarvis() {
                   {qa.ok ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                   {qa.passed}/{qa.total} groen
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   Gedraaid {new Date(qa.ranAt).toLocaleTimeString("nl-NL")} · {(qa.durationMs / 1000).toFixed(1)}s
                 </span>
               </div>
@@ -386,8 +386,8 @@ export default function Jarvis() {
                 <CreditCard className="w-5 h-5 text-emerald-700" />
               </div>
               <div>
-                <div className="font-bold text-slate-900">Subscriptions overview</div>
-                <div className="text-xs text-slate-500">MRR · churn · past due customers</div>
+                <div className="font-bold text-foreground">Subscriptions overview</div>
+                <div className="text-xs text-muted-foreground">MRR · churn · past due customers</div>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -418,17 +418,17 @@ export default function Jarvis() {
 
         {/* Customer health table */}
         <div className="rounded-2xl overflow-hidden mb-6" style={glass}>
-          <div className="p-4 border-b border-white/50 flex items-center justify-between">
+          <div className="p-4 border-b border-border/50 flex items-center justify-between">
             <div>
-              <div className="font-bold text-slate-900">Customer health (24u)</div>
-              <div className="text-xs text-slate-500">Gerangschikt: kritieke events eerst</div>
+              <div className="font-bold text-foreground">Customer health (24u)</div>
+              <div className="text-xs text-muted-foreground">Gerangschikt: kritieke events eerst</div>
             </div>
-            <span className="text-xs text-slate-500">{tenants.length} customers</span>
+            <span className="text-xs text-muted-foreground">{tenants.length} customers</span>
           </div>
           <div className="overflow-auto max-h-[600px]">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-white/80 backdrop-blur-sm">
-                <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 bg-card/80 backdrop-blur-sm">
+                <tr className="text-left text-[10px] uppercase tracking-wider text-muted-foreground">
                   <th className="px-3 py-2 font-semibold">Status</th>
                   <th className="px-3 py-2 font-semibold">Customer</th>
                   <th className="px-3 py-2 font-semibold text-right">Loc</th>
@@ -441,15 +441,15 @@ export default function Jarvis() {
               </thead>
               <tbody>
                 {loading && (
-                  <tr><td colSpan={8} className="p-8 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-slate-400" /></td></tr>
+                  <tr><td colSpan={8} className="p-8 text-center"><Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" /></td></tr>
                 )}
                 {!loading && tenants.length === 0 && (
-                  <tr><td colSpan={8} className="p-8 text-center text-slate-400">Geen customers</td></tr>
+                  <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Geen customers</td></tr>
                 )}
                 {tenants.map((t) => {
                   const h = healthScore(t);
                   return (
-                    <tr key={t.id} className="border-t border-slate-100 hover:bg-white/40">
+                    <tr key={t.id} className="border-t border-border hover:bg-card/40">
                       <td className="px-3 py-2">
                         <span
                           className="inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -459,8 +459,8 @@ export default function Jarvis() {
                         </span>
                       </td>
                       <td className="px-3 py-2">
-                        <div className="font-medium text-slate-900">{t.name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{t.slug} · {t.plan}</div>
+                        <div className="font-medium text-foreground">{t.name}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">{t.slug} · {t.plan}</div>
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">{t.locationCount}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{t.employeeCount}</td>
@@ -471,7 +471,7 @@ export default function Jarvis() {
                       <td className="px-3 py-2 text-right tabular-nums" style={{ color: t.criticalEvents24h > 0 ? "#dc2626" : undefined, fontWeight: t.criticalEvents24h > 0 ? 700 : 400 }}>
                         {t.criticalEvents24h}
                       </td>
-                      <td className="px-3 py-2 text-xs text-slate-500">
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
                         {t.lastEventAt ? new Date(t.lastEventAt).toLocaleString("nl-NL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}
                       </td>
                     </tr>
@@ -489,7 +489,7 @@ export default function Jarvis() {
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{label}</div>
       <div className="text-xl font-black mt-0.5" style={{ color }}>{value}</div>
     </div>
   );

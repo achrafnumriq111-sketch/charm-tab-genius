@@ -178,13 +178,13 @@ export default function MultiLocationDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-xl bg-white/60 border border-white/70 backdrop-blur-xl p-1">
+          <div className="flex rounded-xl bg-card/60 border border-border/70 backdrop-blur-xl p-1">
             {(Object.keys(PERIOD_LABEL) as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${
-                  period === p ? "bg-slate-900 text-white shadow" : "text-slate-600 hover:text-slate-900"
+                  period === p ? "bg-slate-900 text-white shadow" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {PERIOD_LABEL[p]}
@@ -199,28 +199,28 @@ export default function MultiLocationDashboard() {
 
       {/* Global KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+        <Card className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
           <CardContent className="p-4 text-center">
             <TrendingUp className="h-5 w-5 mx-auto mb-1 text-emerald-600" />
             <div className="text-2xl font-black">{euro(totalRevenue)}</div>
             <div className="text-[11px] text-muted-foreground">Omzet · {PERIOD_LABEL[period].toLowerCase()}</div>
           </CardContent>
         </Card>
-        <Card className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+        <Card className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
           <CardContent className="p-4 text-center">
             <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-blue-600" />
             <div className="text-2xl font-black">{totalOrders}</div>
             <div className="text-[11px] text-muted-foreground">Orders</div>
           </CardContent>
         </Card>
-        <Card className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+        <Card className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
           <CardContent className="p-4 text-center">
             <Users className="h-5 w-5 mx-auto mb-1 text-violet-600" />
             <div className="text-2xl font-black">{totalStaff}</div>
             <div className="text-[11px] text-muted-foreground">Medewerkers actief</div>
           </CardContent>
         </Card>
-        <Card className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+        <Card className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
           <CardContent className="p-4 text-center">
             <AlertTriangle className={`h-5 w-5 mx-auto mb-1 ${totalAlerts > 0 ? "text-red-500" : "text-emerald-500"}`} />
             <div className="text-2xl font-black">{totalAlerts}</div>
@@ -231,7 +231,7 @@ export default function MultiLocationDashboard() {
 
       {/* Ranking bar comparison */}
       {ranked.length > 1 && (
-        <Card className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+        <Card className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-500" /> Ranglijst — omzet per locatie
@@ -251,7 +251,7 @@ export default function MultiLocationDashboard() {
                     </span>
                     <span className="font-semibold tabular-nums">{euro(loc.periodRevenue)} · {loc.periodOrders} orders</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 rounded-full bg-card overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -271,7 +271,7 @@ export default function MultiLocationDashboard() {
 
       {/* Aggregated top products */}
       {aggregatedTop.length > 0 && (
-        <Card className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
+        <Card className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-bold">Top producten — alle locaties</CardTitle>
           </CardHeader>
@@ -299,7 +299,7 @@ export default function MultiLocationDashboard() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {summaries.map((loc) => (
-            <Card key={loc.id} className="rounded-2xl border-white/70 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)] overflow-hidden">
+            <Card key={loc.id} className="rounded-2xl border-border/70 bg-card/60 backdrop-blur-xl shadow-[0_8px_30px_rgba(162,178,226,0.10)] overflow-hidden">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base font-bold flex items-center gap-2">

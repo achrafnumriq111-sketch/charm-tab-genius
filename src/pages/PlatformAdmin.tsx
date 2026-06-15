@@ -278,7 +278,7 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
                 <button onClick={() => onImpersonate(tenant)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 text-white" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
                   <Eye className="w-3.5 h-3.5" /> Bekijk als customer
                 </button>
-                <button onClick={() => setEditing(true)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors hover:bg-white/60" style={{ color: "#7c6bc4" }}>
+                <button onClick={() => setEditing(true)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors hover:bg-card/60" style={{ color: "#7c6bc4" }}>
                   <Edit2 className="w-3.5 h-3.5" /> Bewerken
                 </button>
               </div>
@@ -651,7 +651,7 @@ const PlatformAdmin = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate("/admin/jarvis")}
-              className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-white/50 text-white"
+              className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-card/50 text-white"
               style={{ background: "linear-gradient(135deg, #6366f1, #818cf8)" }}
               title="Jarvis observability"
             >
@@ -659,16 +659,16 @@ const PlatformAdmin = () => {
             </button>
             <button
               onClick={() => navigate("/admin/security-events")}
-              className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-white/50"
+              className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-card/50"
               style={{ color: "#dc2626" }}
               title="Security Events"
             >
               <Shield className="w-3.5 h-3.5" /> Security
             </button>
-            <button onClick={fetchTenants} className="h-9 w-9 rounded-xl flex items-center justify-center transition-colors hover:bg-white/50" style={{ color: "#8b8b9e" }}>
+            <button onClick={fetchTenants} className="h-9 w-9 rounded-xl flex items-center justify-center transition-colors hover:bg-card/50" style={{ color: "#8b8b9e" }}>
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button onClick={handleLogout} className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-white/50" style={{ color: "#8b8b9e" }}>
+            <button onClick={handleLogout} className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-card/50" style={{ color: "#8b8b9e" }}>
               <LogOut className="w-3.5 h-3.5" /> Uitloggen
             </button>
           </div>

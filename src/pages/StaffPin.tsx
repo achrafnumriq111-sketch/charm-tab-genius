@@ -5,6 +5,7 @@ import { Loader2, KeyRound, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import { getDeviceMeta, isTrustedDevice } from "@/lib/device";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 /**
  * Device-gated staff PIN login.
@@ -49,15 +50,10 @@ export default function StaffPin() {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background:
-          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
-          "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative">
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeSwitcher />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

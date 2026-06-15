@@ -210,7 +210,7 @@ export default function SecuritySettings() {
             Scan de QR-code
           </div>
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <div className="bg-white p-3 rounded-xl flex-shrink-0 mx-auto">
+            <div className="bg-card p-3 rounded-xl flex-shrink-0 mx-auto">
               <QRCodeSVG value={enrollment.qrUri} size={160} level="M" />
             </div>
             <div className="flex-1 text-xs space-y-2" style={{ color: "#5a5a72" }}>

@@ -87,7 +87,7 @@ const SettingsFeatures = () => {
       <div className="max-w-3xl mx-auto">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-6"
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <ArrowLeft className="w-4 h-4" /> Terug
         </button>
@@ -101,8 +101,8 @@ const SettingsFeatures = () => {
               <Sparkles className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">Modules &amp; features</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-2xl font-semibold text-foreground">Modules &amp; features</h1>
+              <p className="text-sm text-muted-foreground">
                 Zet onderdelen aan of uit voor je hele organisatie. Wijzigingen zijn direct actief.
               </p>
             </div>
@@ -117,7 +117,7 @@ const SettingsFeatures = () => {
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <div className="space-y-3">
@@ -127,8 +127,8 @@ const SettingsFeatures = () => {
               return (
                 <div key={f.key} className="rounded-2xl p-5 flex items-center justify-between gap-4" style={card}>
                   <div className="min-w-0">
-                    <div className="font-medium text-slate-900">{f.label}</div>
-                    <div className="text-sm text-slate-500 mt-0.5">{f.description}</div>
+                    <div className="font-medium text-foreground">{f.label}</div>
+                    <div className="text-sm text-muted-foreground mt-0.5">{f.description}</div>
                   </div>
                   <button
                     onClick={() => !busy && toggle(f.key, !enabled)}
@@ -143,7 +143,7 @@ const SettingsFeatures = () => {
                     }}
                   >
                     <span
-                      className="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"
+                      className="inline-block h-5 w-5 transform rounded-full bg-card shadow transition-transform"
                       style={{ transform: enabled ? "translateX(22px)" : "translateX(4px)" }}
                     />
                   </button>
