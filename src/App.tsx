@@ -32,6 +32,7 @@ const QAReport = lazy(() => import("./pages/QAReport.tsx"));
 const SecurityEvents = lazy(() => import("./pages/SecurityEvents.tsx"));
 const OfflineAdmin = lazy(() => import("./pages/OfflineAdmin.tsx"));
 const Pair = lazy(() => import("./pages/Pair.tsx"));
+const StaffPin = lazy(() => import("./pages/StaffPin.tsx"));
 const Devices = lazy(() => import("./pages/Devices.tsx"));
 const SecuritySettings = lazy(() => import("./pages/SecuritySettings.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
@@ -55,6 +56,7 @@ const AppRoutes = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/accept-invite/:token" element={<AcceptInvite />} />
         <Route path="/pair" element={<Pair />} />
+        <Route path="/staff-pin" element={<StaffPin />} />
         <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
         <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
         <Route path="/admin" element={<PlatformAdmin />} />
