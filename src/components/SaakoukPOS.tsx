@@ -36,7 +36,15 @@ import {
   ChevronRight, ChevronLeft, Banknote, Building2,
   UtensilsCrossed, Armchair, Play, UserCog, Clock,
   ClipboardCheck, BarChart3, Loader2,
+  Copy, AlertTriangle, CalendarPlus,
 } from "lucide-react";
+import {
+  normalizeScheduleConfig, validateScheduleConfig, formatDayHours,
+  DAY_LABELS_LONG, type ScheduleConfig, type ScheduleException,
+} from "@/lib/businessHours";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 
 /**
  * DOTTS POS — Full Lovable-ready single-file build (v2 — all flows wired)
