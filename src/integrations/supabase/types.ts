@@ -371,6 +371,47 @@ export type Database = {
           },
         ]
       }
+      customer_segments: {
+        Row: {
+          created_at: string
+          definition: Json
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          definition?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          definition?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -1230,6 +1271,128 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_campaigns: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          delivered_count: number
+          id: string
+          message: string
+          name: string
+          recipients_count: number
+          scheduled_at: string | null
+          segment_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          id?: string
+          message: string
+          name: string
+          recipients_count?: number
+          scheduled_at?: string | null
+          segment_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          delivered_count?: number
+          id?: string
+          message?: string
+          name?: string
+          recipients_count?: number
+          scheduled_at?: string | null
+          segment_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_campaigns_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "customer_segments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty_tiers: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          min_total_spent: number
+          min_visit_count: number
+          name: string
+          perks: string | null
+          point_multiplier: number
+          sort_order: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_total_spent?: number
+          min_visit_count?: number
+          name: string
+          perks?: string | null
+          point_multiplier?: number
+          sort_order?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          min_total_spent?: number
+          min_visit_count?: number
+          name?: string
+          perks?: string | null
+          point_multiplier?: number
+          sort_order?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_tiers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -2750,6 +2913,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      customer_current_tier: { Args: { _customer_id: string }; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -2846,6 +3010,13 @@ export type Database = {
         }[]
       }
       seed_demo_data: { Args: { _location_id: string }; Returns: Json }
+      segment_match_query: {
+        Args: { _definition: Json; _tenant_id: string }
+        Returns: {
+          customer_id: string
+        }[]
+      }
+      segment_preview: { Args: { _segment_id: string }; Returns: Json }
       setup_tenant_onboarding:
         | {
             Args: {
