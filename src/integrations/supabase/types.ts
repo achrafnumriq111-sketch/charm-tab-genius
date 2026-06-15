@@ -2823,6 +2823,15 @@ export type Database = {
           read_ct: number
         }[]
       }
+      report_pnl: {
+        Args: {
+          _end: string
+          _location_id: string
+          _start: string
+          _vat_rate?: number
+        }
+        Returns: Json
+      }
       security_events_summary: {
         Args: { _since?: string }
         Returns: {
