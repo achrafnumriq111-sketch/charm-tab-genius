@@ -230,3 +230,60 @@
     perspective: 1400px;
   }
 }
+
+/* ============================================================
+   GLOBAL AUROS RETARGETING
+   Override hard-coded light Tailwind utilities used across older
+   POS / Back Office / Admin views so the abyssal theme is applied
+   consistently without touching every component file.
+   ============================================================ */
+@layer utilities {
+  /* Light surface backgrounds → trench */
+  .bg-white,
+  .bg-slate-50, .bg-slate-100,
+  .bg-gray-50,  .bg-gray-100,
+  .bg-neutral-50, .bg-neutral-100,
+  .bg-zinc-50,  .bg-zinc-100,
+  .bg-stone-50, .bg-stone-100 {
+    background-color: hsl(var(--card)) !important;
+    color: hsl(var(--foreground));
+  }
+
+  /* Slightly darker light surfaces → reef (elevated) */
+  .bg-slate-200, .bg-gray-200, .bg-neutral-200, .bg-zinc-200, .bg-stone-200 {
+    background-color: hsl(var(--secondary)) !important;
+    color: hsl(var(--secondary-foreground));
+  }
+
+  /* Pure black text on dark canvas is unreadable */
+  .text-black,
+  .text-slate-900, .text-gray-900, .text-neutral-900, .text-zinc-900, .text-stone-900 {
+    color: hsl(var(--foreground)) !important;
+  }
+  .text-slate-800, .text-gray-800, .text-neutral-800, .text-zinc-800, .text-stone-800,
+  .text-slate-700, .text-gray-700, .text-neutral-700, .text-zinc-700, .text-stone-700 {
+    color: hsl(var(--foreground) / 0.9) !important;
+  }
+  .text-slate-600, .text-gray-600, .text-neutral-600, .text-zinc-600, .text-stone-600,
+  .text-slate-500, .text-gray-500, .text-neutral-500, .text-zinc-500, .text-stone-500 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /* Light borders → ash */
+  .border-slate-200, .border-gray-200, .border-neutral-200, .border-zinc-200, .border-stone-200,
+  .border-slate-100, .border-gray-100, .border-neutral-100, .border-zinc-100, .border-stone-100,
+  .border-white {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Pastel fintech gradients (legacy) → abyss canvas */
+  [class*="from-white"], [class*="to-white"],
+  [class*="from-slate-50"], [class*="to-slate-50"],
+  [class*="from-pink-"],  [class*="to-pink-"],
+  [class*="from-purple-"], [class*="to-purple-"],
+  [class*="from-rose-"],  [class*="to-rose-"] {
+    --tw-gradient-from: hsl(var(--background)) !important;
+    --tw-gradient-to:   hsl(var(--card)) !important;
+  }
+}
+
