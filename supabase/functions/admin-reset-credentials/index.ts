@@ -56,10 +56,11 @@ Deno.serve(async (req) => {
       continue;
     }
     if (!isOwner) {
-      const hash = await bcrypt.hash(userFacing);
-      await admin.from("employees")
-        .update({ pin_hash: hash, failed_login_attempts: 0, locked_until: null })
-        .eq("id", emp.id);
+      const { error: pinErr } = await admin.rpc("set_employee_pin", { _employee_id: emp.id, _pin: userFacing });
+      if (pinErr) {
+        (out.errors as unknown[]).push({ employee: emp.full_name, error: pinErr.message });
+        continue;
+      }
     }
     (out.reset as unknown[]).push({
       name: emp.full_name,
