@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, RefreshCw, Plus, Copy, ShoppingBag } from "lucide-react";
-import { useLocation } from "@/contexts/LocationContext";
+import { useLocation_ } from "@/contexts/LocationContext";
 
 type Integration = {
   id: string;
