@@ -189,17 +189,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq("is_active", true)
       .maybeSingle();
 
-    if (!emp) {
-      await supabase.auth.signOut();
-      return { error: "Geen actieve zaak gekoppeld aan dit account" };
+    let employee: Employee;
+    if (emp) {
+      employee = {
+        id: emp.id,
+        full_name: emp.full_name,
+        role: emp.role,
+        location_id: emp.location_id ?? undefined,
+      };
+    } else {
+      // No employee record — allow platform admins (DOTTS staff) to sign in.
+      const { data: padmin } = await supabase
+        .from("platform_admins")
+        .select("user_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!padmin) {
+        await supabase.auth.signOut();
+        return { error: "Geen actieve zaak gekoppeld aan dit account" };
+      }
+
+      employee = {
+        id: userId,
+        full_name: "DOTTS Platform Admin",
+        role: "owner",
+        location_id: undefined,
+      };
     }
 
-    const employee: Employee = {
-      id: emp.id,
-      full_name: emp.full_name,
-      role: emp.role,
-      location_id: emp.location_id ?? undefined,
-    };
     setEmployee(employee);
 
     const storage = rememberMe ? localStorage : sessionStorage;
@@ -207,6 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!rememberMe) localStorage.removeItem("pos_employee");
     return {};
   }, []);
+
 
   const loginOwner = useCallback(async (
     email: string,
