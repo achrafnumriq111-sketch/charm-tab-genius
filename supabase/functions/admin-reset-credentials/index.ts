@@ -1,7 +1,7 @@
 // One-off admin tool: resets owner passwords + staff PINs and deletes orphaned/test auth users.
 // Guarded by QA_GUARD_SECRET header. Call once, then remove or leave behind a guarded endpoint.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
