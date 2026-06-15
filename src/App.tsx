@@ -69,6 +69,7 @@ const AppRoutes = () => {
         <Route path="/settings/billing" element={<ProtectedRoute><SettingsBilling /></ProtectedRoute>} />
         <Route path="/settings/billing/checkout" element={<ProtectedRoute><BillingCheckout /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+        <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
 
 
         {isPlatformLevel ? (
