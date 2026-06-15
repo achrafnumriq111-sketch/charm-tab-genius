@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.marketplace-webhook]
 verify_jwt = false
+
+[functions.qa-isolation-behavioral]
+verify_jwt = false
