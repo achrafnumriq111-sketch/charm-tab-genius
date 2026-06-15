@@ -6546,8 +6546,13 @@ export default function SaakoukPOS() {
     return null;
   }
 
-  // Platform admin: show tenant picker if no tenant selected
+  // Platform admin enters DOTTS admin directly (impersonation from /admin lands here with selectedTenantId)
   if (isPlatformAdmin && !selectedTenantId) {
+    if (typeof window !== "undefined") window.location.replace("/admin");
+    return null;
+  }
+  // Legacy picker (kept for fallback only)
+  if (false && isPlatformAdmin && !selectedTenantId) {
     return <PlatformTenantPicker tenants={allTenants} onSelect={async (tenant) => {
       // Trigger impersonation via edge function
       try {
