@@ -4568,24 +4568,38 @@ function SettingsView({ features, setFeatures, passkitConfig, setPasskitConfig, 
 
 // ─── SECTION PICKER SCREEN ──────────────────────────────────────────────────
 
-const sectionPickerItems = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, adminOnly: false, ownerOnly: true, color: "from-violet-400 to-indigo-400" },
-  { key: "multilocatie", label: "Locaties", icon: Building2, adminOnly: false, ownerOnly: true, color: "from-sky-400 to-blue-400" },
-  { key: "pos", label: "Point of Sale", icon: ShoppingCart, adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
-  { key: "prepstation", label: "Prepstation", icon: ChefHat, adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
-  { key: "cashclose", label: "Kassa Afsluiting", icon: Lock, adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
-  { key: "reservations", label: "Reserveringen", icon: CalendarDays, adminOnly: false, ownerOnly: false, color: "from-fuchsia-400 to-purple-400" },
-  { key: "products", label: "Producten", icon: Package, adminOnly: false, ownerOnly: false, color: "from-lime-400 to-green-400" },
-  { key: "inventory", label: "Voorraad", icon: Package, adminOnly: false, ownerOnly: false, color: "from-sky-400 to-blue-400" },
-  { key: "costing", label: "Marges", icon: DollarSign, adminOnly: false, ownerOnly: true, color: "from-yellow-400 to-amber-400" },
-  { key: "qr", label: "QR Ordering", icon: QrCode, adminOnly: true, ownerOnly: false, color: "from-indigo-400 to-blue-400" },
-  { key: "customers", label: "Klanten", icon: Users, adminOnly: false, ownerOnly: false, color: "from-rose-400 to-pink-400" },
-  { key: "giftcards", label: "Cadeaukaarten", icon: Gift, adminOnly: false, ownerOnly: false, color: "from-orange-400 to-red-400" },
-  { key: "verkoop", label: "Verkoop", icon: Receipt, adminOnly: true, ownerOnly: true, color: "from-cyan-400 to-sky-400" },
-  { key: "logs", label: "Logs", icon: FileText, adminOnly: false, ownerOnly: true, color: "from-slate-400 to-gray-400" },
-  { key: "employees", label: "Medewerkers", icon: UserCog, adminOnly: true, ownerOnly: false, color: "from-violet-400 to-fuchsia-400" },
-  { key: "settings", label: "Instellingen", icon: Settings, adminOnly: true, ownerOnly: false, color: "from-gray-400 to-slate-400" },
+// ─── SINGLE SOURCE OF TRUTH for app navigation ──────────────────────────────
+// Both the Sidebar (left rail) and the SectionPickerScreen (post-login picker)
+// derive from this. Add an entry here and it shows up in BOTH places automatically.
+const NAV_ITEMS: Array<{
+  key: string;
+  label: string;          // long label (section picker)
+  sidebarLabel: string;   // short label (sidebar rail)
+  icon: any;
+  adminOnly: boolean;
+  ownerOnly: boolean;
+  color: string;          // tailwind gradient for picker card
+}> = [
+  { key: "dashboard",    label: "Dashboard",        sidebarLabel: "Dashboard",  icon: LayoutDashboard, adminOnly: false, ownerOnly: true,  color: "from-violet-400 to-indigo-400" },
+  { key: "multilocatie", label: "Locaties",         sidebarLabel: "Locaties",   icon: Building2,       adminOnly: false, ownerOnly: true,  color: "from-sky-400 to-blue-400" },
+  { key: "pos",          label: "Point of Sale",    sidebarLabel: "POS",        icon: ShoppingCart,    adminOnly: false, ownerOnly: false, color: "from-pink-400 to-rose-400" },
+  { key: "prepstation",  label: "Prepstation",      sidebarLabel: "Prep",       icon: ChefHat,         adminOnly: false, ownerOnly: false, color: "from-amber-400 to-orange-400" },
+  { key: "cashclose",    label: "Kassa Afsluiting", sidebarLabel: "Kassa",      icon: Lock,            adminOnly: false, ownerOnly: false, color: "from-emerald-400 to-teal-400" },
+  { key: "reservations", label: "Reserveringen",    sidebarLabel: "Reserv.",    icon: CalendarDays,    adminOnly: false, ownerOnly: false, color: "from-fuchsia-400 to-purple-400" },
+  { key: "products",     label: "Producten",        sidebarLabel: "Producten",  icon: Package,         adminOnly: false, ownerOnly: false, color: "from-lime-400 to-green-400" },
+  { key: "inventory",    label: "Voorraad",         sidebarLabel: "Voorraad",   icon: Package,         adminOnly: false, ownerOnly: false, color: "from-sky-400 to-blue-400" },
+  { key: "costing",      label: "Marges",           sidebarLabel: "Marges",     icon: DollarSign,      adminOnly: false, ownerOnly: true,  color: "from-yellow-400 to-amber-400" },
+  { key: "aiforecast",   label: "AI Forecast",      sidebarLabel: "AI",         icon: Sparkles,        adminOnly: false, ownerOnly: true,  color: "from-purple-400 to-fuchsia-400" },
+  { key: "qr",           label: "QR Ordering",      sidebarLabel: "QR",         icon: QrCode,          adminOnly: true,  ownerOnly: false, color: "from-indigo-400 to-blue-400" },
+  { key: "customers",    label: "Klanten",          sidebarLabel: "Klanten",    icon: Users,           adminOnly: false, ownerOnly: false, color: "from-rose-400 to-pink-400" },
+  { key: "giftcards",    label: "Cadeaukaarten",    sidebarLabel: "Gift",       icon: Gift,            adminOnly: false, ownerOnly: false, color: "from-orange-400 to-red-400" },
+  { key: "verkoop",      label: "Verkoop",          sidebarLabel: "Verkoop",    icon: Receipt,         adminOnly: true,  ownerOnly: true,  color: "from-cyan-400 to-sky-400" },
+  { key: "logs",         label: "Logs",             sidebarLabel: "Logs",       icon: FileText,        adminOnly: false, ownerOnly: true,  color: "from-slate-400 to-gray-400" },
+  { key: "employees",    label: "Medewerkers",      sidebarLabel: "Team",       icon: UserCog,         adminOnly: true,  ownerOnly: false, color: "from-violet-400 to-fuchsia-400" },
+  { key: "settings",     label: "Instellingen",     sidebarLabel: "Settings",   icon: Settings,        adminOnly: true,  ownerOnly: false, color: "from-gray-400 to-slate-400" },
 ];
+
+const sectionPickerItems = NAV_ITEMS;
 
 function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; onSelect: (key: string) => void; onLogout: () => void }) {
   const isAdmin = employee.role === "owner" || employee.role === "manager";
