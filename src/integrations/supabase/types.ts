@@ -119,7 +119,7 @@ export type Database = {
           is_holiday: boolean | null
           labor_cost: number | null
           labor_hours: number | null
-          location_id: string | null
+          location_id: string
           month: number
           omzet: number
           orders_count: number
@@ -141,7 +141,7 @@ export type Database = {
           is_holiday?: boolean | null
           labor_cost?: number | null
           labor_hours?: number | null
-          location_id?: string | null
+          location_id: string
           month?: number
           omzet?: number
           orders_count?: number
@@ -163,7 +163,7 @@ export type Database = {
           is_holiday?: boolean | null
           labor_cost?: number | null
           labor_hours?: number | null
-          location_id?: string | null
+          location_id?: string
           month?: number
           omzet?: number
           orders_count?: number
@@ -193,7 +193,7 @@ export type Database = {
           is_weekend: boolean | null
           labor_cost: number | null
           local_hour: number
-          location_id: string | null
+          location_id: string
           omzet: number
           orders_count: number
           staff_count: number | null
@@ -209,7 +209,7 @@ export type Database = {
           is_weekend?: boolean | null
           labor_cost?: number | null
           local_hour: number
-          location_id?: string | null
+          location_id: string
           omzet?: number
           orders_count?: number
           staff_count?: number | null
@@ -225,7 +225,7 @@ export type Database = {
           is_weekend?: boolean | null
           labor_cost?: number | null
           local_hour?: number
-          location_id?: string | null
+          location_id?: string
           omzet?: number
           orders_count?: number
           staff_count?: number | null
@@ -249,7 +249,7 @@ export type Database = {
           created_at: string
           employee_name: string
           id: string
-          location_id: string | null
+          location_id: string
           note_text: string
         }
         Insert: {
@@ -258,7 +258,7 @@ export type Database = {
           created_at?: string
           employee_name: string
           id?: string
-          location_id?: string | null
+          location_id: string
           note_text: string
         }
         Update: {
@@ -267,7 +267,7 @@ export type Database = {
           created_at?: string
           employee_name?: string
           id?: string
-          location_id?: string | null
+          location_id?: string
           note_text?: string
         }
         Relationships: [
@@ -302,7 +302,7 @@ export type Database = {
           float_amount: number
           id: string
           idempotency_key: string | null
-          location_id: string | null
+          location_id: string
           primary_employee_id: string
           primary_employee_name: string
           second_checker_id: string
@@ -324,7 +324,7 @@ export type Database = {
           float_amount?: number
           id?: string
           idempotency_key?: string | null
-          location_id?: string | null
+          location_id: string
           primary_employee_id: string
           primary_employee_name: string
           second_checker_id: string
@@ -346,7 +346,7 @@ export type Database = {
           float_amount?: number
           id?: string
           idempotency_key?: string | null
-          location_id?: string | null
+          location_id?: string
           primary_employee_id?: string
           primary_employee_name?: string
           second_checker_id?: string
@@ -710,7 +710,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_login_at: string | null
-          location_id: string | null
+          location_id: string
           locked_until: string | null
           role: Database["public"]["Enums"]["employee_role"]
           tenant_id: string | null
@@ -725,7 +725,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login_at?: string | null
-          location_id?: string | null
+          location_id: string
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
           tenant_id?: string | null
@@ -740,7 +740,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_login_at?: string | null
-          location_id?: string | null
+          location_id?: string
           locked_until?: string | null
           role?: Database["public"]["Enums"]["employee_role"]
           tenant_id?: string | null
@@ -876,7 +876,7 @@ export type Database = {
           forecast_date: string
           forecast_target: string
           id: string
-          location_id: string | null
+          location_id: string
           model_scope: string
           percent_error: number | null
           predicted_value: number
@@ -890,7 +890,7 @@ export type Database = {
           forecast_date: string
           forecast_target?: string
           id?: string
-          location_id?: string | null
+          location_id: string
           model_scope?: string
           percent_error?: number | null
           predicted_value?: number
@@ -904,7 +904,7 @@ export type Database = {
           forecast_date?: string
           forecast_target?: string
           id?: string
-          location_id?: string | null
+          location_id?: string
           model_scope?: string
           percent_error?: number | null
           predicted_value?: number
@@ -932,7 +932,7 @@ export type Database = {
           issued_at: string
           issued_by_employee_id: string | null
           issued_by_employee_name: string | null
-          location_id: string | null
+          location_id: string
           passkit_enrolled: boolean
           passkit_member_id: string | null
           source_order_id: string | null
@@ -951,7 +951,7 @@ export type Database = {
           issued_at?: string
           issued_by_employee_id?: string | null
           issued_by_employee_name?: string | null
-          location_id?: string | null
+          location_id: string
           passkit_enrolled?: boolean
           passkit_member_id?: string | null
           source_order_id?: string | null
@@ -970,7 +970,7 @@ export type Database = {
           issued_at?: string
           issued_by_employee_id?: string | null
           issued_by_employee_name?: string | null
-          location_id?: string | null
+          location_id?: string
           passkit_enrolled?: boolean
           passkit_member_id?: string | null
           source_order_id?: string | null
@@ -1001,7 +1001,7 @@ export type Database = {
           last_count_date: string | null
           last_delivery_date: string | null
           location: string | null
-          location_id: string | null
+          location_id: string
           minimum_stock: number
           recommended_threshold: number
           reorder_level: number
@@ -1025,7 +1025,7 @@ export type Database = {
           last_count_date?: string | null
           last_delivery_date?: string | null
           location?: string | null
-          location_id?: string | null
+          location_id: string
           minimum_stock?: number
           recommended_threshold?: number
           reorder_level?: number
@@ -1049,7 +1049,7 @@ export type Database = {
           last_count_date?: string | null
           last_delivery_date?: string | null
           location?: string | null
-          location_id?: string | null
+          location_id?: string
           minimum_stock?: number
           recommended_threshold?: number
           reorder_level?: number
@@ -1239,7 +1239,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
-          location_id: string | null
+          location_id: string
           target_margin_pct: number
           updated_at: string
         }
@@ -1247,7 +1247,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
-          location_id?: string | null
+          location_id: string
           target_margin_pct?: number
           updated_at?: string
         }
@@ -1255,7 +1255,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
-          location_id?: string | null
+          location_id?: string
           target_margin_pct?: number
           updated_at?: string
         }
@@ -1277,7 +1277,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_required: boolean
-          location_id: string | null
+          location_id: string
           max_select: number
           min_select: number
           name: string
@@ -1290,7 +1290,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_required?: boolean
-          location_id?: string | null
+          location_id: string
           max_select?: number
           min_select?: number
           name: string
@@ -1303,7 +1303,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_required?: boolean
-          location_id?: string | null
+          location_id?: string
           max_select?: number
           min_select?: number
           name?: string
@@ -1329,6 +1329,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_default: boolean
+          location_id: string
           name: string
           stock_sensitive: boolean
           updated_at: string
@@ -1342,6 +1343,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_default?: boolean
+          location_id: string
           name: string
           stock_sensitive?: boolean
           updated_at?: string
@@ -1355,6 +1357,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_default?: boolean
+          location_id?: string
           name?: string
           stock_sensitive?: boolean
           updated_at?: string
@@ -1365,6 +1368,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modifiers_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -1401,7 +1411,7 @@ export type Database = {
           id: string
           idempotency_key: string | null
           items: Json
-          location_id: string | null
+          location_id: string
           loyalty_id: string | null
           loyalty_provider: string | null
           order_id: string
@@ -1427,7 +1437,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           items?: Json
-          location_id?: string | null
+          location_id: string
           loyalty_id?: string | null
           loyalty_provider?: string | null
           order_id: string
@@ -1453,7 +1463,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           items?: Json
-          location_id?: string | null
+          location_id?: string
           loyalty_id?: string | null
           loyalty_provider?: string | null
           order_id?: string
@@ -1488,7 +1498,7 @@ export type Database = {
           buying_price: number
           created_at: string | null
           id: string
-          location_id: string | null
+          location_id: string
           product_name: string
           selling_price: number | null
           updated_at: string | null
@@ -1497,7 +1507,7 @@ export type Database = {
           buying_price?: number
           created_at?: string | null
           id?: string
-          location_id?: string | null
+          location_id: string
           product_name: string
           selling_price?: number | null
           updated_at?: string | null
@@ -1506,7 +1516,7 @@ export type Database = {
           buying_price?: number
           created_at?: string | null
           id?: string
-          location_id?: string | null
+          location_id?: string
           product_name?: string
           selling_price?: number | null
           updated_at?: string | null
@@ -1525,21 +1535,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          location_id: string | null
+          location_id: string
           modifier_group_id: string
           product_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          location_id?: string | null
+          location_id: string
           modifier_group_id: string
           product_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          location_id?: string | null
+          location_id?: string
           modifier_group_id?: string
           product_id?: string
         }
@@ -1566,7 +1576,7 @@ export type Database = {
           id: string
           inventory_item_id: string
           is_optional: boolean
-          location_id: string | null
+          location_id: string
           product_id: string
           product_name: string
           quantity: number
@@ -1579,7 +1589,7 @@ export type Database = {
           id?: string
           inventory_item_id: string
           is_optional?: boolean
-          location_id?: string | null
+          location_id: string
           product_id: string
           product_name: string
           quantity?: number
@@ -1592,7 +1602,7 @@ export type Database = {
           id?: string
           inventory_item_id?: string
           is_optional?: boolean
-          location_id?: string | null
+          location_id?: string
           product_id?: string
           product_name?: string
           quantity?: number
@@ -1692,7 +1702,7 @@ export type Database = {
           id: string
           idempotency_key: string | null
           items: Json
-          location_id: string | null
+          location_id: string
           status: string
           table_id: string
           tenant_id: string | null
@@ -1706,7 +1716,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           items?: Json
-          location_id?: string | null
+          location_id: string
           status?: string
           table_id: string
           tenant_id?: string | null
@@ -1720,7 +1730,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           items?: Json
-          location_id?: string | null
+          location_id?: string
           status?: string
           table_id?: string
           tenant_id?: string | null
@@ -1824,7 +1834,7 @@ export type Database = {
           created_at: string
           id: string
           is_enabled: boolean
-          location_id: string | null
+          location_id: string
           permission_key: string
           role: string
           updated_at: string
@@ -1833,7 +1843,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_enabled?: boolean
-          location_id?: string | null
+          location_id: string
           permission_key: string
           role: string
           updated_at?: string
@@ -1842,7 +1852,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_enabled?: boolean
-          location_id?: string | null
+          location_id?: string
           permission_key?: string
           role?: string
           updated_at?: string
@@ -1971,7 +1981,7 @@ export type Database = {
           difference_pct: number
           id: string
           inventory_item_id: string
-          location_id: string | null
+          location_id: string
           physical_count: number
           system_stock: number
         }
@@ -1984,7 +1994,7 @@ export type Database = {
           difference_pct?: number
           id?: string
           inventory_item_id: string
-          location_id?: string | null
+          location_id: string
           physical_count?: number
           system_stock?: number
         }
@@ -1997,7 +2007,7 @@ export type Database = {
           difference_pct?: number
           id?: string
           inventory_item_id?: string
-          location_id?: string | null
+          location_id?: string
           physical_count?: number
           system_stock?: number
         }
@@ -2027,7 +2037,7 @@ export type Database = {
           inventory_item_id: string
           invoice_reference: string | null
           location: string | null
-          location_id: string | null
+          location_id: string
           purchase_price: number
           quantity: number
           supplier: string | null
@@ -2041,7 +2051,7 @@ export type Database = {
           inventory_item_id: string
           invoice_reference?: string | null
           location?: string | null
-          location_id?: string | null
+          location_id: string
           purchase_price?: number
           quantity?: number
           supplier?: string | null
@@ -2055,7 +2065,7 @@ export type Database = {
           inventory_item_id?: string
           invoice_reference?: string | null
           location?: string | null
-          location_id?: string | null
+          location_id?: string
           purchase_price?: number
           quantity?: number
           supplier?: string | null
@@ -2086,7 +2096,7 @@ export type Database = {
           id: string
           idempotency_key: string | null
           inventory_item_id: string
-          location_id: string | null
+          location_id: string
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes: string | null
           order_id: string | null
@@ -2103,7 +2113,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           inventory_item_id: string
-          location_id?: string | null
+          location_id: string
           movement_type: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
           order_id?: string | null
@@ -2120,7 +2130,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           inventory_item_id?: string
-          location_id?: string | null
+          location_id?: string
           movement_type?: Database["public"]["Enums"]["movement_type"]
           notes?: string | null
           order_id?: string | null
@@ -2333,7 +2343,7 @@ export type Database = {
           id: string
           impression_count: number
           is_active: boolean
-          location_id: string | null
+          location_id: string
           priority: number
           prompt_text_nl: string
           suggested_product_id: string
@@ -2351,7 +2361,7 @@ export type Database = {
           id?: string
           impression_count?: number
           is_active?: boolean
-          location_id?: string | null
+          location_id: string
           priority?: number
           prompt_text_nl?: string
           suggested_product_id: string
@@ -2369,7 +2379,7 @@ export type Database = {
           id?: string
           impression_count?: number
           is_active?: boolean
-          location_id?: string | null
+          location_id?: string
           priority?: number
           prompt_text_nl?: string
           suggested_product_id?: string
@@ -2432,7 +2442,7 @@ export type Database = {
           created_at: string
           id: string
           last_updated: string
-          location_id: string | null
+          location_id: string
           metadata: Json | null
           pattern_key: string
           sample_size: number
@@ -2447,7 +2457,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_updated?: string
-          location_id?: string | null
+          location_id: string
           metadata?: Json | null
           pattern_key: string
           sample_size?: number
@@ -2462,7 +2472,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_updated?: string
-          location_id?: string | null
+          location_id?: string
           metadata?: Json | null
           pattern_key?: string
           sample_size?: number
@@ -2492,7 +2502,7 @@ export type Database = {
           is_rain: boolean | null
           is_severe: boolean | null
           is_storm: boolean | null
-          location_id: string | null
+          location_id: string
           location_key: string
           max_temp_c: number | null
           min_temp_c: number | null
@@ -2519,7 +2529,7 @@ export type Database = {
           is_rain?: boolean | null
           is_severe?: boolean | null
           is_storm?: boolean | null
-          location_id?: string | null
+          location_id: string
           location_key?: string
           max_temp_c?: number | null
           min_temp_c?: number | null
@@ -2546,7 +2556,7 @@ export type Database = {
           is_rain?: boolean | null
           is_severe?: boolean | null
           is_storm?: boolean | null
-          location_id?: string | null
+          location_id?: string
           location_key?: string
           max_temp_c?: number | null
           min_temp_c?: number | null
@@ -2584,7 +2594,7 @@ export type Database = {
           id: string
           is_daylight: boolean | null
           local_hour: number
-          location_id: string | null
+          location_id: string
           location_key: string
           precipitation_chance: number | null
           precipitation_intensity: number | null
@@ -2608,7 +2618,7 @@ export type Database = {
           id?: string
           is_daylight?: boolean | null
           local_hour: number
-          location_id?: string | null
+          location_id: string
           location_key?: string
           precipitation_chance?: number | null
           precipitation_intensity?: number | null
@@ -2632,7 +2642,7 @@ export type Database = {
           id?: string
           is_daylight?: boolean | null
           local_hour?: number
-          location_id?: string | null
+          location_id?: string
           location_key?: string
           precipitation_chance?: number | null
           precipitation_intensity?: number | null
