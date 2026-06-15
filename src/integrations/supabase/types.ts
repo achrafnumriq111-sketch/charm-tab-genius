@@ -3174,6 +3174,14 @@ export type Database = {
         Returns: string
       }
       get_tenant_id_for_user: { Args: { _user_id: string }; Returns: string }
+      is_location_readable_by: {
+        Args: { _location_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_location_writable_by: {
+        Args: { _location_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_slug_available: { Args: { _slug: string }; Returns: boolean }
       location_has_active_subscription: {
