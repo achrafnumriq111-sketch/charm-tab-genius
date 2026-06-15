@@ -36,6 +36,8 @@ const StaffPin = lazy(() => import("./pages/StaffPin.tsx"));
 const Devices = lazy(() => import("./pages/Devices.tsx"));
 const SecuritySettings = lazy(() => import("./pages/SecuritySettings.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const Help = lazy(() => import("./pages/Help.tsx"));
+const HelpForecasting = lazy(() => import("./pages/HelpForecasting.tsx"));
 
 const MarketingHome = lazy(() => import("./pages/marketing/Home.tsx"));
 const MarketingFeatures = lazy(() => import("./pages/marketing/Features.tsx"));
@@ -74,6 +76,8 @@ const AppRoutes = () => {
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
         <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
         <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/help/forecasting" element={<HelpForecasting />} />
 
 
         {isPlatformLevel ? (
