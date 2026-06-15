@@ -2166,54 +2166,63 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          cancel_at_period_end: boolean
           canceled_at: string | null
           created_at: string
           currency: string
           current_period_end: string | null
           current_period_start: string | null
           custom_overrides: Json
+          environment: string
           id: string
           location_id: string
           plan_type: Database["public"]["Enums"]["subscription_plan"]
           price_cents: number
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id: string | null
+          stripe_price_id: string | null
           stripe_subscription_id: string | null
           tenant_id: string | null
           trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
           currency?: string
           current_period_end?: string | null
           current_period_start?: string | null
           custom_overrides?: Json
+          environment?: string
           id?: string
           location_id: string
           plan_type?: Database["public"]["Enums"]["subscription_plan"]
           price_cents?: number
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           tenant_id?: string | null
           trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
+          cancel_at_period_end?: boolean
           canceled_at?: string | null
           created_at?: string
           currency?: string
           current_period_end?: string | null
           current_period_start?: string | null
           custom_overrides?: Json
+          environment?: string
           id?: string
           location_id?: string
           plan_type?: Database["public"]["Enums"]["subscription_plan"]
           price_cents?: number
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
+          stripe_price_id?: string | null
           stripe_subscription_id?: string | null
           tenant_id?: string | null
           trial_ends_at?: string | null
@@ -2838,6 +2847,10 @@ export type Database = {
           _timezone?: string
         }
         Returns: Json
+      }
+      tenant_has_active_subscription: {
+        Args: { _tenant_id: string }
+        Returns: boolean
       }
     }
     Enums: {
