@@ -5,6 +5,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { isTrustedDevice } from "@/lib/device";
 import { Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
 import { motion } from "framer-motion";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -60,16 +61,10 @@ const Login = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background:
-          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
-          "radial-gradient(ellipse at 50% 80%, rgba(199,230,255,0.2), transparent 50%), " +
-          "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background relative">
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeSwitcher />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
