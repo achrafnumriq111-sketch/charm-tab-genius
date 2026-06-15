@@ -17,7 +17,11 @@ import type {
   NormalizedDailyWeather, NormalizedHourlyWeather, NormalizedCurrentWeather,
   WeatherSummary,
 } from "@/lib/weather/weatherIntelligence";
-import { getSchedule, isOpenHour, getOpenHours, getTotalOpenHours, formatSchedule } from "@/lib/businessHours";
+import {
+  getSchedule, isOpenHour, getOpenHours, getTotalOpenHours, formatSchedule,
+  normalizeSchedule, getDefaultSchedule, type LocationSchedule,
+} from "@/lib/businessHours";
+import { useLocation_ } from "@/contexts/LocationContext";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
