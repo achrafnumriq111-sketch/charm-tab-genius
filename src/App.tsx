@@ -17,6 +17,9 @@ import TeamInvites from "./pages/TeamInvites.tsx";
 const Locations = lazy(() => import("./pages/Locations.tsx"));
 const TeamStaff = lazy(() => import("./pages/TeamStaff.tsx"));
 const SettingsFeatures = lazy(() => import("./pages/SettingsFeatures.tsx"));
+const SettingsBilling = lazy(() => import("./pages/SettingsBilling.tsx"));
+const BillingCheckout = lazy(() => import("./pages/BillingCheckout.tsx"));
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
@@ -61,6 +64,8 @@ const AppRoutes = () => {
         <Route path="/team/staff" element={<ProtectedRoute><TeamStaff /></ProtectedRoute>} />
         <Route path="/locations" element={<ProtectedRoute><Locations /></ProtectedRoute>} />
         <Route path="/settings/features" element={<ProtectedRoute><SettingsFeatures /></ProtectedRoute>} />
+        <Route path="/settings/billing" element={<ProtectedRoute><SettingsBilling /></ProtectedRoute>} />
+        <Route path="/settings/billing/checkout" element={<ProtectedRoute><BillingCheckout /></ProtectedRoute>} />
 
         {isPlatformLevel ? (
           <>
@@ -69,10 +74,10 @@ const AppRoutes = () => {
             <Route path="/pricing" element={<MarketingPricing />} />
             <Route path="/contact" element={<MarketingContact />} />
             <Route path="/demo" element={<MarketingDemo />} />
-            <Route path="/app" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/app" element={<ProtectedRoute><SubscriptionGate><Index /></SubscriptionGate></ProtectedRoute>} />
           </>
         ) : (
-          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><SubscriptionGate><Index /></SubscriptionGate></ProtectedRoute>} />
         )}
         <Route path="*" element={<NotFound />} />
       </Routes>
