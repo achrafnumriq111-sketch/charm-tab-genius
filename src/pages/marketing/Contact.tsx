@@ -40,7 +40,7 @@ export default function MarketingContact() {
               e.preventDefault();
               const fd = new FormData(e.currentTarget as HTMLFormElement);
               const params = new URLSearchParams({
-                subject: `[SAAKOUK] ${fd.get("subject") || ""}`,
+                subject: `[DOTTS] ${fd.get("subject") || ""}`,
                 body: `Naam: ${fd.get("name")}\nEmail: ${fd.get("email")}\n\n${fd.get("message")}`,
               });
               window.location.href = `mailto:hello@saakouk.nl?${params}`;

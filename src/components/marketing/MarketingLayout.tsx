@@ -18,8 +18,8 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border/60 backdrop-blur-xl bg-background/70">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="w-7 h-7 rounded-lg bg-foreground text-background grid place-items-center text-xs">S</span>
-            SAAKOUK POS
+            <span className="w-7 h-7 rounded-lg bg-foreground text-background grid place-items-center text-xs">·</span>
+            DOTTS
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {NAV.map((n) => {
@@ -66,7 +66,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       <footer className="border-t border-border/60 mt-24">
         <div className="max-w-6xl mx-auto px-6 py-10 grid gap-8 md:grid-cols-4 text-sm">
           <div>
-            <div className="font-semibold mb-2">SAAKOUK POS</div>
+            <div className="font-semibold mb-2">DOTTS</div>
             <p className="text-muted-foreground">
               De moderne kassa voor specialty horeca. Gebouwd in Amsterdam.
             </p>
@@ -96,7 +96,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="border-t border-border/60 py-5 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} SAAKOUK POS — Alle rechten voorbehouden.
+          © {new Date().getFullYear()} DOTTS — Alle rechten voorbehouden.
         </div>
       </footer>
     </div>

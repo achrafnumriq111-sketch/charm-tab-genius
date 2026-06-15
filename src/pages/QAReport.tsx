@@ -41,7 +41,7 @@ export default function QAReport() {
   const buildStandaloneHtml = () => `<!doctype html>
 <html lang="nl"><head>
 <meta charset="utf-8" />
-<title>QA Report — SAAKOUK POS</title>
+<title>QA Report — DOTTS</title>
 <style>
   body { font-family: -apple-system, system-ui, "Segoe UI", sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1.5rem; color: #1a1a1a; line-height: 1.6; }
   h1 { font-size: 2rem; border-bottom: 2px solid #b8860b; padding-bottom: .5rem; }
