@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CreditCard, ExternalLink, Loader2, Sparkles, Check } from "lucide-react";
+import { ArrowLeft, CreditCard, ExternalLink, Loader2, Sparkles, Check, LogOut, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation_ } from "@/contexts/LocationContext";
 import { useSubscriptionStatus } from "@/hooks/useSubscriptionStatus";
-import { getStripeEnvironment, paymentsConfigured, PLANS } from "@/lib/stripe";
+import { getStripeEnvironment, paymentsConfigured, PLANS, SCALE_CONTACT_EMAIL } from "@/lib/stripe";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 const STATUS_META: Record<string, { label: string; bg: string; color: string }> = {
