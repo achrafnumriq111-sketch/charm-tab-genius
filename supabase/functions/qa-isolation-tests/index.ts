@@ -271,7 +271,7 @@ Deno.serve(async (req) => {
       const { data, error } = await sbB.from(t).select("id").eq("id", seededA[t]);
       assert(
         `B-owner cannot SELECT A.${t}`,
-        (data?.length ?? 0) === 0,
+        !error && (data?.length ?? -1) === 0,
         error ? `err: ${error.message}` : `rows: ${data?.length}`,
       );
 
@@ -279,7 +279,7 @@ Deno.serve(async (req) => {
       const upd = await sbB.from(t).update({ updated_at: new Date().toISOString() } as Record<string, unknown>).eq("id", seededA[t]).select("id");
       assert(
         `B-owner cannot UPDATE A.${t}`,
-        (upd.data?.length ?? 0) === 0,
+        !upd.error && (upd.data?.length ?? -1) === 0,
         upd.error ? `err: ${upd.error.message}` : `rows: ${upd.data?.length}`,
       );
 
@@ -287,7 +287,7 @@ Deno.serve(async (req) => {
       const del = await sbB.from(t).delete().eq("id", seededA[t]).select("id");
       assert(
         `B-owner cannot DELETE A.${t}`,
-        (del.data?.length ?? 0) === 0,
+        !del.error && (del.data?.length ?? -1) === 0,
         del.error ? `err: ${del.error.message}` : `rows: ${del.data?.length}`,
       );
     }
