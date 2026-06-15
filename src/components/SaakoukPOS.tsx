@@ -4620,9 +4620,14 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
                             onChange={(e) => updateException(date, { open: Math.max(0, Math.min(23, parseInt(e.target.value) || 0)) })}
                             className="w-16 h-8 text-center" />
                           <span className="text-xs text-muted-foreground">–</span>
-                          <Input type="number" min={1} max={30} value={exc.close}
-                            onChange={(e) => updateException(date, { close: Math.max(1, Math.min(30, parseInt(e.target.value) || 1)) })}
-                            className="w-16 h-8 text-center" />
+                          <Input type="number" min={0} max={30} value={exc.close}
+                            onChange={(e) => {
+                              const raw = parseInt(e.target.value);
+                              const v = isNaN(raw) ? 24 : raw === 0 ? 24 : Math.max(1, Math.min(30, raw));
+                              updateException(date, { close: v });
+                            }}
+                            className="w-16 h-8 text-center"
+                            title="0 of 24 = middernacht. 26 = 02:00 volgende dag." />
                           <span className="text-[10px] text-muted-foreground w-24">{formatDayHours(exc)}</span>
                         </>
                       )}
