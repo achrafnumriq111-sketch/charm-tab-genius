@@ -1031,6 +1031,36 @@ export type Database = {
           },
         ]
       }
+      help_feedback: {
+        Row: {
+          article_slug: string
+          created_at: string
+          id: string
+          message: string | null
+          rating: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          article_slug: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          rating: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          article_slug?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          rating?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           ai_forecast_enabled: boolean
