@@ -19,7 +19,7 @@ const STATUS_META: Record<string, { label: string; bg: string; color: string }> 
 };
 
 export default function SettingsBilling() {
-  const { employee } = useAuth();
+  const { employee, logout } = useAuth();
   const { activeLocation } = useLocation_();
   const { sub, loading } = useSubscriptionStatus(activeLocation?.id);
   const [busy, setBusy] = useState<string | null>(null);
