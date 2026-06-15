@@ -800,8 +800,8 @@ function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: Norm
         </CardContent></Card>
         <Card className="rounded-2xl"><CardContent className="p-4">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Open uren</div>
-          <div className="text-xl font-bold">{formatSchedule(todayDow)}</div>
-          <div className="text-xs text-muted-foreground">{getTotalOpenHours(todayDow)} uur</div>
+          <div className="text-xl font-bold">{formatSchedule(todayDow, schedule)}</div>
+          <div className="text-xs text-muted-foreground">{getTotalOpenHours(todayDow, schedule)} uur</div>
         </CardContent></Card>
       </div>
 
