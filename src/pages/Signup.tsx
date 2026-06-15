@@ -2,13 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Loader2, ArrowRight, ArrowLeft, Check, Store, MapPin, User } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, Check, Store, MapPin, User, Sparkles, Zap } from "lucide-react";
 
-type Step = "account" | "business" | "done";
+type Step = "account" | "business" | "plan" | "done";
+type PlanChoice = "trial" | "pro" | "scale";
 
 const Signup = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("account");
+  const [plan, setPlan] = useState<PlanChoice>("trial");
+  const [seedDemo, setSeedDemo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
