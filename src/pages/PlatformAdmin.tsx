@@ -569,6 +569,9 @@ const PlatformAdmin = () => {
         employee: data.impersonation.employee,
         logId: data.impersonation.log_id,
       }));
+      // Also set the selected-tenant key so LocationContext/SaakoukPOS treat it as an active selection
+      // (otherwise the platform-admin guard redirects back to /admin)
+      sessionStorage.setItem("saakouk_admin_selected_tenant", data.impersonation.tenant.id);
 
       // Navigate to POS with tenant context
       window.location.href = `/?tenant=${data.impersonation.tenant.slug}`;
