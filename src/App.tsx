@@ -38,6 +38,7 @@ const SecuritySettings = lazy(() => import("./pages/SecuritySettings.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Help = lazy(() => import("./pages/Help.tsx"));
 const HelpForecasting = lazy(() => import("./pages/HelpForecasting.tsx"));
+const HelpArticle = lazy(() => import("./pages/HelpArticle.tsx"));
 
 const MarketingHome = lazy(() => import("./pages/marketing/Home.tsx"));
 const MarketingFeatures = lazy(() => import("./pages/marketing/Features.tsx"));
@@ -78,6 +79,7 @@ const AppRoutes = () => {
         <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
         <Route path="/help" element={<Help />} />
         <Route path="/help/forecasting" element={<HelpForecasting />} />
+        <Route path="/help/:slug" element={<HelpArticle />} />
 
 
         {isPlatformLevel ? (
