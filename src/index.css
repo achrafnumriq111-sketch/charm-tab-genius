@@ -78,6 +78,37 @@
     --tracking-eyebrow: 0.24em;
     --tracking-caption: 0.12em;
   }
+
+  /* ---- LIGHT THEME (opt-in via .light on <html>) ---- */
+  .light {
+    --background: 180 20% 96%;
+    --foreground: 177 94% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 177 94% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 177 94% 8%;
+    --primary: 176 100% 18%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 178 30% 92%;
+    --secondary-foreground: 177 94% 8%;
+    --muted: 178 25% 94%;
+    --muted-foreground: 178 15% 38%;
+    --accent: 176 100% 36%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 178 20% 86%;
+    --input: 178 20% 86%;
+    --ring: 176 100% 36%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 178 15% 38%;
+    --sidebar-primary: 176 100% 18%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 178 25% 94%;
+    --sidebar-accent-foreground: 177 94% 8%;
+    --sidebar-border: 178 20% 86%;
+    --sidebar-ring: 176 100% 36%;
+  }
 }
 
 @layer base {
