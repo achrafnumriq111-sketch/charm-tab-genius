@@ -6,7 +6,7 @@ export default function MarketingDemo() {
   return (
     <MarketingLayout>
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-24 text-center">
-        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Bekijk SAAKOUK in actie.</h1>
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Bekijk DOTTS in actie.</h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Plan een persoonlijke demo of probeer het zelf in een gratis account.
         </p>

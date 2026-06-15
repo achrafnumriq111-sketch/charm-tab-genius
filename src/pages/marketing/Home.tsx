@@ -26,7 +26,7 @@ export default function MarketingHome() {
             De kassa voor moderne <br /> specialty horeca.
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            SAAKOUK POS combineert een razendsnelle iPad-kassa met realtime voorraad,
+            DOTTS combineert een razendsnelle iPad-kassa met realtime voorraad,
             QR-bestellingen, loyaliteit en AI-forecasting. Gebouwd voor café-eigenaren die
             schalen.
           </p>

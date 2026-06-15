@@ -90,11 +90,11 @@ const Login = () => {
             }}
           >
             <span className="text-xl font-bold" style={{ color: "#5a5a72" }}>
-              {tenant ? tenant.name.charAt(0).toUpperCase() : "S"}
+              {tenant ? tenant.name.charAt(0).toUpperCase() : "·"}
             </span>
           </motion.div>
           <h1 className="text-lg font-semibold tracking-tight" style={{ color: "#2a2a3a" }}>
-            {tenant ? tenant.name : "SAAKOUK"}
+            {tenant ? tenant.name : "DOTTS"}
           </h1>
           <p className="text-xs mt-0.5" style={{ color: "#9b9bab" }}>
             Eigenaar-login
