@@ -130,24 +130,11 @@ Deno.serve(async (req) => {
       }
 
 
-      // Log the impersonation (platform-only log, not in tenant audit)
-      const { data: logEntry } = await admin
-        .from("admin_impersonation_log")
-        .insert({
-          admin_user_id: user.id,
-          target_tenant_id: tenant.id,
-          target_tenant_name: tenant.name,
-          ip_address: ip,
-          user_agent: ua,
-        })
-        .select("id")
-        .single();
-
-      // Return tenant info + owner employee info for client-side impersonation
-      // The admin keeps their own auth session but the client switches context
+      // No-log impersonation: intentionally do NOT write to admin_impersonation_log
+      // (silent support/debug session per product decision)
       return new Response(JSON.stringify({
         impersonation: {
-          log_id: logEntry?.id,
+          log_id: null,
           tenant: {
             id: tenant.id,
             name: tenant.name,
@@ -165,15 +152,7 @@ Deno.serve(async (req) => {
       });
 
     } else if (action === "stop") {
-      // Mark impersonation as ended
-      if (log_id && typeof log_id === "string") {
-        await admin
-          .from("admin_impersonation_log")
-          .update({ ended_at: new Date().toISOString() })
-          .eq("id", log_id)
-          .eq("admin_user_id", user.id);
-      }
-
+      // No-log impersonation: nothing to update
       return new Response(JSON.stringify({ ok: true }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
