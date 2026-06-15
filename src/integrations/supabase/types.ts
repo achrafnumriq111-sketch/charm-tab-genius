@@ -2164,6 +2164,78 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          canceled_at: string | null
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          current_period_start: string | null
+          custom_overrides: Json
+          id: string
+          location_id: string
+          plan_type: Database["public"]["Enums"]["subscription_plan"]
+          price_cents: number
+          status: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tenant_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          custom_overrides?: Json
+          id?: string
+          location_id: string
+          plan_type?: Database["public"]["Enums"]["subscription_plan"]
+          price_cents?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          custom_overrides?: Json
+          id?: string
+          location_id?: string
+          plan_type?: Database["public"]["Enums"]["subscription_plan"]
+          price_cents?: number
+          status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -2697,6 +2769,10 @@ export type Database = {
       get_tenant_id_for_user: { Args: { _user_id: string }; Returns: string }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_slug_available: { Args: { _slug: string }; Returns: boolean }
+      location_has_active_subscription: {
+        Args: { _location_id: string }
+        Returns: boolean
+      }
       location_in_user_tenant: {
         Args: { _location_id: string; _user_id: string }
         Returns: boolean
@@ -2781,6 +2857,13 @@ export type Database = {
         | "count_adjustment"
         | "refund_restore"
       security_event_severity: "info" | "warning" | "critical"
+      subscription_plan: "all_in" | "custom" | "trial"
+      subscription_status:
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "suspended"
+        | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2926,6 +3009,14 @@ export const Constants = {
         "refund_restore",
       ],
       security_event_severity: ["info", "warning", "critical"],
+      subscription_plan: ["all_in", "custom", "trial"],
+      subscription_status: [
+        "trialing",
+        "active",
+        "past_due",
+        "suspended",
+        "canceled",
+      ],
     },
   },
 } as const
