@@ -1,7 +1,8 @@
 # Project Memory
 
 ## Core
-- SAAKOUK POS — SaaS café platform, multi-tenant architecture.
+- **DOTTS** = product brand (kassasysteem). SAAKOUK = first tenant/customer. Never conflate.
+- SaaS café platform, multi-tenant architecture.
 - iPad/tablet optimized: 44px hit targets, viewport-fit=cover, responsive grid.
 - Stack: Supabase (RLS anon access for PIN auth), Edge Functions, PassKit.
 - AI BI powered exclusively by Apple WeatherKit (Europe/Amsterdam timezone).
