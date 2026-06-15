@@ -315,23 +315,32 @@ function WeatherStrip({ daily, hourly, currentWeather, weatherSource, weatherLoa
           </div>
         )}
 
-        {todayOpenHours.length > 0 && (
+        {todayHourly.length > 0 && (
           <div className="mt-2 pt-2 border-t border-border/50">
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-[10px] font-medium text-muted-foreground">Resterende open uren ({formatSchedule(currentDow, schedule)})</span>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-[10px] font-medium text-muted-foreground">Resterende uren ({formatScheduleForDate(today, schedule)})</span>
+              <span className="text-[9px] text-muted-foreground/70 flex items-center gap-2">
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500/70" />open</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-muted-foreground/30" />gesloten</span>
+              </span>
             </div>
             <div className="flex gap-1 overflow-x-auto pb-1">
-              {todayOpenHours.map((h) => {
+              {todayHourly.map((h) => {
                 const isCurrent = h.localHour === currentHour;
+                const isOpen = openHoursToday.has(h.localHour);
                 return (
                   <div key={h.localHour} className={cn(
                     "flex flex-col items-center min-w-[40px] text-center rounded-lg px-1 py-1 transition-all",
-                    isCurrent ? "bg-card border border-foreground/20 shadow-sm" : ""
-                  )}>
-                    <span className={cn("text-[9px]", isCurrent ? "text-foreground font-semibold" : "text-muted-foreground")}>{isCurrent ? "Nu" : `${h.localHour}:00`}</span>
+                    isCurrent ? "bg-card border border-foreground/20 shadow-sm" : "",
+                    !isOpen && "opacity-40 grayscale"
+                  )} title={isOpen ? "Open" : "Buiten openingstijden"}>
+                    <span className={cn("text-[9px]", isCurrent ? "text-foreground font-semibold" : "text-muted-foreground")}>
+                      {isCurrent ? "Nu" : `${h.localHour}:00`}
+                    </span>
                     <span className="text-xs">{h.icon}</span>
                     <span className={cn("text-[10px] font-medium")}>{h.temperatureC}°</span>
                     {h.precipitationChance > 30 && <span className="text-[8px] text-blue-500 flex items-center gap-0.5"><Droplets className="h-2 w-2" />{h.precipitationChance}%</span>}
+                    {!isOpen && <span className="text-[8px] text-muted-foreground">dicht</span>}
                   </div>
                 );
               })}
