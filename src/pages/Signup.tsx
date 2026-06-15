@@ -160,9 +160,10 @@ const Signup = () => {
       {[
         { key: "account", label: "Account", icon: User },
         { key: "business", label: "Bedrijf", icon: Store },
+        { key: "plan", label: "Plan", icon: Sparkles },
         { key: "done", label: "Klaar", icon: Check },
       ].map((s, i) => {
-        const steps: Step[] = ["account", "business", "done"];
+        const steps: Step[] = ["account", "business", "plan", "done"];
         const currentIdx = steps.indexOf(step);
         const stepIdx = steps.indexOf(s.key as Step);
         const isActive = stepIdx === currentIdx;
