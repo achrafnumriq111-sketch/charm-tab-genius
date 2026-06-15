@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // CHECK 7 — staff cannot insert into loc2
+    // CHECK 7 — staff cannot insert into loc2 (products)
     {
       const { error } = await staffA.from("products").insert({
         name: "cross-location-leak", location_id: A.loc2Id, price: 1, vat_rate: 9, is_active: true,
@@ -219,6 +219,58 @@ Deno.serve(async (req) => {
         name: "staff_at_loc1_cannot_insert_into_loc2",
         status: error ? "pass" : "fail",
         details: { error_code: error?.code },
+      });
+    }
+
+    // CHECK 7b — staff cross-location READ blocked across all location-scoped tables
+    const crossReadTables: Array<{ tbl: string; col?: string }> = [
+      { tbl: "products" },
+      { tbl: "floor_zones" },
+      { tbl: "floor_tables" },
+      { tbl: "inventory_items" },
+      { tbl: "discounts" },
+      { tbl: "location_settings" },
+      { tbl: "vat_category_rates" },
+      { tbl: "qr_orders" },
+      { tbl: "pos_transactions" },
+      { tbl: "cash_closings" },
+    ];
+    for (const { tbl } of crossReadTables) {
+      const { data, error } = await (staffA as any).from(tbl).select("id").eq("location_id", A.loc2Id);
+      const leaked = (data ?? []).length;
+      checks.push({
+        name: `staff_at_loc1_cannot_read_loc2_${tbl}`,
+        status: leaked === 0 ? "pass" : "fail",
+        details: { leaked_rows: leaked, error: error?.message },
+      });
+    }
+
+    // CHECK 7c — staff cross-location INSERT blocked
+    const crossInsertCases: Array<{ tbl: string; row: Record<string, unknown> }> = [
+      { tbl: "products", row: { name: "x-leak", location_id: A.loc2Id, price: 1, vat_rate: 9, is_active: true } },
+      { tbl: "floor_zones", row: { name: "x-leak", location_id: A.loc2Id, sort_order: 99 } },
+      { tbl: "inventory_items", row: { name: "x-leak", unit: "g", location_id: A.loc2Id, tenant_id: A.tenantId, current_stock: 0, par_level: 0 } },
+      { tbl: "discounts", row: { name: "x-leak", location_id: A.loc2Id, type: "percent", value: 5, is_active: true } },
+      { tbl: "vat_category_rates", row: { category: "food", rate: 9, location_id: A.loc2Id } },
+    ];
+    for (const { tbl, row } of crossInsertCases) {
+      const { error } = await (staffA as any).from(tbl).insert(row);
+      checks.push({
+        name: `staff_at_loc1_cannot_insert_into_loc2_${tbl}`,
+        status: error ? "pass" : "fail",
+        details: { error_code: error?.code, error_message: error?.message?.slice(0, 200) },
+      });
+    }
+
+    // CHECK 7d — staff cross-location UPDATE blocked (try to bump a product price in loc2)
+    {
+      const { data, error } = await staffA.from("products").update({ price: 99 })
+        .eq("location_id", A.loc2Id).select();
+      const mutated = (data ?? []).length;
+      checks.push({
+        name: "staff_at_loc1_cannot_update_loc2_products",
+        status: mutated === 0 ? "pass" : "fail",
+        details: { mutated_rows: mutated, error: error?.message },
       });
     }
 
