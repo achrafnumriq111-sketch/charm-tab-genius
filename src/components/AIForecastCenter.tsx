@@ -812,8 +812,14 @@ function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: Norm
         </CardContent></Card>
         <Card className="rounded-2xl"><CardContent className="p-4">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">Open uren</div>
-          <div className="text-xl font-bold">{formatSchedule(todayDow, schedule)}</div>
-          <div className="text-xs text-muted-foreground">{getTotalOpenHours(todayDow, schedule)} uur</div>
+          <div className="text-xl font-bold">{formatScheduleForDate(today, schedule)}</div>
+          <div className="text-xs text-muted-foreground">{getTotalOpenHoursForDate(today, schedule)} uur</div>
+        </CardContent></Card>
+      </div>
+
+      <Card className="rounded-2xl"><CardContent className="p-3 text-[10px] text-muted-foreground flex items-center gap-2">
+        <Info className="h-3 w-3 shrink-0" />
+        Uren buiten {formatScheduleForDate(today, schedule)} worden niet meegerekend in dit personeelsadvies.
         </CardContent></Card>
       </div>
 
