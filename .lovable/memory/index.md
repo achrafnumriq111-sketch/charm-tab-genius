@@ -14,6 +14,7 @@
 - Platform admin: separate role via platform_admins table, /admin panel.
 
 ## Memories
+- [Auros theme tokens](mem://ui/auros-theme) — Global dark teal abyssal theme, palette, gradients, fonts, radius
 - [DOTTS brand](mem://brand/dotts) — Product brand DOTTS vs tenant SAAKOUK; what to rename and what not to touch
 - [SaaS Tenant Model](mem://features/saas-tenant-model) — Tenants table, self-service onboarding, subdomain routing
 - [Layout Design](mem://ui/layout-design) — Compact icon-centric sidebar, wrapping POS categories
