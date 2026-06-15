@@ -19,6 +19,7 @@ const TeamStaff = lazy(() => import("./pages/TeamStaff.tsx"));
 const SettingsFeatures = lazy(() => import("./pages/SettingsFeatures.tsx"));
 const SettingsBilling = lazy(() => import("./pages/SettingsBilling.tsx"));
 const BillingCheckout = lazy(() => import("./pages/BillingCheckout.tsx"));
+const Reports = lazy(() => import("./pages/Reports.tsx"));
 import { SubscriptionGate } from "@/components/SubscriptionGate";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
