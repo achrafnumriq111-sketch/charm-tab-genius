@@ -47,7 +47,8 @@ const PROVIDERS = [
 ];
 
 export default function Marketplace() {
-  const { locationId } = useLocation();
+  const { activeLocation } = useLocation_();
+  const locationId = activeLocation?.id;
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [orders, setOrders] = useState<MarketplaceOrder[]>([]);
   const [loading, setLoading] = useState(true);
