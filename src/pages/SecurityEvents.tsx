@@ -299,7 +299,7 @@ export default function SecurityEvents() {
                   <th className="px-3 py-2 font-medium text-slate-600">Table</th>
                   <th className="px-3 py-2 font-medium text-slate-600">Code</th>
                   <th className="px-3 py-2 font-medium text-slate-600">User</th>
-                  <th className="px-3 py-2 font-medium text-slate-600">Tenant</th>
+                  <th className="px-3 py-2 font-medium text-slate-600">Customer</th>
                   <th className="px-3 py-2 font-medium text-slate-600">Details</th>
                 </tr>
               </thead>
