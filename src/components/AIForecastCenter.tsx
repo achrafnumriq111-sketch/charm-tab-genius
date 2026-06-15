@@ -820,8 +820,8 @@ function StaffingTab({ data, daily, hourly, schedule }: { data: any; daily: Norm
       <Card className="rounded-2xl"><CardContent className="p-3 text-[10px] text-muted-foreground flex items-center gap-2">
         <Info className="h-3 w-3 shrink-0" />
         Uren buiten {formatScheduleForDate(today, schedule)} worden niet meegerekend in dit personeelsadvies.
-        </CardContent></Card>
-      </div>
+      </CardContent></Card>
+
 
       <Card className="rounded-2xl">
         <CardHeader className="p-4 pb-2"><CardTitle className="text-sm flex items-center gap-2">
