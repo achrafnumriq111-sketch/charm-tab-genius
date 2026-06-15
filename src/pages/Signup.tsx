@@ -113,15 +113,28 @@ const Signup = () => {
       _owner_name: ownerName.trim(),
       _city: city.trim(),
       _address: address.trim(),
+      _plan_type: plan,
     });
 
-    setLoading(false);
     if (rpcError) {
+      setLoading(false);
       setError(rpcError.message);
       return;
     }
 
     setResult(data);
+
+    // Optionally seed demo data
+    if (seedDemo && (data as any)?.location_id) {
+      try {
+        await supabase.rpc("seed_demo_data", { _location_id: (data as any).location_id });
+      } catch (e) {
+        // Non-fatal — continue to done step
+        console.warn("Demo seed failed", e);
+      }
+    }
+
+    setLoading(false);
     setStep("done");
   };
 
