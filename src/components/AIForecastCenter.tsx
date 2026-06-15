@@ -208,7 +208,7 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
       {/* Weather Strip */}
       <WeatherStrip daily={daily} hourly={hourly} currentWeather={currentWeather}
         weatherSource={weatherSource} weatherLoading={weatherLoading} liveTime={liveTime}
-        lastUpdated={lastUpdated} fetchWeather={fetchWeather} />
+        lastUpdated={lastUpdated} fetchWeather={fetchWeather} schedule={schedule} />
 
       {/* Content */}
       {forecastLoading && (
