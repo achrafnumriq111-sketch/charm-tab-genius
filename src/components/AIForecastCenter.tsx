@@ -69,6 +69,25 @@ export function AIForecastCenter({ onToast }: { onToast?: (msg: string) => void 
   const [segment, setSegment] = useState<SegmentKey>("revenue");
   const [range, setRange] = useState<RangeKey>("7d");
 
+  // Per-location opening hours (drives "open hours only" forecast logic)
+  const { activeLocation } = useLocation_();
+  const [schedule, setSchedule] = useState<LocationSchedule>(() => getDefaultSchedule());
+  useEffect(() => {
+    const locId = activeLocation?.id;
+    if (!locId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("location_settings")
+        .select("opening_hours")
+        .eq("location_id", locId)
+        .maybeSingle();
+      if (cancelled) return;
+      setSchedule(normalizeSchedule((data as any)?.opening_hours));
+    })();
+    return () => { cancelled = true; };
+  }, [activeLocation?.id]);
+
   // Weather state
   const [daily, setDaily] = useState<NormalizedDailyWeather[]>([]);
   const [hourly, setHourly] = useState<NormalizedHourlyWeather[]>([]);
