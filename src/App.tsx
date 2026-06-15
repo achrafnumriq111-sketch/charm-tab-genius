@@ -21,6 +21,7 @@ const SettingsFeatures = lazy(() => import("./pages/SettingsFeatures.tsx"));
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Menu = lazy(() => import("./pages/Menu.tsx"));
 const PlatformAdmin = lazy(() => import("./pages/PlatformAdmin.tsx"));
+const Jarvis = lazy(() => import("./pages/Jarvis.tsx"));
 const QAReport = lazy(() => import("./pages/QAReport.tsx"));
 const SecurityEvents = lazy(() => import("./pages/SecurityEvents.tsx"));
 const OfflineAdmin = lazy(() => import("./pages/OfflineAdmin.tsx"));
@@ -51,6 +52,7 @@ const AppRoutes = () => {
         <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
         <Route path="/settings/security" element={<ProtectedRoute><SecuritySettings /></ProtectedRoute>} />
         <Route path="/admin" element={<PlatformAdmin />} />
+        <Route path="/admin/jarvis" element={<Jarvis />} />
         <Route path="/admin/qa-report" element={<QAReport />} />
         <Route path="/admin/security-events" element={<SecurityEvents />} />
         <Route path="/admin/offline" element={<ProtectedRoute><OfflineAdmin /></ProtectedRoute>} />
