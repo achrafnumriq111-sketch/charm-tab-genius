@@ -4463,18 +4463,38 @@ function OpeningHoursCard({ locationId, onToast }: { locationId?: string; onToas
   const hasErrors = warnings.some(w => w.severity === "error");
 
   async function save() {
-    if (!locationId) return;
+    if (!locationId) { onToast?.("Geen actieve locatie geselecteerd"); return; }
     if (hasErrors) { onToast?.("Los eerst de fouten op."); return; }
     setSaving(true);
     try {
+      const { data: userRes } = await supabase.auth.getUser();
+      if (!userRes?.user) {
+        onToast?.("Niet ingelogd — log opnieuw in om openingstijden op te slaan.");
+        return;
+      }
       const payload = { days: cfg.days, exceptions: cfg.exceptions };
       const { error } = await supabase
         .from("location_settings")
         .upsert({ location_id: locationId, opening_hours: payload as any }, { onConflict: "location_id" });
-      if (error) throw error;
+      if (error) {
+        const code = (error as any).code || "";
+        const msg = error.message || "";
+        if (code === "42501" || /row-level security|permission denied|violates.*policy/i.test(msg)) {
+          onToast?.("Geen rechten om openingstijden op te slaan voor deze locatie. Vraag de eigenaar of een manager, of controleer of je aan deze locatie gekoppeld bent.");
+        } else if (code === "23505") {
+          onToast?.("Conflict bij opslaan (dubbele record). Herlaad de pagina en probeer opnieuw.");
+        } else if (code === "PGRST301" || /jwt|expired/i.test(msg)) {
+          onToast?.("Sessie verlopen — log opnieuw in en probeer nogmaals.");
+        } else {
+          onToast?.(`Opslaan mislukt${code ? ` [${code}]` : ""}: ${msg || "onbekende fout"}`);
+        }
+        console.error("[OpeningHours] save error", { code, message: msg, details: (error as any).details, hint: (error as any).hint });
+        return;
+      }
       onToast?.("Openingstijden opgeslagen");
     } catch (e: any) {
-      onToast?.(`Opslaan mislukt: ${e.message}`);
+      console.error("[OpeningHours] unexpected save error", e);
+      onToast?.(`Opslaan mislukt: ${e?.message || "onbekende fout"}`);
     } finally {
       setSaving(false);
     }
