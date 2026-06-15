@@ -3213,6 +3213,14 @@ export type Database = {
         }
         Returns: number
       }
+      qa_structural_isolation_checks: {
+        Args: never
+        Returns: {
+          check_name: string
+          details: Json
+          status: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
