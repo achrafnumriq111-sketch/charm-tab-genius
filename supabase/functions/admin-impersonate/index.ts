@@ -78,19 +78,57 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get the tenant owner's employee record to find their location
-      const { data: ownerEmployee } = await admin
+      // Get the tenant owner's employee record to find their location.
+      // Fallback: any active owner-role employee within the tenant, then any active employee,
+      // then synthesize a virtual record from the first location (QA/empty tenants).
+      let ownerEmployee:
+        | { id: string | null; full_name: string; role: string; location_id: string | null }
+        | null = null;
+
+      const { data: byOwnerUser } = await admin
         .from("employees")
-        .select("id, full_name, role, location_id")
+        .select("id, full_name, role, location_id, locations!inner(tenant_id)")
         .eq("user_id", tenant.owner_user_id)
         .eq("is_active", true)
-        .single();
+        .eq("locations.tenant_id", tenant.id)
+        .maybeSingle();
+      if (byOwnerUser) ownerEmployee = byOwnerUser as any;
 
       if (!ownerEmployee) {
-        return new Response(JSON.stringify({ error: "Tenant owner employee niet gevonden" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const { data: anyEmp } = await admin
+          .from("employees")
+          .select("id, full_name, role, location_id, locations!inner(tenant_id)")
+          .eq("locations.tenant_id", tenant.id)
+          .eq("is_active", true)
+          .order("role", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (anyEmp) ownerEmployee = anyEmp as any;
       }
+
+      if (!ownerEmployee) {
+        const { data: firstLoc } = await admin
+          .from("locations")
+          .select("id")
+          .eq("tenant_id", tenant.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (!firstLoc) {
+          return new Response(JSON.stringify({ error: "Tenant heeft geen locaties" }), {
+            status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        ownerEmployee = {
+          id: null,
+          full_name: `${tenant.name} (admin)`,
+          role: "owner",
+          location_id: firstLoc.id,
+        };
+      }
+
 
       // Log the impersonation (platform-only log, not in tenant audit)
       const { data: logEntry } = await admin
