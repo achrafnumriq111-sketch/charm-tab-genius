@@ -17,8 +17,25 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b border-border/60 backdrop-blur-xl bg-background/70">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="w-7 h-7 rounded-lg bg-foreground text-background grid place-items-center text-xs">·</span>
+          <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight text-foreground">
+            <motion.span
+              whileHover={{ rotateX: 12, rotateY: -12, scale: 1.08 }}
+              transition={{ type: "spring", stiffness: 220, damping: 16 }}
+              style={{ transformStyle: "preserve-3d", perspective: 400 }}
+              className="w-7 h-7 rounded-lg grid place-items-center text-xs text-foreground"
+            >
+              <span
+                className="w-full h-full rounded-lg grid place-items-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(var(--auros-teal) / 0.4), hsl(var(--auros-lilac) / 0.25))",
+                  boxShadow:
+                    "inset 0 1px 0 hsl(var(--auros-ice) / 0.3), inset 0 -4px 8px hsl(var(--auros-abyss) / 0.6), 0 6px 14px -6px hsl(var(--auros-teal) / 0.5)",
+                }}
+              >
+                ·
+              </span>
+            </motion.span>
             DOTTS
           </Link>
           <nav className="hidden md:flex items-center gap-1">
@@ -46,7 +63,13 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link
               to="/signup"
-              className="px-4 py-1.5 rounded-md text-sm bg-foreground text-background hover:opacity-90 transition-opacity"
+              className="px-4 py-1.5 rounded-md text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(var(--auros-teal)), hsl(var(--auros-lilac)))",
+                boxShadow:
+                  "0 8px 20px -8px hsl(var(--auros-teal) / 0.55), inset 0 1px 0 hsl(var(--auros-ice) / 0.25)",
+              }}
             >
               Start gratis
             </Link>
