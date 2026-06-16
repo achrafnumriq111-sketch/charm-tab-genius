@@ -94,11 +94,11 @@ export default function Devices() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-xl font-semibold mb-1"
-        style={{ color: "#2a2a3a" }}
+        style={{ color: "hsl(var(--foreground))" }}
       >
         Vertrouwde apparaten
       </motion.h1>
-      <p className="text-xs mb-6" style={{ color: "#8b8b9e" }}>
+      <p className="text-xs mb-6" style={{ color: "hsl(var(--muted-foreground))" }}>
         Koppel iPads en kassa's aan jouw zaak. Gekoppelde apparaten hoeven alleen nog een PIN in te voeren.
       </p>
 
@@ -106,36 +106,36 @@ export default function Devices() {
       <div
         className="rounded-2xl p-5 mb-6"
         style={{
-          background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-          border: "1px solid rgba(255,255,255,0.72)",
-          boxShadow: "0 12px 40px rgba(160,175,219,0.12)",
+          background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+          border: "1px solid hsl(var(--card))",
+          boxShadow: "0 12px 40px hsl(var(--auros-abyss) / 0.6)",
         }}
       >
         <div className="flex items-center gap-2 mb-3">
-          <Plus className="w-4 h-4" style={{ color: "#7c6bc4" }} />
-          <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>Nieuw apparaat koppelen</span>
+          <Plus className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} />
+          <span className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>Nieuw apparaat koppelen</span>
         </div>
 
         {pairCode ? (
           <div className="text-center py-4">
-            <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "#8b8b9e" }}>
+            <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>
               Koppelcode (geldig 5 min)
             </div>
             <div
               className="text-4xl font-bold mb-3 cursor-pointer inline-flex items-center gap-3"
-              style={{ color: "#2a2a3a", letterSpacing: "0.3em", fontVariantNumeric: "tabular-nums" }}
+              style={{ color: "hsl(var(--foreground))", letterSpacing: "0.3em", fontVariantNumeric: "tabular-nums" }}
               onClick={copy}
             >
               {pairCode.code}
-              {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" style={{ color: "#9b9bab" }} />}
+              {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" style={{ color: "hsl(var(--muted-foreground))" }} />}
             </div>
-            <div className="text-xs mb-4" style={{ color: "#8b8b9e" }}>
+            <div className="text-xs mb-4" style={{ color: "hsl(var(--muted-foreground))" }}>
               Open <span className="font-mono">/pair</span> op de nieuwe iPad en voer deze code in.
             </div>
             <button
               onClick={() => setPairCode(null)}
               className="text-xs underline"
-              style={{ color: "#7c6bc4" }}
+              style={{ color: "hsl(var(--primary))" }}
             >
               Nieuwe code maken
             </button>
@@ -147,15 +147,15 @@ export default function Devices() {
               onChange={(e) => setDeviceName(e.target.value)}
               placeholder="Bijv. Kassa 1, Bar iPad"
               className="flex-1 h-10 px-3 rounded-lg text-sm outline-none"
-              style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.08)" }}
+              style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.08)" }}
             />
             <button
               onClick={generate}
               disabled={generating || !deviceName.trim()}
               className="h-10 px-4 rounded-lg text-sm font-semibold disabled:opacity-40"
               style={{
-                background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                color: "#fff",
+                background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                color: "hsl(var(--primary-foreground))",
               }}
             >
               {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Genereer code"}
@@ -174,7 +174,7 @@ export default function Devices() {
       {loading ? (
         <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin" /></div>
       ) : devices.length === 0 ? (
-        <div className="text-center py-10 text-sm" style={{ color: "#9b9bab" }}>
+        <div className="text-center py-10 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
           Nog geen gekoppelde apparaten.
         </div>
       ) : (
@@ -184,19 +184,19 @@ export default function Devices() {
               key={d.id}
               className="flex items-center gap-3 p-3 rounded-xl"
               style={{
-                background: "rgba(255,255,255,0.6)",
+                background: "hsl(var(--card))",
                 border: "1px solid rgba(0,0,0,0.05)",
                 opacity: d.revoked_at ? 0.55 : 1,
               }}
             >
               {d.revoked_at
-                ? <ShieldOff className="w-4 h-4" style={{ color: "#9b9bab" }} />
+                ? <ShieldOff className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
                 : <ShieldCheck className="w-4 h-4" style={{ color: "#22c55e" }} />}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate" style={{ color: "#2a2a3a" }}>
+                <div className="text-sm font-medium truncate" style={{ color: "hsl(var(--foreground))" }}>
                   {d.device_name}
                 </div>
-                <div className="text-[11px]" style={{ color: "#9b9bab" }}>
+                <div className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                   {d.revoked_at
                     ? `Ingetrokken ${new Date(d.revoked_at).toLocaleString("nl-NL")}`
                     : d.last_seen_at

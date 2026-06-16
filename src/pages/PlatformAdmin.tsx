@@ -67,9 +67,9 @@ const ALL_FEATURES = [
 ];
 
 const glassCard = {
-  background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-  border: "1px solid rgba(255,255,255,0.72)",
-  boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 12px 40px rgba(160,175,219,0.12)",
+  background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+  border: "1px solid hsl(var(--card))",
+  boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 12px 40px hsl(var(--auros-abyss) / 0.6)",
   backdropFilter: "blur(14px)",
 };
 
@@ -85,7 +85,7 @@ function FeatureFlagsPanel({ tenantId, flags, onToggle }: { tenantId: string; fl
     <div>
       <div className="flex items-center gap-2 mb-2">
         <Zap className="w-3.5 h-3.5" style={{ color: "#f59e0b" }} />
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#5a5a72" }}>
+        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "hsl(var(--foreground))" }}>
           Feature Flags
         </span>
       </div>
@@ -105,7 +105,7 @@ function FeatureFlagsPanel({ tenantId, flags, onToggle }: { tenantId: string; fl
             >
               <span className="text-sm">{f.icon}</span>
               <div>
-                <div className="text-[10px] font-semibold" style={{ color: enabled ? "#16a34a" : "#9b9bab" }}>
+                <div className="text-[10px] font-semibold" style={{ color: enabled ? "#16a34a" : "hsl(var(--muted-foreground))" }}>
                   {f.label}
                 </div>
                 <div className="text-[8px] uppercase tracking-wider" style={{ color: enabled ? "#22c55e" : "#c4c4d0" }}>
@@ -210,7 +210,7 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#7c6bc4" }} />
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(var(--primary))" }} />
       </div>
     );
   }
@@ -231,11 +231,11 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
             <div className="space-y-3">
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#8b8b9e" }}>Naam</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>Naam</label>
                   <input value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full mt-1 h-9 px-3 rounded-lg text-sm border" style={{ borderColor: "rgba(0,0,0,0.08)", background: "white" }} />
                 </div>
                 <div className="w-36">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#8b8b9e" }}>Plan</label>
+                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>Plan</label>
                   <select value={editPlan} onChange={(e) => setEditPlan(e.target.value)} className="w-full mt-1 h-9 px-3 rounded-lg text-sm border" style={{ borderColor: "rgba(0,0,0,0.08)", background: "white" }}>
                     <option value="free">Free</option>
                     <option value="starter">Starter</option>
@@ -245,10 +245,10 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
                 </div>
               </div>
               <div className="flex gap-2 justify-end">
-                <button onClick={() => setEditing(false)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1" style={{ color: "#8b8b9e" }}>
+                <button onClick={() => setEditing(false)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1" style={{ color: "hsl(var(--muted-foreground))" }}>
                   <X className="w-3.5 h-3.5" /> Annuleren
                 </button>
-                <button onClick={handleSave} disabled={saving} className="h-8 px-4 rounded-lg text-xs font-medium flex items-center gap-1 text-white" style={{ background: "linear-gradient(135deg, #7c6bc4, #6366f1)" }}>
+                <button onClick={handleSave} disabled={saving} className="h-8 px-4 rounded-lg text-xs font-medium flex items-center gap-1 text-white" style={{ background: "linear-gradient(135deg, hsl(var(--primary)), #6366f1)" }}>
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   Opslaan
                 </button>
@@ -258,27 +258,27 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
             <div className="flex items-center justify-between">
               <div className="grid grid-cols-4 gap-6 flex-1">
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#8b8b9e" }}>Slug</div>
-                  <div className="text-sm font-mono" style={{ color: "#2a2a3a" }}>{tenant.slug}</div>
+                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>Slug</div>
+                  <div className="text-sm font-mono" style={{ color: "hsl(var(--foreground))" }}>{tenant.slug}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#8b8b9e" }}>Omzet 7d</div>
+                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>Omzet 7d</div>
                   <div className="text-sm font-bold" style={{ color: "#16a34a" }}>{euro(stats.revenue7d)}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#8b8b9e" }}>Orders 7d</div>
-                  <div className="text-sm font-bold" style={{ color: "#2a2a3a" }}>{stats.orderCount7d}</div>
+                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>Orders 7d</div>
+                  <div className="text-sm font-bold" style={{ color: "hsl(var(--foreground))" }}>{stats.orderCount7d}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#8b8b9e" }}>Aangemaakt</div>
-                  <div className="text-sm" style={{ color: "#2a2a3a" }}>{new Date(tenant.created_at).toLocaleDateString("nl-NL")}</div>
+                  <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>Aangemaakt</div>
+                  <div className="text-sm" style={{ color: "hsl(var(--foreground))" }}>{new Date(tenant.created_at).toLocaleDateString("nl-NL")}</div>
                 </div>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => onImpersonate(tenant)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 text-white" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>
                   <Eye className="w-3.5 h-3.5" /> Bekijk als customer
                 </button>
-                <button onClick={() => setEditing(true)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors hover:bg-card/60" style={{ color: "#7c6bc4" }}>
+                <button onClick={() => setEditing(true)} className="h-8 px-3 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors hover:bg-card/60" style={{ color: "hsl(var(--primary))" }}>
                   <Edit2 className="w-3.5 h-3.5" /> Bewerken
                 </button>
               </div>
@@ -292,18 +292,18 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
         {/* Locations */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <MapPin className="w-3.5 h-3.5" style={{ color: "#7c6bc4" }} />
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#5a5a72" }}>Locaties ({stats.locations.length})</span>
+            <MapPin className="w-3.5 h-3.5" style={{ color: "hsl(var(--primary))" }} />
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "hsl(var(--foreground))" }}>Locaties ({stats.locations.length})</span>
           </div>
           <div className="space-y-2">
             {stats.locations.length === 0 ? (
-              <div className="text-xs py-3 text-center" style={{ color: "#9b9bab" }}>Geen locaties</div>
+              <div className="text-xs py-3 text-center" style={{ color: "hsl(var(--muted-foreground))" }}>Geen locaties</div>
             ) : (
               stats.locations.map((loc) => (
                 <div key={loc.id} className="rounded-lg p-3 flex items-center justify-between" style={{ ...glassCard, opacity: loc.is_active ? 1 : 0.5 }}>
                   <div>
-                    <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{loc.name}</span>
-                    <span className="text-[11px] ml-2" style={{ color: "#8b8b9e" }}>{loc.city} · {loc.address}</span>
+                    <span className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{loc.name}</span>
+                    <span className="text-[11px] ml-2" style={{ color: "hsl(var(--muted-foreground))" }}>{loc.city} · {loc.address}</span>
                   </div>
                   <button onClick={() => toggleLocation(loc)} className="text-[10px] px-2 py-1 rounded-lg font-medium" style={{ background: loc.is_active ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.1)", color: loc.is_active ? "#dc2626" : "#16a34a" }}>
                     {loc.is_active ? "Deactiveer" : "Activeer"}
@@ -317,18 +317,18 @@ function TenantDetail({ tenant, onRefresh, onImpersonate }: { tenant: TenantRow;
         {/* Employees */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-3.5 h-3.5" style={{ color: "#7c6bc4" }} />
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#5a5a72" }}>Medewerkers ({stats.employees.length})</span>
+            <Users className="w-3.5 h-3.5" style={{ color: "hsl(var(--primary))" }} />
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "hsl(var(--foreground))" }}>Medewerkers ({stats.employees.length})</span>
           </div>
           <div className="space-y-1">
             {stats.employees.length === 0 ? (
-              <div className="text-xs py-3 text-center" style={{ color: "#9b9bab" }}>Geen medewerkers</div>
+              <div className="text-xs py-3 text-center" style={{ color: "hsl(var(--muted-foreground))" }}>Geen medewerkers</div>
             ) : (
               stats.employees.map((emp) => (
                 <div key={emp.id} className="rounded-lg px-3 py-2 flex items-center justify-between" style={{ ...glassCard, opacity: emp.is_active ? 1 : 0.5 }}>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium" style={{ color: "#2a2a3a" }}>{emp.full_name}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase" style={{ background: "rgba(172,155,255,0.12)", color: "#7c6bc4" }}>{emp.role}</span>
+                    <span className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>{emp.full_name}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase" style={{ background: "hsl(var(--auros-teal) / 0.12)", color: "hsl(var(--primary))" }}>{emp.role}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {emp.last_login_at && (
@@ -418,11 +418,11 @@ function ImpersonationLogTable() {
             <FileText className="w-4 h-4" style={{ color: "#f59e0b" }} />
           </div>
           <div className="text-left">
-            <div className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>Impersonation Log</div>
-            <div className="text-[10px]" style={{ color: "#9b9bab" }}>Overzicht van alle customer-sessies</div>
+            <div className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>Impersonation Log</div>
+            <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>Overzicht van alle customer-sessies</div>
           </div>
         </div>
-        {open ? <ChevronUp className="w-4 h-4" style={{ color: "#8b8b9e" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "#8b8b9e" }} />}
+        {open ? <ChevronUp className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} /> : <ChevronDown className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />}
       </button>
       <AnimatePresence>
         {open && (
@@ -435,32 +435,32 @@ function ImpersonationLogTable() {
             <div className="rounded-b-xl p-4 space-y-2" style={{ ...glassCard, borderTop: "none", borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
               {loading ? (
                 <div className="flex justify-center py-4">
-                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#7c6bc4" }} />
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(var(--primary))" }} />
                 </div>
               ) : logs.length === 0 ? (
-                <div className="text-xs text-center py-4" style={{ color: "#9b9bab" }}>Nog geen impersonation sessies</div>
+                <div className="text-xs text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>Nog geen impersonation sessies</div>
               ) : (
                 <div className="space-y-1.5">
                   <div className="grid grid-cols-4 gap-2 px-3 py-1">
-                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Customer</span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Gestart</span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Gestopt</span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "#8b8b9e" }}>Duur</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(var(--muted-foreground))" }}>Customer</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(var(--muted-foreground))" }}>Gestart</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(var(--muted-foreground))" }}>Gestopt</span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(var(--muted-foreground))" }}>Duur</span>
                   </div>
                   {logs.map((log) => (
-                    <div key={log.id} className="grid grid-cols-4 gap-2 rounded-lg px-3 py-2 items-center" style={{ background: "rgba(255,255,255,0.5)" }}>
-                      <span className="text-xs font-medium" style={{ color: "#2a2a3a" }}>{log.target_tenant_name || "Onbekend"}</span>
-                      <span className="text-[11px]" style={{ color: "#5a5a72" }}>
+                    <div key={log.id} className="grid grid-cols-4 gap-2 rounded-lg px-3 py-2 items-center" style={{ background: "hsl(var(--card))" }}>
+                      <span className="text-xs font-medium" style={{ color: "hsl(var(--foreground))" }}>{log.target_tenant_name || "Onbekend"}</span>
+                      <span className="text-[11px]" style={{ color: "hsl(var(--foreground))" }}>
                         {new Date(log.started_at).toLocaleString("nl-NL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </span>
-                      <span className="text-[11px]" style={{ color: log.ended_at ? "#5a5a72" : "#f59e0b" }}>
+                      <span className="text-[11px]" style={{ color: log.ended_at ? "hsl(var(--foreground))" : "#f59e0b" }}>
                         {log.ended_at
                           ? new Date(log.ended_at).toLocaleString("nl-NL", { hour: "2-digit", minute: "2-digit" })
                           : "— Actief —"}
                       </span>
                       <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" style={{ color: log.ended_at ? "#9b9bab" : "#f59e0b" }} />
-                        <span className="text-[11px] font-medium" style={{ color: log.ended_at ? "#5a5a72" : "#f59e0b" }}>
+                        <Clock className="w-3 h-3" style={{ color: log.ended_at ? "hsl(var(--muted-foreground))" : "#f59e0b" }} />
+                        <span className="text-[11px] font-medium" style={{ color: log.ended_at ? "hsl(var(--foreground))" : "#f59e0b" }}>
                           {formatDuration(log.started_at, log.ended_at)}
                         </span>
                       </div>
@@ -614,7 +614,7 @@ const PlatformAdmin = () => {
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#f0f2f8" }}>
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#7c6bc4" }} />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "hsl(var(--primary))" }} />
       </div>
     );
   }
@@ -624,8 +624,8 @@ const PlatformAdmin = () => {
       className="min-h-screen p-4 md:p-8"
       style={{
         background:
-          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+          "radial-gradient(ellipse at 20% 20%, hsl(var(--auros-lilac) / 0.35), transparent 50%), " +
+          "radial-gradient(ellipse at 80% 30%, hsl(var(--auros-lilac) / 0.25), transparent 50%), " +
           "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
         paddingTop: impersonating ? "52px" : undefined,
       }}
@@ -640,12 +640,12 @@ const PlatformAdmin = () => {
       <div className="max-w-5xl mx-auto mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))", border: "1px solid rgba(255,255,255,0.6)" }}>
-              <Shield className="w-5 h-5" style={{ color: "#5a5a72" }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.3), hsl(var(--auros-lilac) / 0.4))", border: "1px solid hsl(var(--card))" }}>
+              <Shield className="w-5 h-5" style={{ color: "hsl(var(--foreground))" }} />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight" style={{ color: "#2a2a3a" }}>Platform Admin</h1>
-              <p className="text-xs" style={{ color: "#9b9bab" }}>Beheer customers · feature flags · impersonation</p>
+              <h1 className="text-lg font-bold tracking-tight" style={{ color: "hsl(var(--foreground))" }}>Platform Admin</h1>
+              <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Beheer customers · feature flags · impersonation</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -665,10 +665,10 @@ const PlatformAdmin = () => {
             >
               <Shield className="w-3.5 h-3.5" /> Security
             </button>
-            <button onClick={fetchTenants} className="h-9 w-9 rounded-xl flex items-center justify-center transition-colors hover:bg-card/50" style={{ color: "#8b8b9e" }}>
+            <button onClick={fetchTenants} className="h-9 w-9 rounded-xl flex items-center justify-center transition-colors hover:bg-card/50" style={{ color: "hsl(var(--muted-foreground))" }}>
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button onClick={handleLogout} className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-card/50" style={{ color: "#8b8b9e" }}>
+            <button onClick={handleLogout} className="h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs font-medium transition-colors hover:bg-card/50" style={{ color: "hsl(var(--muted-foreground))" }}>
               <LogOut className="w-3.5 h-3.5" /> Uitloggen
             </button>
           </div>
@@ -687,10 +687,10 @@ const PlatformAdmin = () => {
         ].map((s) => (
           <div key={s.label} className="rounded-xl p-4" style={glassCard}>
             <div className="flex items-center gap-2 mb-1">
-              <s.icon className="w-3.5 h-3.5" style={{ color: "#9b9bab" }} />
-              <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "#8b8b9e" }}>{s.label}</span>
+              <s.icon className="w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
+              <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>{s.label}</span>
             </div>
-            <span className="text-2xl font-bold" style={{ color: "#2a2a3a" }}>{s.value}</span>
+            <span className="text-2xl font-bold" style={{ color: "hsl(var(--foreground))" }}>{s.value}</span>
           </div>
         ))}
       </div>
@@ -699,7 +699,7 @@ const PlatformAdmin = () => {
       <div className="max-w-5xl mx-auto">
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#7c6bc4" }} />
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "hsl(var(--primary))" }} />
           </div>
         ) : (
           <div className="space-y-3">
@@ -714,21 +714,21 @@ const PlatformAdmin = () => {
               >
                 <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpanded(expanded === t.id ? null : t.id)}>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold" style={{ background: t.is_active ? "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.2))" : "rgba(0,0,0,0.04)", color: t.is_active ? "#16a34a" : "#9b9bab" }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold" style={{ background: t.is_active ? "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.2))" : "rgba(0,0,0,0.04)", color: t.is_active ? "#16a34a" : "hsl(var(--muted-foreground))" }}>
                       {t.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{t.name}</span>
+                        <span className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{t.name}</span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider" style={{ background: t.is_active ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.08)", color: t.is_active ? "#16a34a" : "#dc2626" }}>
                           {t.is_active ? "Actief" : "Inactief"}
                         </span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider" style={{ background: "rgba(172,155,255,0.1)", color: "#7c6bc4" }}>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider" style={{ background: "hsl(var(--auros-teal) / 0.1)", color: "hsl(var(--primary))" }}>
                           {t.plan}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-[11px] font-mono" style={{ color: "#8b8b9e" }}>{t.slug}.dotts.app</span>
+                        <span className="text-[11px] font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>{t.slug}.dotts.app</span>
                         <span className="text-[10px]" style={{ color: "#b5b5c3" }}>{new Date(t.created_at).toLocaleDateString("nl-NL")}</span>
                       </div>
                     </div>
@@ -750,9 +750,9 @@ const PlatformAdmin = () => {
                       )}
                     </button>
                     {expanded === t.id ? (
-                      <ChevronUp className="w-4 h-4" style={{ color: "#8b8b9e" }} />
+                      <ChevronUp className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
                     ) : (
-                      <ChevronDown className="w-4 h-4" style={{ color: "#8b8b9e" }} />
+                      <ChevronDown className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
                     )}
                   </div>
                 </div>

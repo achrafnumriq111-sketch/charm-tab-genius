@@ -222,7 +222,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
         <div className="py-3 px-2 border-b border-border/50 flex flex-col items-center gap-0.5">
           <motion.div
             whileHover={{ scale: 1.08, rotate: -4 }}
-            className="w-9 h-9 rounded-full bg-accent border border-border/80 flex items-center justify-center text-xs font-bold text-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_8px_24px_rgba(172,155,255,0.18)]"
+            className="w-9 h-9 rounded-full bg-accent border border-border/80 flex items-center justify-center text-xs font-bold text-foreground shadow-[inset_0_1px_1px_hsl(var(--auros-ice) / 0.08),0_8px_24px_hsl(var(--auros-teal) / 0.18)]"
           >
             {employeeName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
           </motion.div>
@@ -334,7 +334,7 @@ function Sidebar({ active, setActive, role, onLogout, employeeName, locations, a
                   className={clsx(
                     "w-12 h-12 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center rounded-2xl text-[10px] leading-tight transition-all gap-0.5",
                     isActive
-                      ? "bg-accent/20 text-foreground font-medium shadow-[0_8px_30px_rgba(172,155,255,0.22)] border border-border/70"
+                      ? "bg-accent/20 text-foreground font-medium shadow-[0_8px_30px_hsl(var(--auros-teal) / 0.22)] border border-border/70"
                       : "hover:bg-card/50 text-muted-foreground"
                   )}
                 >
@@ -369,7 +369,7 @@ function ProductButton({ product, onClick }: { product: any; onClick: () => void
       onClick={onClick}
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
-      className="rounded-[22px] border border-border/80 bg-card p-3 text-left shadow-[0_14px_40px_rgba(163,177,219,0.12)] backdrop-blur-xl active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation min-h-[72px] group"
+      className="rounded-[22px] border border-border/80 bg-card p-3 text-left shadow-[0_14px_40px_hsl(var(--auros-abyss) / 0.6)] backdrop-blur-xl active:scale-[0.97] transition-all h-full flex flex-col justify-between touch-manipulation min-h-[72px] group"
     >
       <div>
         <div className="flex items-start justify-between gap-1.5">
@@ -2833,7 +2833,7 @@ function QrView({ features, tables }: any) {
     const ctx = canvas.getContext("2d")!;
     const img = new Image();
     img.onload = () => {
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = "hsl(var(--primary-foreground))";
       ctx.fillRect(0, 0, 600, 600);
       ctx.drawImage(img, 50, 50, 500, 500);
       // Add table name below
@@ -4893,7 +4893,7 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
             <div className="flex items-center gap-4">
               <motion.div
                 whileHover={{ scale: 1.06, rotate: -4 }}
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border/80 bg-accent text-sm font-semibold text-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_10px_30px_rgba(172,155,255,0.18)]"
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border/80 bg-accent text-sm font-semibold text-foreground shadow-[inset_0_1px_1px_hsl(var(--auros-ice) / 0.08),0_10px_30px_hsl(var(--auros-teal) / 0.18)]"
               >
                 {employee.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
               </motion.div>
@@ -4934,7 +4934,7 @@ function SectionPickerScreen({ employee, onSelect, onLogout }: { employee: any; 
                   {/* hover glow */}
                   <div className={`absolute -inset-[2px] rounded-[24px] bg-gradient-to-br ${item.color} opacity-0 blur-md transition duration-500 group-hover:opacity-40`} />
 
-                  <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[22px] border border-border/80 bg-card px-4 py-6 shadow-[0_18px_50px_rgba(163,177,219,0.14)] backdrop-blur-xl transition duration-500 group-hover:shadow-[0_26px_70px_rgba(170,148,255,0.20)] min-h-[120px]">
+                  <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[22px] border border-border/80 bg-card px-4 py-6 shadow-[0_18px_50px_hsl(var(--auros-abyss) / 0.6)] backdrop-blur-xl transition duration-500 group-hover:shadow-[0_26px_70px_rgba(170,148,255,0.20)] min-h-[120px]">
                     {/* inner shine */}
                     <div className="absolute inset-x-0 top-0 h-10 bg-transparent" />
 
@@ -6236,22 +6236,22 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-            style={{  border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 12px 40px rgba(160,175,219,0.15)" }}
+            style={{  border: "1px solid hsl(var(--card))", boxShadow: "0 12px 40px hsl(var(--auros-abyss) / 0.6)" }}
           >
-            <Shield className="w-8 h-8" style={{ color: "#5a5a72" }} />
+            <Shield className="w-8 h-8" style={{ color: "hsl(var(--foreground))" }} />
           </motion.div>
-          <h1 className="text-xl font-bold tracking-tight" style={{ color: "#2a2a3a" }}>Selecteer Customer</h1>
-          <p className="text-sm mt-1" style={{ color: "#8b8b9e" }}>Kies een klant om hun POS te openen</p>
+          <h1 className="text-xl font-bold tracking-tight" style={{ color: "hsl(var(--foreground))" }}>Selecteer Customer</h1>
+          <p className="text-sm mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>Kies een klant om hun POS te openen</p>
         </div>
 
         <div className="mb-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9b9bab" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Zoek customer..."
             className="w-full h-11 pl-10 pr-4 rounded-xl text-sm border"
-            style={{ background: "rgba(255,255,255,0.8)", borderColor: "rgba(0,0,0,0.08)", backdropFilter: "blur(10px)" }}
+            style={{ background: "hsl(var(--auros-ice) / 0.08)", borderColor: "rgba(0,0,0,0.08)", backdropFilter: "blur(10px)" }}
           />
         </div>
 
@@ -6267,39 +6267,39 @@ function PlatformTenantPicker({ tenants, onSelect, onAdmin }: { tenants: any[]; 
               className="w-full rounded-xl p-4 flex items-center justify-between text-left transition-all hover:scale-[1.01]"
               style={{
                 
-                border: "1px solid rgba(255,255,255,0.72)",
-                boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 8px 24px rgba(160,175,219,0.08)",
+                border: "1px solid hsl(var(--card))",
+                boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 8px 24px hsl(var(--auros-abyss) / 0.6)",
                 opacity: t.is_active ? 1 : 0.5,
               }}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold" style={{ background: t.is_active ? "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.2))" : "rgba(0,0,0,0.04)", color: t.is_active ? "#16a34a" : "#9b9bab" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold" style={{ background: t.is_active ? "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.2))" : "rgba(0,0,0,0.04)", color: t.is_active ? "#16a34a" : "hsl(var(--muted-foreground))" }}>
                   {t.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{t.name}</div>
+                  <div className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{t.name}</div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] font-mono" style={{ color: "#8b8b9e" }}>{t.slug}</span>
-                    <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium uppercase" style={{ background: "rgba(172,155,255,0.1)", color: "#7c6bc4" }}>{t.plan}</span>
+                    <span className="text-[10px] font-mono" style={{ color: "hsl(var(--muted-foreground))" }}>{t.slug}</span>
+                    <span className="text-[8px] px-1.5 py-0.5 rounded-full font-medium uppercase" style={{ background: "hsl(var(--auros-teal) / 0.1)", color: "hsl(var(--primary))" }}>{t.plan}</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 {loading === t.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#7c6bc4" }} />
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(var(--primary))" }} />
                 ) : (
-                  <ChevronRight className="w-4 h-4" style={{ color: "#9b9bab" }} />
+                  <ChevronRight className="w-4 h-4" style={{ color: "hsl(var(--muted-foreground))" }} />
                 )}
               </div>
             </motion.button>
           ))}
           {filtered.length === 0 && (
-            <div className="text-center py-8 text-sm" style={{ color: "#9b9bab" }}>Geen customers gevonden</div>
+            <div className="text-center py-8 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Geen customers gevonden</div>
           )}
         </div>
 
         <div className="mt-6 text-center">
-          <button onClick={onAdmin} className="text-xs font-medium px-4 py-2 rounded-lg transition-colors hover:bg-card/50" style={{ color: "#7c6bc4" }}>
+          <button onClick={onAdmin} className="text-xs font-medium px-4 py-2 rounded-lg transition-colors hover:bg-card/50" style={{ color: "hsl(var(--primary))" }}>
             <Shield className="w-3.5 h-3.5 inline mr-1" />
             Naar Admin Dashboard
           </button>

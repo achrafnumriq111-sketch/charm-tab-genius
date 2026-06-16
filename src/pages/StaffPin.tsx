@@ -63,17 +63,17 @@ export default function StaffPin() {
           <div
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
             style={{
-              background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))",
-              border: "1px solid rgba(255,255,255,0.6)",
-              boxShadow: "0 8px 32px rgba(172,155,255,0.2)",
+              background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.3), hsl(var(--auros-lilac) / 0.4))",
+              border: "1px solid hsl(var(--card))",
+              boxShadow: "0 8px 32px hsl(var(--auros-teal) / 0.2)",
             }}
           >
-            <KeyRound className="w-6 h-6" style={{ color: "#7c6bc4" }} />
+            <KeyRound className="w-6 h-6" style={{ color: "hsl(var(--primary))" }} />
           </div>
-          <h1 className="text-lg font-semibold" style={{ color: "#2a2a3a" }}>
+          <h1 className="text-lg font-semibold" style={{ color: "hsl(var(--foreground))" }}>
             Medewerker inloggen
           </h1>
-          <p className="text-xs mt-1" style={{ color: "#9b9bab" }}>
+          <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
             {meta?.tenant_name || meta?.tenant_slug || "Gekoppeld apparaat"}
           </p>
         </div>
@@ -82,13 +82,13 @@ export default function StaffPin() {
           onSubmit={handleSubmit}
           className="rounded-2xl p-6 space-y-5"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-            border: "1px solid rgba(255,255,255,0.72)",
-            boxShadow: "0 22px 90px rgba(160,175,219,0.16)",
+            background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+            border: "1px solid hsl(var(--card))",
+            boxShadow: "0 22px 90px hsl(var(--auros-abyss) / 0.6)",
           }}
         >
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
               Naam
             </label>
             <input
@@ -101,14 +101,14 @@ export default function StaffPin() {
               disabled={loading}
               className="w-full h-12 px-4 rounded-xl text-sm outline-none"
               style={{
-                background: "rgba(255,255,255,0.5)",
+                background: "hsl(var(--card))",
                 border: "1px solid rgba(0,0,0,0.06)",
-                color: "#2a2a3a",
+                color: "hsl(var(--foreground))",
               }}
             />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
               PIN (6 cijfers)
             </label>
             <input
@@ -122,9 +122,9 @@ export default function StaffPin() {
               disabled={loading}
               className="w-full h-14 px-4 rounded-xl text-center outline-none"
               style={{
-                background: "rgba(255,255,255,0.5)",
+                background: "hsl(var(--card))",
                 border: "1px solid rgba(0,0,0,0.06)",
-                color: "#2a2a3a",
+                color: "hsl(var(--foreground))",
                 fontSize: 26,
                 letterSpacing: "0.4em",
                 fontVariantNumeric: "tabular-nums",
@@ -141,8 +141,8 @@ export default function StaffPin() {
             disabled={loading || pin.length !== 6 || !username.trim()}
             className="w-full h-12 rounded-xl text-sm font-semibold disabled:opacity-40"
             style={{
-              background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-              color: "#fff",
+              background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+              color: "hsl(var(--primary-foreground))",
             }}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Inloggen"}
@@ -152,7 +152,7 @@ export default function StaffPin() {
         <button
           onClick={() => navigate("/login")}
           className="w-full mt-4 h-10 text-xs flex items-center justify-center gap-1.5"
-          style={{ color: "#7c6bc4" }}
+          style={{ color: "hsl(var(--primary))" }}
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Eigenaar-login

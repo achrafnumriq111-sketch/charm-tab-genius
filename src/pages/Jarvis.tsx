@@ -54,9 +54,9 @@ interface SubsOverview {
 }
 
 const glass: React.CSSProperties = {
-  background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-  border: "1px solid rgba(255,255,255,0.72)",
-  boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 12px 40px rgba(160,175,219,0.12)",
+  background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+  border: "1px solid hsl(var(--card))",
+  boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 12px 40px hsl(var(--auros-abyss) / 0.6)",
   backdropFilter: "blur(14px)",
 };
 
@@ -244,8 +244,8 @@ export default function Jarvis() {
       className="min-h-screen p-4 md:p-8"
       style={{
         background:
-          "radial-gradient(ellipse at 20% 10%, rgba(205,216,255,0.4), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+          "radial-gradient(ellipse at 20% 10%, hsl(var(--auros-lilac) / 0.4), transparent 50%), " +
+          "radial-gradient(ellipse at 80% 30%, hsl(var(--auros-lilac) / 0.25), transparent 50%), " +
           "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
       }}
     >
@@ -280,7 +280,7 @@ export default function Jarvis() {
         {/* Fleet KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { label: "Customers", value: fleet.tenants, icon: Activity, color: "#5a5a72" },
+            { label: "Customers", value: fleet.tenants, icon: Activity, color: "hsl(var(--foreground))" },
             { label: "Actief", value: fleet.active, icon: CheckCircle2, color: "#16a34a" },
             { label: "Met kritieke events", value: fleet.critical, icon: AlertTriangle, color: fleet.critical > 0 ? "#dc2626" : "#16a34a" },
             { label: "RLS hotspots (24u)", value: fleet.rlsHotspots, icon: ShieldAlert, color: fleet.rlsHotspots > 0 ? "#d97706" : "#16a34a" },
@@ -305,7 +305,7 @@ export default function Jarvis() {
         {/* Security summary banner */}
         {summary && (
           <div className="rounded-2xl p-4 mb-6 grid grid-cols-2 md:grid-cols-4 gap-4" style={glass}>
-            <Stat label="Events 24u" value={summary.total} color="#5a5a72" />
+            <Stat label="Events 24u" value={summary.total} color="hsl(var(--foreground))" />
             <Stat label="Critical" value={summary.critical} color={summary.critical > 0 ? "#dc2626" : "#16a34a"} />
             <Stat label="RLS rejects (42501)" value={summary.rls_rejects} color={summary.rls_rejects > 0 ? "#d97706" : "#16a34a"} />
             <Stat label="Cross-customer" value={summary.cross_tenant} color={summary.cross_tenant > 0 ? "#dc2626" : "#16a34a"} />

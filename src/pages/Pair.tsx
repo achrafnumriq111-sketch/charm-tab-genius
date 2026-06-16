@@ -58,8 +58,8 @@ export default function Pair() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         background:
-          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+          "radial-gradient(ellipse at 20% 20%, hsl(var(--auros-lilac) / 0.35), transparent 50%), " +
+          "radial-gradient(ellipse at 80% 30%, hsl(var(--auros-lilac) / 0.25), transparent 50%), " +
           "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
       }}
     >
@@ -72,17 +72,17 @@ export default function Pair() {
           <div
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
             style={{
-              background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))",
-              border: "1px solid rgba(255,255,255,0.6)",
-              boxShadow: "0 8px 32px rgba(172,155,255,0.2)",
+              background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.3), hsl(var(--auros-lilac) / 0.4))",
+              border: "1px solid hsl(var(--card))",
+              boxShadow: "0 8px 32px hsl(var(--auros-teal) / 0.2)",
             }}
           >
-            <ShieldCheck className="w-6 h-6" style={{ color: "#7c6bc4" }} />
+            <ShieldCheck className="w-6 h-6" style={{ color: "hsl(var(--primary))" }} />
           </div>
-          <h1 className="text-lg font-semibold" style={{ color: "#2a2a3a" }}>
+          <h1 className="text-lg font-semibold" style={{ color: "hsl(var(--foreground))" }}>
             Apparaat koppelen
           </h1>
-          <p className="text-xs mt-1" style={{ color: "#9b9bab" }}>
+          <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
             Vraag de eigenaar om een koppelcode te genereren.
           </p>
         </div>
@@ -91,23 +91,23 @@ export default function Pair() {
           <div
             className="rounded-2xl p-6 text-center"
             style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-              border: "1px solid rgba(255,255,255,0.72)",
-              boxShadow: "0 22px 90px rgba(160,175,219,0.16)",
+              background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+              border: "1px solid hsl(var(--card))",
+              boxShadow: "0 22px 90px hsl(var(--auros-abyss) / 0.6)",
             }}
           >
-            <div className="text-sm font-semibold mb-1" style={{ color: "#2a2a3a" }}>
+            <div className="text-sm font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>
               ✓ Gekoppeld
             </div>
-            <div className="text-xs mb-4" style={{ color: "#8b8b9e" }}>
+            <div className="text-xs mb-4" style={{ color: "hsl(var(--muted-foreground))" }}>
               {paired.device_name} → {paired.tenant_name || paired.tenant_slug}
             </div>
             <button
               onClick={() => navigate("/login", { replace: true })}
               className="w-full h-11 rounded-xl text-sm font-semibold"
               style={{
-                background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                color: "#fff",
+                background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                color: "hsl(var(--primary-foreground))",
               }}
             >
               Naar inloggen
@@ -115,7 +115,7 @@ export default function Pair() {
             <button
               onClick={() => { clearDevice(); setPaired(null); }}
               className="w-full h-9 mt-2 text-xs"
-              style={{ color: "#9b9bab" }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Ontkoppelen
             </button>
@@ -125,13 +125,13 @@ export default function Pair() {
             onSubmit={submit}
             className="rounded-2xl p-6 space-y-5"
             style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-              border: "1px solid rgba(255,255,255,0.72)",
-              boxShadow: "0 22px 90px rgba(160,175,219,0.16)",
+              background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+              border: "1px solid hsl(var(--card))",
+              boxShadow: "0 22px 90px hsl(var(--auros-abyss) / 0.6)",
             }}
           >
             <div>
-              <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+              <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Koppelcode
               </label>
               <input
@@ -145,9 +145,9 @@ export default function Pair() {
                 disabled={loading}
                 className="w-full h-14 px-4 rounded-xl text-center outline-none"
                 style={{
-                  background: "rgba(255,255,255,0.5)",
+                  background: "hsl(var(--card))",
                   border: "1px solid rgba(0,0,0,0.06)",
-                  color: "#2a2a3a",
+                  color: "hsl(var(--foreground))",
                   fontSize: 28,
                   letterSpacing: "0.5em",
                   fontVariantNumeric: "tabular-nums",
@@ -164,8 +164,8 @@ export default function Pair() {
               disabled={loading || code.length !== 6}
               className="w-full h-12 rounded-xl text-sm font-semibold disabled:opacity-40"
               style={{
-                background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                color: "#fff",
+                background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                color: "hsl(var(--primary-foreground))",
               }}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Koppelen"}

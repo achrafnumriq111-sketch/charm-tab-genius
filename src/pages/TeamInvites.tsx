@@ -87,28 +87,28 @@ const TeamInvites = () => {
   return (
     <div className="min-h-screen p-6" style={{ background: "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)" }}>
       <div className="max-w-3xl mx-auto">
-        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "#7c6bc4" }}>
+        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "hsl(var(--primary))" }}>
           <ArrowLeft className="w-3.5 h-3.5" /> Terug
         </button>
 
-        <h1 className="text-xl font-semibold mb-1" style={{ color: "#2a2a3a" }}>Team-uitnodigingen</h1>
-        <p className="text-xs mb-6" style={{ color: "#8b8b9e" }}>
+        <h1 className="text-xl font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>Team-uitnodigingen</h1>
+        <p className="text-xs mb-6" style={{ color: "hsl(var(--muted-foreground))" }}>
           Genereer een uitnodigingslink en deel die met je medewerker via WhatsApp, e-mail of SMS.
         </p>
 
         <form onSubmit={create} className="rounded-2xl p-5 mb-6 flex flex-wrap gap-3 items-end"
-          style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" }}>
+          style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--card))", backdropFilter: "blur(12px)" }}>
           <div className="flex-1 min-w-[180px]">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>Naam</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>Naam</label>
             <input value={name} onChange={(e) => setName(e.target.value)} required
               className="w-full h-10 px-3 rounded-lg text-sm outline-none"
-              style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.06)" }} />
+              style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }} />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>Rol</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>Rol</label>
             <select value={role} onChange={(e) => setRole(e.target.value)}
               className="h-10 px-3 rounded-lg text-sm outline-none"
-              style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.06)" }}>
+              style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }}>
               <option value="sales">Sales</option>
               <option value="manager">Manager</option>
               <option value="owner">Owner</option>
@@ -116,7 +116,7 @@ const TeamInvites = () => {
           </div>
           <button type="submit" disabled={creating || name.trim().length < 2}
             className="h-10 px-4 rounded-lg text-sm font-semibold flex items-center gap-2 disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))", color: "#fff" }}>
+            style={{ background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))", color: "hsl(var(--primary-foreground))" }}>
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
             Uitnodiging genereren
           </button>
@@ -125,18 +125,18 @@ const TeamInvites = () => {
 
         <div className="space-y-2">
           {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#7c6bc4" }} />
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(var(--primary))" }} />
           ) : invites.length === 0 ? (
-            <p className="text-xs" style={{ color: "#8b8b9e" }}>Nog geen uitnodigingen.</p>
+            <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Nog geen uitnodigingen.</p>
           ) : invites.map((inv) => {
             const expired = new Date(inv.expires_at).getTime() < Date.now();
             const link = `${window.location.origin}/accept-invite/${inv.token}`;
             return (
               <div key={inv.id} className="rounded-xl p-4 flex flex-wrap items-center gap-3"
-                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.7)" }}>
+                style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--card))" }}>
                 <div className="flex-1 min-w-[180px]">
-                  <div className="text-sm font-medium" style={{ color: "#2a2a3a" }}>{inv.full_name}</div>
-                  <div className="text-[11px]" style={{ color: "#8b8b9e" }}>
+                  <div className="text-sm font-medium" style={{ color: "hsl(var(--foreground))" }}>{inv.full_name}</div>
+                  <div className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                     {inv.role} ·{" "}
                     {inv.accepted_at ? "Geaccepteerd" : expired ? "Verlopen" : `Verloopt ${new Date(inv.expires_at).toLocaleDateString("nl-NL")}`}
                   </div>
@@ -144,7 +144,7 @@ const TeamInvites = () => {
                 {!inv.accepted_at && !expired && (
                   <button onClick={() => copyLink(inv.token)}
                     className="h-9 px-3 rounded-lg text-xs flex items-center gap-1.5"
-                    style={{ background: "rgba(124,107,196,0.1)", color: "#7c6bc4" }}>
+                    style={{ background: "hsl(var(--auros-teal) / 0.1)", color: "hsl(var(--primary))" }}>
                     {copied === inv.token ? <><Check className="w-3.5 h-3.5" /> Gekopieerd</> : <><Copy className="w-3.5 h-3.5" /> Kopieer link</>}
                   </button>
                 )}
@@ -154,7 +154,7 @@ const TeamInvites = () => {
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
                 {!inv.accepted_at && !expired && (
-                  <div className="w-full text-[10px] font-mono px-2 py-1.5 rounded" style={{ background: "rgba(0,0,0,0.04)", color: "#5a5a72", wordBreak: "break-all" }}>
+                  <div className="w-full text-[10px] font-mono px-2 py-1.5 rounded" style={{ background: "rgba(0,0,0,0.04)", color: "hsl(var(--foreground))", wordBreak: "break-all" }}>
                     {link}
                   </div>
                 )}

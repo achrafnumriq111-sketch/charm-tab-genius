@@ -144,22 +144,22 @@ const Reports: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl p-4"
       style={{
-        background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(247,249,255,0.85))",
-        border: "1px solid rgba(255,255,255,0.7)",
-        boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 8px 28px rgba(160,175,219,0.10)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.95), hsl(var(--card)))",
+        border: "1px solid hsl(var(--card))",
+        boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 8px 28px hsl(var(--auros-abyss) / 0.6)",
       }}
     >
       <div className="flex items-center gap-2 mb-2">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: accent || "rgba(172,155,255,0.15)", color: "#7c6bc4" }}
+          style={{ background: accent || "hsl(var(--auros-teal) / 0.15)", color: "hsl(var(--primary))" }}
         >
           <Icon className="w-4 h-4" />
         </div>
-        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#8b8b9e" }}>{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
       </div>
-      <div className="text-xl font-bold" style={{ color: "#2a2a3a" }}>{value}</div>
-      {sub && <div className="text-[11px] mt-0.5" style={{ color: "#9b9bab" }}>{sub}</div>}
+      <div className="text-xl font-bold" style={{ color: "hsl(var(--foreground))" }}>{value}</div>
+      {sub && <div className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{sub}</div>}
     </motion.div>
   );
 
@@ -168,8 +168,8 @@ const Reports: React.FC = () => {
       className="min-h-screen p-4 sm:p-6"
       style={{
         background:
-          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+          "radial-gradient(ellipse at 20% 20%, hsl(var(--auros-lilac) / 0.35), transparent 50%), " +
+          "radial-gradient(ellipse at 80% 30%, hsl(var(--auros-lilac) / 0.25), transparent 50%), " +
           "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
       }}
     >
@@ -179,15 +179,15 @@ const Reports: React.FC = () => {
           <button
             onClick={() => navigate(-1)}
             className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(0,0,0,0.06)" }}
+            style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }}
           >
-            <ArrowLeft className="w-4 h-4" style={{ color: "#5a5a72" }} />
+            <ArrowLeft className="w-4 h-4" style={{ color: "hsl(var(--foreground))" }} />
           </button>
           <div>
-            <h1 className="text-xl font-bold tracking-tight" style={{ color: "#2a2a3a" }}>
+            <h1 className="text-xl font-bold tracking-tight" style={{ color: "hsl(var(--foreground))" }}>
               Rapportage & Boekhouding
             </h1>
-            <p className="text-xs" style={{ color: "#9b9bab" }}>
+            <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               {activeLocation?.name || "—"} · winst- & verliesoverzicht en exports
             </p>
           </div>
@@ -197,9 +197,9 @@ const Reports: React.FC = () => {
         <div
           className="rounded-2xl p-4 mb-6 flex flex-wrap items-center gap-3"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(247,249,255,0.85))",
-            border: "1px solid rgba(255,255,255,0.7)",
-            boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 8px 28px rgba(160,175,219,0.10)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.95), hsl(var(--card)))",
+            border: "1px solid hsl(var(--card))",
+            boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 8px 28px hsl(var(--auros-abyss) / 0.6)",
           }}
         >
           <div className="flex flex-wrap gap-1.5">
@@ -218,8 +218,8 @@ const Reports: React.FC = () => {
                   onClick={() => setPreset(key)}
                   className="px-3 h-9 rounded-lg text-xs font-semibold transition-all"
                   style={{
-                    background: active ? "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))" : "rgba(0,0,0,0.04)",
-                    color: active ? "#fff" : "#5a5a72",
+                    background: active ? "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))" : "rgba(0,0,0,0.04)",
+                    color: active ? "hsl(var(--primary-foreground))" : "hsl(var(--foreground))",
                   }}
                 >
                   {label}
@@ -235,26 +235,26 @@ const Reports: React.FC = () => {
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
                 className="h-9 px-2 rounded-lg text-xs outline-none"
-                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(0,0,0,0.06)" }}
+                style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }}
               />
-              <span className="text-xs" style={{ color: "#9b9bab" }}>→</span>
+              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>→</span>
               <input
                 type="date"
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
                 className="h-9 px-2 rounded-lg text-xs outline-none"
-                style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(0,0,0,0.06)" }}
+                style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }}
               />
             </div>
           )}
 
           <div className="ml-auto flex items-center gap-2">
-            <label className="text-[11px] font-medium" style={{ color: "#8b8b9e" }}>BTW%</label>
+            <label className="text-[11px] font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>BTW%</label>
             <select
               value={vatRate}
               onChange={(e) => setVatRate(Number(e.target.value))}
               className="h-9 px-2 rounded-lg text-xs outline-none"
-              style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(0,0,0,0.06)" }}
+              style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }}
             >
               <option value={9}>9% (voeding & drank)</option>
               <option value={21}>21% (retail & overig)</option>
@@ -271,7 +271,7 @@ const Reports: React.FC = () => {
 
         {loading || locLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#7c6bc4" }} />
+            <Loader2 className="w-6 h-6 animate-spin" style={{ color: "hsl(var(--primary))" }} />
           </div>
         ) : data ? (
           <>
@@ -280,7 +280,7 @@ const Reports: React.FC = () => {
               <StatCard icon={TrendingUp} label="Bruto omzet (incl)" value={fmtEUR(data.gross_revenue_incl_vat)} sub={`${data.transactions} transacties`} accent="rgba(34,197,94,0.15)" />
               <StatCard icon={Receipt} label="Netto omzet (excl)" value={fmtEUR(data.net_revenue_excl_vat)} sub={`Bij ${data.vat_rate_assumed}% BTW`} accent="rgba(59,130,246,0.15)" />
               <StatCard icon={FileText} label="BTW geheven" value={fmtEUR(data.vat_collected)} accent="rgba(245,158,11,0.15)" />
-              <StatCard icon={TrendingUp} label="Gem. orderwaarde" value={fmtEUR(data.avg_order_value)} accent="rgba(172,155,255,0.18)" />
+              <StatCard icon={TrendingUp} label="Gem. orderwaarde" value={fmtEUR(data.avg_order_value)} accent="hsl(var(--auros-teal) / 0.18)" />
             </div>
 
             {/* Payment split */}
@@ -295,13 +295,13 @@ const Reports: React.FC = () => {
             <div
               className="rounded-2xl p-5"
               style={{
-                background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(247,249,255,0.85))",
-                border: "1px solid rgba(255,255,255,0.7)",
-                boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 8px 28px rgba(160,175,219,0.10)",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.95), hsl(var(--card)))",
+                border: "1px solid hsl(var(--card))",
+                boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 8px 28px hsl(var(--auros-abyss) / 0.6)",
               }}
             >
-              <h2 className="text-sm font-bold mb-1" style={{ color: "#2a2a3a" }}>Boekhouding-export</h2>
-              <p className="text-[11px] mb-4" style={{ color: "#9b9bab" }}>
+              <h2 className="text-sm font-bold mb-1" style={{ color: "hsl(var(--foreground))" }}>Boekhouding-export</h2>
+              <p className="text-[11px] mb-4" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Eén regel per transactie, met BTW-splitsing op basis van het gekozen tarief.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -315,15 +315,15 @@ const Reports: React.FC = () => {
                     onClick={() => downloadCsv(opt.id)}
                     className="text-left p-3 rounded-xl transition-all hover:scale-[1.01]"
                     style={{
-                      background: "rgba(172,155,255,0.08)",
-                      border: "1px solid rgba(172,155,255,0.2)",
+                      background: "hsl(var(--auros-teal) / 0.08)",
+                      border: "1px solid hsl(var(--auros-teal) / 0.2)",
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{opt.name}</span>
-                      <Download className="w-4 h-4" style={{ color: "#7c6bc4" }} />
+                      <span className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{opt.name}</span>
+                      <Download className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} />
                     </div>
-                    <span className="text-[11px]" style={{ color: "#9b9bab" }}>{opt.desc}</span>
+                    <span className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{opt.desc}</span>
                   </button>
                 ))}
               </div>
@@ -331,13 +331,13 @@ const Reports: React.FC = () => {
 
             {/* Multi-location aggregate hint */}
             {locations.length > 1 && (
-              <div className="mt-4 text-[11px] text-center" style={{ color: "#9b9bab" }}>
+              <div className="mt-4 text-[11px] text-center" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Wissel van locatie via de locatie-switcher voor cross-locatie rapportage.
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-12 text-sm" style={{ color: "#9b9bab" }}>Geen data voor deze periode.</div>
+          <div className="text-center py-12 text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Geen data voor deze periode.</div>
         )}
       </div>
     </div>

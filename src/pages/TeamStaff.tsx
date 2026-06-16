@@ -15,11 +15,11 @@ interface Emp {
 interface Loc { id: string; name: string; city: string; is_active: boolean }
 
 const bg = "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)";
-const card = { background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" } as const;
-const input = { background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.06)" } as const;
+const card = { background: "hsl(var(--card))", border: "1px solid hsl(var(--card))", backdropFilter: "blur(12px)" } as const;
+const input = { background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" } as const;
 
 const roleColors: Record<string, { bg: string; fg: string }> = {
-  owner: { bg: "rgba(124,107,196,0.12)", fg: "#7c6bc4" },
+  owner: { bg: "hsl(var(--auros-teal) / 0.12)", fg: "hsl(var(--primary))" },
   manager: { bg: "rgba(59,130,246,0.12)", fg: "#2563eb" },
   sales: { bg: "rgba(34,197,94,0.12)", fg: "#16a34a" },
 };
@@ -92,51 +92,51 @@ const TeamStaff = () => {
   return (
     <div className="min-h-screen p-6" style={{ background: bg }}>
       <div className="max-w-5xl mx-auto">
-        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "#7c6bc4" }}>
+        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "hsl(var(--primary))" }}>
           <ArrowLeft className="w-3.5 h-3.5" /> Terug
         </button>
 
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <div>
-            <h1 className="text-xl font-semibold mb-1" style={{ color: "#2a2a3a" }}>Team & toewijzing</h1>
-            <p className="text-xs" style={{ color: "#8b8b9e" }}>
+            <h1 className="text-xl font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>Team & toewijzing</h1>
+            <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               Verplaats medewerkers tussen locaties, wijzig rollen of deactiveer accounts.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => navigate("/team")} className="h-9 px-3 rounded-lg text-xs"
-              style={{ background: "rgba(124,107,196,0.1)", color: "#7c6bc4" }}>Uitnodigingen</button>
+              style={{ background: "hsl(var(--auros-teal) / 0.1)", color: "hsl(var(--primary))" }}>Uitnodigingen</button>
             <button onClick={() => navigate("/locations")} className="h-9 px-3 rounded-lg text-xs"
-              style={{ background: "rgba(124,107,196,0.1)", color: "#7c6bc4" }}>Locaties</button>
+              style={{ background: "hsl(var(--auros-teal) / 0.1)", color: "hsl(var(--primary))" }}>Locaties</button>
           </div>
         </div>
 
         <div className="rounded-2xl p-3 mb-4 flex items-center gap-2 flex-wrap" style={card}>
-          <span className="text-[10px] font-semibold uppercase tracking-widest px-2" style={{ color: "#8b8b9e" }}>Filter</span>
+          <span className="text-[10px] font-semibold uppercase tracking-widest px-2" style={{ color: "hsl(var(--muted-foreground))" }}>Filter</span>
           <button onClick={() => setFilterLoc("all")} className="h-8 px-3 rounded-lg text-xs"
-            style={{ background: filterLoc === "all" ? "rgba(124,107,196,0.18)" : "transparent", color: "#7c6bc4" }}>Alle</button>
+            style={{ background: filterLoc === "all" ? "hsl(var(--auros-teal) / 0.18)" : "transparent", color: "hsl(var(--primary))" }}>Alle</button>
           {activeLocs.map(l => (
             <button key={l.id} onClick={() => setFilterLoc(l.id)} className="h-8 px-3 rounded-lg text-xs"
-              style={{ background: filterLoc === l.id ? "rgba(124,107,196,0.18)" : "transparent", color: "#7c6bc4" }}>{l.name}</button>
+              style={{ background: filterLoc === l.id ? "hsl(var(--auros-teal) / 0.18)" : "transparent", color: "hsl(var(--primary))" }}>{l.name}</button>
           ))}
         </div>
 
         {error && <div className="mb-3 text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", color: "#dc2626" }}>{error}</div>}
 
         {loading ? (
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#7c6bc4" }} />
+          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(var(--primary))" }} />
         ) : (
           <div className="space-y-6">
             {grouped.map(({ loc, members }) => (
               <section key={loc.id}>
                 <div className="flex items-center gap-2 mb-2 px-1">
-                  <Users className="w-3.5 h-3.5" style={{ color: "#7c6bc4" }} />
-                  <h2 className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{loc.name}</h2>
-                  <span className="text-[11px]" style={{ color: "#8b8b9e" }}>{loc.city}</span>
-                  <span className="ml-auto text-[11px]" style={{ color: "#8b8b9e" }}>{members.length} medewerker(s)</span>
+                  <Users className="w-3.5 h-3.5" style={{ color: "hsl(var(--primary))" }} />
+                  <h2 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{loc.name}</h2>
+                  <span className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{loc.city}</span>
+                  <span className="ml-auto text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{members.length} medewerker(s)</span>
                 </div>
                 {members.length === 0 ? (
-                  <div className="rounded-xl p-4 text-xs text-center" style={{ ...card, color: "#8b8b9e" }}>Geen medewerkers op deze locatie</div>
+                  <div className="rounded-xl p-4 text-xs text-center" style={{ ...card, color: "hsl(var(--muted-foreground))" }}>Geen medewerkers op deze locatie</div>
                 ) : (
                   <div className="space-y-2">
                     {members.map(emp => <EmpRow key={emp.id} emp={emp} locs={activeLocs} locName={locName} busy={busy === emp.id}
@@ -176,11 +176,11 @@ const EmpRow: React.FC<{
         {emp.full_name.split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase()}
       </div>
       <div className="flex-1 min-w-[160px]">
-        <div className="text-sm font-medium flex items-center gap-2" style={{ color: "#2a2a3a" }}>
+        <div className="text-sm font-medium flex items-center gap-2" style={{ color: "hsl(var(--foreground))" }}>
           {emp.full_name}
-          {!emp.is_active && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.06)", color: "#8b8b9e" }}>Inactief</span>}
+          {!emp.is_active && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.06)", color: "hsl(var(--muted-foreground))" }}>Inactief</span>}
         </div>
-        <div className="text-[11px]" style={{ color: "#8b8b9e" }}>{emp.role}</div>
+        <div className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{emp.role}</div>
       </div>
 
       <select value={emp.role} disabled={busy} onChange={(e) => onRole(e.target.value as Emp["role"])}
@@ -189,7 +189,7 @@ const EmpRow: React.FC<{
       </select>
 
       <div className="flex items-center gap-1.5">
-        <ArrowRight className="w-3.5 h-3.5" style={{ color: "#8b8b9e" }} />
+        <ArrowRight className="w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
         <select value={emp.location_id} disabled={busy} onChange={(e) => onMove(e.target.value)}
           className="h-9 px-2.5 rounded-lg text-xs outline-none" style={input}>
           {locs.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
@@ -203,7 +203,7 @@ const EmpRow: React.FC<{
         <UserCog className="w-3.5 h-3.5" /> {emp.is_active ? "Deactiveren" : "Activeren"}
       </button>
 
-      {busy && <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#7c6bc4" }} />}
+      {busy && <Loader2 className="w-4 h-4 animate-spin" style={{ color: "hsl(var(--primary))" }} />}
     </div>
   );
 };
