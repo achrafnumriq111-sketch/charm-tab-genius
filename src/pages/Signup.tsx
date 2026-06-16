@@ -140,18 +140,18 @@ const Signup = () => {
 
   const glassCard = {
     background:
-      "radial-gradient(circle at top left, rgba(205,216,255,0.24), transparent 38%), " +
-      "radial-gradient(circle at top right, rgba(255,206,236,0.18), transparent 42%), " +
-      "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-    border: "1px solid rgba(255,255,255,0.72)",
-    boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 22px 90px rgba(160,175,219,0.16)",
+      "radial-gradient(circle at top left, hsl(var(--auros-lilac) / 0.24), transparent 38%), " +
+      "radial-gradient(circle at top right, hsl(var(--auros-lilac) / 0.18), transparent 42%), " +
+      "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+    border: "1px solid hsl(var(--card))",
+    boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 22px 90px hsl(var(--auros-abyss) / 0.6)",
     backdropFilter: "blur(14px)",
   };
 
   const inputStyle = {
-    background: "rgba(255,255,255,0.5)",
+    background: "hsl(var(--card))",
     border: "1px solid rgba(0,0,0,0.06)",
-    color: "#2a2a3a",
+    color: "hsl(var(--foreground))",
     boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
   };
 
@@ -173,7 +173,7 @@ const Signup = () => {
             {i > 0 && (
               <div
                 className="w-8 h-0.5 rounded-full"
-                style={{ background: isDone ? "rgba(172,155,255,0.7)" : "rgba(0,0,0,0.08)" }}
+                style={{ background: isDone ? "hsl(var(--auros-teal) / 0.7)" : "rgba(0,0,0,0.08)" }}
               />
             )}
             <div className="flex flex-col items-center gap-1">
@@ -181,16 +181,16 @@ const Signup = () => {
                 className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
                 style={{
                   background: isActive || isDone
-                    ? "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))"
+                    ? "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))"
                     : "rgba(0,0,0,0.05)",
-                  color: isActive || isDone ? "#fff" : "#9b9bab",
+                  color: isActive || isDone ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                 }}
               >
                 {isDone ? <Check className="w-3.5 h-3.5" /> : <s.icon className="w-3.5 h-3.5" />}
               </div>
               <span
                 className="text-[9px] font-medium"
-                style={{ color: isActive ? "#2a2a3a" : "#9b9bab" }}
+                style={{ color: isActive ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
               >
                 {s.label}
               </span>
@@ -206,8 +206,8 @@ const Signup = () => {
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         background:
-          "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-          "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+          "radial-gradient(ellipse at 20% 20%, hsl(var(--auros-lilac) / 0.35), transparent 50%), " +
+          "radial-gradient(ellipse at 80% 30%, hsl(var(--auros-lilac) / 0.25), transparent 50%), " +
           "radial-gradient(ellipse at 50% 80%, rgba(199,230,255,0.2), transparent 50%), " +
           "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)",
       }}
@@ -226,18 +226,18 @@ const Signup = () => {
             transition={{ delay: 0.15, duration: 0.4 }}
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
             style={{
-              background: "linear-gradient(135deg, rgba(172,155,255,0.3), rgba(205,216,255,0.4))",
-              border: "1px solid rgba(255,255,255,0.6)",
-              boxShadow: "0 8px 32px rgba(172,155,255,0.2), inset 0 1px 1px rgba(255,255,255,0.8)",
+              background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.3), hsl(var(--auros-lilac) / 0.4))",
+              border: "1px solid hsl(var(--card))",
+              boxShadow: "0 8px 32px hsl(var(--auros-teal) / 0.2), inset 0 1px 1px hsl(var(--auros-ice) / 0.08)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <Store className="w-6 h-6" style={{ color: "#5a5a72" }} />
+            <Store className="w-6 h-6" style={{ color: "hsl(var(--foreground))" }} />
           </motion.div>
-          <h1 className="text-lg font-semibold tracking-tight" style={{ color: "#2a2a3a" }}>
+          <h1 className="text-lg font-semibold tracking-tight" style={{ color: "hsl(var(--foreground))" }}>
             Start jouw POS
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: "#9b9bab" }}>
+          <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
             Maak een account en configureer je zaak
           </p>
         </div>
@@ -249,7 +249,7 @@ const Signup = () => {
           {step === "account" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                   E-mailadres
                 </label>
                 <input
@@ -262,7 +262,7 @@ const Signup = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                   Wachtwoord
                 </label>
                 <input
@@ -275,7 +275,7 @@ const Signup = () => {
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                   Bevestig wachtwoord
                 </label>
                 <input
@@ -301,17 +301,17 @@ const Signup = () => {
                 disabled={loading || !email.trim() || !password.trim()}
                 className="w-full h-12 rounded-xl text-sm font-semibold transition-all disabled:opacity-35 flex items-center justify-center gap-2"
                 style={{
-                  background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                  color: "#fff",
-                  boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+                  background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                  color: "hsl(var(--primary-foreground))",
+                  boxShadow: "0 4px 20px hsl(var(--auros-teal) / 0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
                 }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Volgende <ArrowRight className="w-4 h-4" /></>}
               </button>
 
-              <p className="text-center text-[11px]" style={{ color: "#9b9bab" }}>
+              <p className="text-center text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                 Al een account?{" "}
-                <button onClick={() => navigate("/login")} className="font-medium underline" style={{ color: "#7c6bc4" }}>
+                <button onClick={() => navigate("/login")} className="font-medium underline" style={{ color: "hsl(var(--primary))" }}>
                   Inloggen
                 </button>
               </p>
@@ -322,7 +322,7 @@ const Signup = () => {
           {step === "business" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                   Bedrijfsnaam
                 </label>
                 <input
@@ -337,7 +337,7 @@ const Signup = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                   URL slug (subdomain)
                 </label>
                 <div className="flex items-center gap-0">
@@ -352,7 +352,7 @@ const Signup = () => {
                   />
                   <div
                     className="h-12 px-3 flex items-center rounded-r-xl text-[11px] font-medium"
-                    style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", borderLeft: "none", color: "#8b8b9e" }}
+                    style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)", borderLeft: "none", color: "hsl(var(--muted-foreground))" }}
                   >
                     .dotts.app
                   </div>
@@ -360,7 +360,7 @@ const Signup = () => {
                 {slug.length >= 3 && (
                   <div className="mt-1 text-[10px] font-medium">
                     {checkingSlug ? (
-                      <span style={{ color: "#9b9bab" }}>Controleren...</span>
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Controleren...</span>
                     ) : slugAvailable === true ? (
                       <span style={{ color: "#16a34a" }}>✓ Beschikbaar</span>
                     ) : slugAvailable === false ? (
@@ -371,7 +371,7 @@ const Signup = () => {
               </div>
 
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                   Jouw naam (eigenaar)
                 </label>
                 <input
@@ -387,7 +387,7 @@ const Signup = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                     Stad
                   </label>
                   <input
@@ -401,7 +401,7 @@ const Signup = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>
+                  <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
                     Adres
                   </label>
                   <input
@@ -428,7 +428,7 @@ const Signup = () => {
                 <button
                   onClick={() => { setStep("account"); setError(""); }}
                   className="h-12 px-4 rounded-xl text-sm font-medium flex items-center gap-1.5"
-                  style={{ background: "rgba(0,0,0,0.04)", color: "#5a5a72" }}
+                  style={{ background: "rgba(0,0,0,0.04)", color: "hsl(var(--foreground))" }}
                 >
                   <ArrowLeft className="w-4 h-4" /> Terug
                 </button>
@@ -448,9 +448,9 @@ const Signup = () => {
                   disabled={!businessName.trim() || !ownerName.trim() || !slug.trim() || slugAvailable === false}
                   className="flex-1 h-12 rounded-xl text-sm font-semibold transition-all disabled:opacity-35 flex items-center justify-center gap-2"
                   style={{
-                    background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                    color: "#fff",
-                    boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+                    background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                    color: "hsl(var(--primary-foreground))",
+                    boxShadow: "0 4px 20px hsl(var(--auros-teal) / 0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
                   }}
                 >
                   Volgende <ArrowRight className="w-4 h-4" />
@@ -463,8 +463,8 @@ const Signup = () => {
           {step === "plan" && (
             <div className="space-y-4">
               <div className="text-center mb-2">
-                <h2 className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>Kies je startplan</h2>
-                <p className="text-[11px] mt-0.5" style={{ color: "#9b9bab" }}>14 dagen gratis, geen creditcard nodig</p>
+                <h2 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>Kies je startplan</h2>
+                <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>14 dagen gratis, geen creditcard nodig</p>
               </div>
 
               {[
@@ -480,38 +480,38 @@ const Signup = () => {
                     onClick={() => setPlan(p.id)}
                     className="w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all"
                     style={{
-                      background: selected ? "rgba(172,155,255,0.12)" : "rgba(255,255,255,0.5)",
-                      border: selected ? "1.5px solid rgba(172,155,255,0.6)" : "1px solid rgba(0,0,0,0.06)",
+                      background: selected ? "hsl(var(--auros-teal) / 0.12)" : "hsl(var(--card))",
+                      border: selected ? "1.5px solid hsl(var(--auros-teal) / 0.6)" : "1px solid rgba(0,0,0,0.06)",
                     }}
                   >
                     <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                       style={{
                         background: selected
-                          ? "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))"
+                          ? "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))"
                           : "rgba(0,0,0,0.04)",
-                        color: selected ? "#fff" : "#7c6bc4",
+                        color: selected ? "hsl(var(--primary-foreground))" : "hsl(var(--primary))",
                       }}
                     >
                       <p.icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>{p.name}</span>
+                        <span className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>{p.name}</span>
                         {p.badge && (
                           <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: "#16a34a" }}>
                             {p.badge}
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px]" style={{ color: "#9b9bab" }}>{p.desc}</span>
+                      <span className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{p.desc}</span>
                     </div>
-                    <span className="text-sm font-bold shrink-0" style={{ color: selected ? "#7c6bc4" : "#5a5a72" }}>{p.price}</span>
+                    <span className="text-sm font-bold shrink-0" style={{ color: selected ? "hsl(var(--primary))" : "hsl(var(--foreground))" }}>{p.price}</span>
                   </button>
                 );
               })}
 
-              <label className="flex items-center gap-2.5 p-3 rounded-xl cursor-pointer" style={{ background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.06)" }}>
+              <label className="flex items-center gap-2.5 p-3 rounded-xl cursor-pointer" style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" }}>
                 <input
                   type="checkbox"
                   checked={seedDemo}
@@ -519,8 +519,8 @@ const Signup = () => {
                   className="w-4 h-4 rounded accent-purple-500"
                 />
                 <div className="flex-1">
-                  <div className="text-xs font-semibold" style={{ color: "#2a2a3a" }}>Demo-data toevoegen</div>
-                  <div className="text-[10px]" style={{ color: "#9b9bab" }}>10 voorbeeldproducten + 6 tafels — verwijderbaar</div>
+                  <div className="text-xs font-semibold" style={{ color: "hsl(var(--foreground))" }}>Demo-data toevoegen</div>
+                  <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>10 voorbeeldproducten + 6 tafels — verwijderbaar</div>
                 </div>
               </label>
 
@@ -537,7 +537,7 @@ const Signup = () => {
                   onClick={() => { setStep("business"); setError(""); }}
                   disabled={loading}
                   className="h-12 px-4 rounded-xl text-sm font-medium flex items-center gap-1.5"
-                  style={{ background: "rgba(0,0,0,0.04)", color: "#5a5a72" }}
+                  style={{ background: "rgba(0,0,0,0.04)", color: "hsl(var(--foreground))" }}
                 >
                   <ArrowLeft className="w-4 h-4" /> Terug
                 </button>
@@ -546,9 +546,9 @@ const Signup = () => {
                   disabled={loading}
                   className="flex-1 h-12 rounded-xl text-sm font-semibold transition-all disabled:opacity-35 flex items-center justify-center gap-2"
                   style={{
-                    background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                    color: "#fff",
-                    boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+                    background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                    color: "hsl(var(--primary-foreground))",
+                    boxShadow: "0 4px 20px hsl(var(--auros-teal) / 0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
                   }}
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Zaak aanmaken <Check className="w-4 h-4" /></>}
@@ -573,15 +573,15 @@ const Signup = () => {
                 <Check className="w-8 h-8" style={{ color: "#16a34a" }} />
               </motion.div>
               <div>
-                <h2 className="text-lg font-bold" style={{ color: "#2a2a3a" }}>
+                <h2 className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>
                   Welkom, {ownerName}!
                 </h2>
-                <p className="text-sm mt-1" style={{ color: "#9b9bab" }}>
+                <p className="text-sm mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
                   <strong>{businessName}</strong> is aangemaakt
                 </p>
               </div>
 
-              <p className="text-sm" style={{ color: "#5a5a72" }}>
+              <p className="text-sm" style={{ color: "hsl(var(--foreground))" }}>
                 Je bent direct ingelogd als <strong>eigenaar</strong>. Je medewerkers kunnen later via "Medewerker" inloggen met hun naam en 6-cijferige PIN.
               </p>
 
@@ -589,9 +589,9 @@ const Signup = () => {
                 onClick={() => navigate("/app", { replace: true })}
                 className="w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
                 style={{
-                  background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-                  color: "#fff",
-                  boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+                  background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+                  color: "hsl(var(--primary-foreground))",
+                  boxShadow: "0 4px 20px hsl(var(--auros-teal) / 0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
                 }}
               >
                 Naar dashboard <ArrowRight className="w-4 h-4" />

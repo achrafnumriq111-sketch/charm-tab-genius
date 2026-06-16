@@ -17,8 +17,8 @@ interface LocRow {
 }
 
 const bg = "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)";
-const card = { background: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" } as const;
-const input = { background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.06)" } as const;
+const card = { background: "hsl(var(--card))", border: "1px solid hsl(var(--card))", backdropFilter: "blur(12px)" } as const;
+const input = { background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.06)" } as const;
 
 const Locations = () => {
   const navigate = useNavigate();
@@ -107,42 +107,42 @@ const Locations = () => {
   return (
     <div className="min-h-screen p-6" style={{ background: bg }}>
       <div className="max-w-4xl mx-auto">
-        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "#7c6bc4" }}>
+        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "hsl(var(--primary))" }}>
           <ArrowLeft className="w-3.5 h-3.5" /> Terug
         </button>
 
-        <h1 className="text-xl font-semibold mb-1" style={{ color: "#2a2a3a" }}>Locaties</h1>
-        <p className="text-xs mb-6" style={{ color: "#8b8b9e" }}>
+        <h1 className="text-xl font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>Locaties</h1>
+        <p className="text-xs mb-6" style={{ color: "hsl(var(--muted-foreground))" }}>
           Beheer de fysieke vestigingen binnen je organisatie. Elke locatie heeft eigen menu, voorraad en kassa.
         </p>
 
         <form onSubmit={create} className="rounded-2xl p-5 mb-6 grid grid-cols-1 sm:grid-cols-4 gap-3" style={card}>
           <div className="sm:col-span-2">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>Naam</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>Naam</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required
               className="w-full h-10 px-3 rounded-lg text-sm outline-none" style={input} placeholder="bv. Saakouk Centrum" />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>Stad</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>Stad</label>
             <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}
               className="w-full h-10 px-3 rounded-lg text-sm outline-none" style={input} placeholder="Amsterdam" />
           </div>
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>Valuta</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>Valuta</label>
             <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
               className="w-full h-10 px-3 rounded-lg text-sm outline-none" style={input}>
               <option value="EUR">EUR</option><option value="USD">USD</option><option value="GBP">GBP</option>
             </select>
           </div>
           <div className="sm:col-span-3">
-            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>Adres</label>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>Adres</label>
             <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}
               className="w-full h-10 px-3 rounded-lg text-sm outline-none" style={input} placeholder="Straatnaam 12, 1011 AA" />
           </div>
           <div className="flex items-end">
             <button type="submit" disabled={creating || form.name.trim().length < 2}
               className="h-10 w-full px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))", color: "#fff" }}>
+              style={{ background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))", color: "hsl(var(--primary-foreground))" }}>
               {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Toevoegen
             </button>
@@ -154,12 +154,12 @@ const Locations = () => {
 
         <div className="space-y-2">
           {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#7c6bc4" }} />
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: "hsl(var(--primary))" }} />
           ) : rows.length === 0 ? (
-            <p className="text-xs" style={{ color: "#8b8b9e" }}>Nog geen locaties.</p>
+            <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Nog geen locaties.</p>
           ) : rows.map((r) => (
             <div key={r.id} className="rounded-xl p-4 flex flex-wrap items-center gap-3" style={card}>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "rgba(124,107,196,0.12)", color: "#7c6bc4" }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: "hsl(var(--auros-teal) / 0.12)", color: "hsl(var(--primary))" }}>
                 <MapPin className="w-4 h-4" />
               </div>
               {editId === r.id ? (
@@ -173,11 +173,11 @@ const Locations = () => {
                 </div>
               ) : (
                 <div className="flex-1 min-w-[180px]">
-                  <div className="text-sm font-medium flex items-center gap-2" style={{ color: "#2a2a3a" }}>
+                  <div className="text-sm font-medium flex items-center gap-2" style={{ color: "hsl(var(--foreground))" }}>
                     {r.name}
-                    {!r.is_active && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.06)", color: "#8b8b9e" }}>Gearchiveerd</span>}
+                    {!r.is_active && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.06)", color: "hsl(var(--muted-foreground))" }}>Gearchiveerd</span>}
                   </div>
-                  <div className="text-[11px]" style={{ color: "#8b8b9e" }}>
+                  <div className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                     {[r.city, r.address].filter(Boolean).join(" · ") || "Geen adres"} · {r.currency} · {r.timezone}
                   </div>
                 </div>
@@ -188,12 +188,12 @@ const Locations = () => {
                   <button onClick={() => saveEdit(r.id)} className="h-9 w-9 rounded-lg flex items-center justify-center"
                     style={{ background: "rgba(34,197,94,0.12)", color: "#16a34a" }}><Check className="w-4 h-4" /></button>
                   <button onClick={() => setEditId(null)} className="h-9 w-9 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(0,0,0,0.05)", color: "#5a5a72" }}><X className="w-4 h-4" /></button>
+                    style={{ background: "rgba(0,0,0,0.05)", color: "hsl(var(--foreground))" }}><X className="w-4 h-4" /></button>
                 </div>
               ) : (
                 <div className="flex gap-1.5">
                   <button onClick={() => beginEdit(r)} className="h-9 px-3 rounded-lg text-xs flex items-center gap-1.5"
-                    style={{ background: "rgba(124,107,196,0.1)", color: "#7c6bc4" }}>
+                    style={{ background: "hsl(var(--auros-teal) / 0.1)", color: "hsl(var(--primary))" }}>
                     <Pencil className="w-3.5 h-3.5" /> Bewerken
                   </button>
                   <button onClick={() => toggleActive(r)} className="h-9 px-3 rounded-lg text-xs flex items-center gap-1.5"

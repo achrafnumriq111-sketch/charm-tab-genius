@@ -113,16 +113,16 @@ export default function SecuritySettings() {
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1.5 text-xs mb-4"
-        style={{ color: "#7c6bc4" }}
+        style={{ color: "hsl(var(--primary))" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Terug
       </button>
 
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-xl font-semibold mb-1" style={{ color: "#2a2a3a" }}>
+        <h1 className="text-xl font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>
           Beveiliging
         </h1>
-        <p className="text-xs mb-6" style={{ color: "#8b8b9e" }}>
+        <p className="text-xs mb-6" style={{ color: "hsl(var(--muted-foreground))" }}>
           Bescherm jouw eigenaar-account met tweestapsverificatie (TOTP).
         </p>
       </motion.div>
@@ -131,14 +131,14 @@ export default function SecuritySettings() {
       <div
         className="rounded-2xl p-5 mb-6"
         style={{
-          background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-          border: "1px solid rgba(255,255,255,0.72)",
-          boxShadow: "0 12px 40px rgba(160,175,219,0.12)",
+          background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+          border: "1px solid hsl(var(--card))",
+          boxShadow: "0 12px 40px hsl(var(--auros-abyss) / 0.6)",
         }}
       >
         <div className="flex items-center gap-2 mb-3">
-          <KeyRound className="w-4 h-4" style={{ color: "#7c6bc4" }} />
-          <span className="text-sm font-semibold" style={{ color: "#2a2a3a" }}>
+          <KeyRound className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} />
+          <span className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
             Authenticator app
           </span>
         </div>
@@ -146,7 +146,7 @@ export default function SecuritySettings() {
         {loading ? (
           <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin" /></div>
         ) : factors.filter((f) => f.status === "verified").length === 0 ? (
-          <div className="text-xs mb-3" style={{ color: "#8b8b9e" }}>
+          <div className="text-xs mb-3" style={{ color: "hsl(var(--muted-foreground))" }}>
             Nog niet ingeschakeld. Gebruik Google Authenticator, 1Password of een andere TOTP app.
           </div>
         ) : (
@@ -155,14 +155,14 @@ export default function SecuritySettings() {
               <div
                 key={f.id}
                 className="flex items-center gap-3 p-3 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.6)", border: "1px solid rgba(0,0,0,0.05)" }}
+                style={{ background: "hsl(var(--card))", border: "1px solid rgba(0,0,0,0.05)" }}
               >
                 <ShieldCheck className="w-4 h-4" style={{ color: "#22c55e" }} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate" style={{ color: "#2a2a3a" }}>
+                  <div className="text-sm font-medium truncate" style={{ color: "hsl(var(--foreground))" }}>
                     {f.friendly_name || "TOTP"}
                   </div>
-                  <div className="text-[11px]" style={{ color: "#9b9bab" }}>
+                  <div className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                     Sinds {new Date(f.created_at).toLocaleDateString("nl-NL")}
                   </div>
                 </div>
@@ -184,8 +184,8 @@ export default function SecuritySettings() {
             disabled={enrolling}
             className="h-10 px-4 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center gap-2"
             style={{
-              background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-              color: "#fff",
+              background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+              color: "hsl(var(--primary-foreground))",
             }}
           >
             {enrolling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
@@ -201,19 +201,19 @@ export default function SecuritySettings() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl p-5 mb-6"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(247,249,255,0.85))",
-            border: "1px solid rgba(124,107,196,0.25)",
-            boxShadow: "0 12px 40px rgba(160,175,219,0.18)",
+            background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+            border: "1px solid hsl(var(--auros-teal) / 0.25)",
+            boxShadow: "0 12px 40px hsl(var(--auros-abyss) / 0.6)",
           }}
         >
-          <div className="text-sm font-semibold mb-3" style={{ color: "#2a2a3a" }}>
+          <div className="text-sm font-semibold mb-3" style={{ color: "hsl(var(--foreground))" }}>
             Scan de QR-code
           </div>
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="bg-card p-3 rounded-xl flex-shrink-0 mx-auto">
               <QRCodeSVG value={enrollment.qrUri} size={160} level="M" />
             </div>
-            <div className="flex-1 text-xs space-y-2" style={{ color: "#5a5a72" }}>
+            <div className="flex-1 text-xs space-y-2" style={{ color: "hsl(var(--foreground))" }}>
               <p>1. Open je authenticator app.</p>
               <p>2. Scan de QR of voer de geheime sleutel handmatig in:</p>
               <code
@@ -234,7 +234,7 @@ export default function SecuritySettings() {
               placeholder="••••••"
               className="flex-1 h-11 px-4 rounded-lg text-center outline-none"
               style={{
-                background: "rgba(255,255,255,0.6)",
+                background: "hsl(var(--card))",
                 border: "1px solid rgba(0,0,0,0.08)",
                 fontSize: 20,
                 letterSpacing: "0.4em",
@@ -247,7 +247,7 @@ export default function SecuritySettings() {
               className="h-11 px-4 rounded-lg text-sm font-semibold disabled:opacity-40"
               style={{
                 background: "linear-gradient(135deg, rgba(34,197,94,0.85), rgba(22,163,74,0.9))",
-                color: "#fff",
+                color: "hsl(var(--primary-foreground))",
               }}
             >
               {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Bevestigen"}
@@ -255,7 +255,7 @@ export default function SecuritySettings() {
             <button
               onClick={cancelEnroll}
               className="h-11 px-3 rounded-lg text-xs"
-              style={{ color: "#9b9bab" }}
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
               Annuleer
             </button>

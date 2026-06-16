@@ -5,28 +5,28 @@ import { Loader2, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 const pageBg =
-  "radial-gradient(ellipse at 20% 20%, rgba(205,216,255,0.35), transparent 50%), " +
-  "radial-gradient(ellipse at 80% 30%, rgba(255,206,236,0.25), transparent 50%), " +
+  "radial-gradient(ellipse at 20% 20%, hsl(var(--auros-lilac) / 0.35), transparent 50%), " +
+  "radial-gradient(ellipse at 80% 30%, hsl(var(--auros-lilac) / 0.25), transparent 50%), " +
   "linear-gradient(180deg, #f0f2f8 0%, #e8ecf4 100%)";
 
 const cardStyle: React.CSSProperties = {
-  background: "linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,249,255,0.78))",
-  border: "1px solid rgba(255,255,255,0.72)",
-  boxShadow: "inset 0 1px 1px rgba(255,255,255,0.85), 0 22px 90px rgba(160,175,219,0.16)",
+  background: "linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)))",
+  border: "1px solid hsl(var(--card))",
+  boxShadow: "inset 0 1px 1px hsl(var(--card)), 0 22px 90px hsl(var(--auros-abyss) / 0.6)",
   backdropFilter: "blur(14px)",
 };
 
 const inputStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.5)",
+  background: "hsl(var(--card))",
   border: "1px solid rgba(0,0,0,0.06)",
-  color: "#2a2a3a",
+  color: "hsl(var(--foreground))",
   boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)",
 };
 
 const btnStyle: React.CSSProperties = {
-  background: "linear-gradient(135deg, rgba(172,155,255,0.85), rgba(140,120,220,0.9))",
-  color: "#fff",
-  boxShadow: "0 4px 20px rgba(172,155,255,0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
+  background: "linear-gradient(135deg, hsl(var(--auros-teal) / 0.85), hsl(var(--auros-teal) / 0.9))",
+  color: "hsl(var(--primary-foreground))",
+  boxShadow: "0 4px 20px hsl(var(--auros-teal) / 0.3), inset 0 1px 1px rgba(255,255,255,0.3)",
 };
 
 const ForgotPassword = () => {
@@ -51,12 +51,12 @@ const ForgotPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: pageBg }}>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
-        <button onClick={() => navigate("/login")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "#7c6bc4" }}>
+        <button onClick={() => navigate("/login")} className="flex items-center gap-1 text-xs mb-4" style={{ color: "hsl(var(--primary))" }}>
           <ArrowLeft className="w-3.5 h-3.5" /> Terug naar inloggen
         </button>
         <div className="rounded-2xl p-6" style={cardStyle}>
-          <h1 className="text-base font-semibold mb-1" style={{ color: "#2a2a3a" }}>Wachtwoord vergeten</h1>
-          <p className="text-xs mb-5" style={{ color: "#8b8b9e" }}>
+          <h1 className="text-base font-semibold mb-1" style={{ color: "hsl(var(--foreground))" }}>Wachtwoord vergeten</h1>
+          <p className="text-xs mb-5" style={{ color: "hsl(var(--muted-foreground))" }}>
             Voor eigenaren met een e-mailaccount. Medewerkers vragen hun PIN bij de eigenaar.
           </p>
           {sent ? (
@@ -66,7 +66,7 @@ const ForgotPassword = () => {
           ) : (
             <form onSubmit={submit} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "#8b8b9e" }}>E-mail</label>
+                <label className="block text-[10px] font-semibold uppercase tracking-widest mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>E-mail</label>
                 <input
                   type="email"
                   required
