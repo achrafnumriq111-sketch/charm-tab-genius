@@ -69,7 +69,7 @@ const Login = () => {
         style={{
           background:
             "radial-gradient(circle at 20% 20%, hsl(var(--auros-teal) / 0.18), transparent 45%)," +
-            "radial-gradient(circle at 80% 75%, hsl(var(--auros-lavender) / 0.14), transparent 50%)",
+            "radial-gradient(circle at 80% 75%, hsl(var(--auros-lilac) / 0.14), transparent 50%)",
         }}
       />
       <div className="absolute top-4 right-4 z-10">
@@ -95,7 +95,7 @@ const Login = () => {
               className="w-full h-full rounded-2xl flex items-center justify-center"
               style={{
                 background:
-                  "linear-gradient(135deg, hsl(var(--auros-teal) / 0.35), hsl(var(--auros-lavender) / 0.25))",
+                  "linear-gradient(135deg, hsl(var(--auros-teal) / 0.35), hsl(var(--auros-lilac) / 0.25))",
                 boxShadow:
                   "inset 0 1px 0 hsl(var(--auros-ice) / 0.25), inset 0 -10px 20px hsl(var(--auros-abyss) / 0.5), 0 18px 40px -12px hsl(var(--auros-teal) / 0.45), 0 4px 10px hsl(var(--auros-abyss) / 0.6)",
               }}
@@ -196,7 +196,7 @@ const Login = () => {
                 className="w-4 h-4 rounded flex items-center justify-center transition-all border"
                 style={{
                   background: rememberMe
-                    ? "linear-gradient(135deg, hsl(var(--auros-teal)), hsl(var(--auros-lavender)))"
+                    ? "linear-gradient(135deg, hsl(var(--auros-teal)), hsl(var(--auros-lilac)))"
                     : "hsl(var(--background))",
                   borderColor: rememberMe ? "transparent" : "hsl(var(--border))",
                   boxShadow: rememberMe ? "0 2px 8px hsl(var(--auros-teal) / 0.4)" : "none",
@@ -232,7 +232,7 @@ const Login = () => {
               className="w-full h-12 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-40 text-primary-foreground"
               style={{
                 background:
-                  "linear-gradient(135deg, hsl(var(--auros-teal)), hsl(var(--auros-lavender)))",
+                  "linear-gradient(135deg, hsl(var(--auros-teal)), hsl(var(--auros-lilac)))",
                 boxShadow:
                   "0 10px 30px -10px hsl(var(--auros-teal) / 0.55), inset 0 1px 0 hsl(var(--auros-ice) / 0.25), inset 0 -2px 6px hsl(var(--auros-abyss) / 0.35)",
               }}
